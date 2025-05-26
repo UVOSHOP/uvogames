@@ -3,226 +3,479 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ular Emoji</title>
+    <title>Ular Emoji Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-color: #2c3e50;
+            --container-bg: #34495e;
+            --border-color: #2ecc71;
+            --canvas-bg: #27ae60;
+            --score-color: #f1c40f;
+            --button-bg: #3498db;
+            --button-hover-bg: #2980b9;
+            --start-button-bg: #4CAF50;
+            --start-button-hover-bg: #45a049;
+            --restart-button-bg: #f44336;
+            --restart-button-hover-bg: #d32f2f;
+            --text-color: #ecf0f1;
+            --game-over-bg: rgba(0, 0, 0, 0.85);
+            --font-family-pixel: 'Press Start 2P', cursive;
+            --font-family-sans: 'Arial', sans-serif;
+        }
+
         body {
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #2c3e50;
+            background-color: var(--bg-color);
             margin: 0;
-            font-family: 'Arial', sans-serif;
-            color: #ecf0f1;
+            font-family: var(--font-family-sans);
+            color: var(--text-color);
+            overflow: hidden; /* Prevent scrolling on mobile */
+            -webkit-user-select: none; /* Disable text selection for better mobile experience */
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            touch-action: manipulation; /* Prevent default touch actions like zoom */
         }
 
-        #game-container {
-            text-align: center;
-            background-color: #34495e;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-            margin-bottom: 20px;
-        }
-
-        canvas {
-            background-color: #27ae60;
-            border: 5px solid #2ecc71;
-            display: block;
-            margin: 0 auto;
-        }
-
-        #score-board {
-            margin-top: 15px;
-            font-size: 1.5em;
-            color: #f1c40f;
-        }
-
-        #controls {
-            display: none; /* Sembunyikan secara default, akan ditampilkan saat game dimulai */
-            flex-direction: column; /* Mengatur kontrol dalam kolom */
-            align-items: center;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .arrow-button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 15px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1.2em;
-            text-align: center;
-            line-height: 1;
-            width: 60px;
-            height: 60px;
+        #game-area {
+            position: relative;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
         }
 
-        .arrow-button:hover {
-            background-color: #2980b9;
+        #game-container {
+            text-align: center;
+            background-color: var(--container-bg);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.7);
+            margin-bottom: 20px;
+            border: 3px solid var(--border-color);
+            position: relative;
+            z-index: 10;
         }
 
-        #horizontal-buttons {
+        h1 {
+            font-family: var(--font-family-pixel);
+            color: var(--score-color);
+            margin-top: 0;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+            font-size: 1.8em;
+        }
+
+        canvas {
+            background-color: var(--canvas-bg);
+            border: 5px solid var(--border-color);
+            display: block;
+            margin: 0 auto;
+            border-radius: 8px;
+        }
+
+        #score-board {
+            margin-top: 15px;
+            font-size: 1.6em;
+            color: var(--score-color);
+            font-family: var(--font-family-pixel);
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+        }
+
+        #high-score-board {
+            font-size: 0.9em;
+            color: #bdc3c7;
+            margin-top: 5px;
+        }
+
+        .game-button {
+            background-color: var(--button-bg);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-family: var(--font-family-pixel);
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            text-transform: uppercase;
+        }
+
+        .game-button:hover {
+            background-color: var(--button-hover-bg);
+            transform: translateY(-2px);
+        }
+
+        .game-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        #start-button {
+            background-color: var(--start-button-bg);
+            font-size: 1.8em;
+            padding: 20px 40px;
+            margin-top: 40px; /* Jarak dari canvas */
+            position: relative;
+            z-index: 20; /* Pastikan di atas layer game over */
+        }
+
+        #start-button:hover {
+            background-color: var(--start-button-hover-bg);
+        }
+
+        #restart-button {
+            background-color: var(--restart-button-bg);
+            font-size: 1.5em;
+            padding: 15px 30px;
+            margin-top: 20px;
+        }
+
+        #restart-button:hover {
+            background-color: var(--restart-button-hover-bg);
+        }
+
+        #pause-button {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
             display: flex;
-            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5em;
+            cursor: pointer;
+            z-index: 15;
+            transition: background-color 0.2s ease;
         }
 
-        #game-over-screen {
+        #pause-button:hover {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        /* Full screen overlays */
+        .overlay {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: var(--game-over-bg);
             color: white;
-            display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             font-size: 2em;
             z-index: 100;
+            font-family: var(--font-family-pixel);
+            text-shadow: 3px 3px 7px rgba(0, 0, 0, 0.6);
         }
 
-        #game-over-screen p {
-            margin-bottom: 20px;
+        .overlay p {
+            margin-bottom: 25px;
+            font-size: 1em;
+            text-align: center;
         }
 
-        #start-button {
-            background-color: #4CAF50;
+        .overlay h2 {
+            font-size: 2.5em;
+            color: var(--score-color);
+            margin-bottom: 10px;
+            margin-top: 0;
+        }
+
+        #intro-screen {
+            display: flex; /* Always visible initially */
+        }
+
+        #pause-screen {
+            background-color: rgba(0, 0, 0, 0.7); /* Lebih transparan */
+        }
+
+        #pause-screen p {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+
+        /* Mobile Controls */
+        #controls-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            gap: 15px; /* Spasi antar baris tombol */
+            z-index: 10;
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 15px; /* Spasi antar tombol di baris yang sama */
+        }
+
+        .arrow-button {
+            background-color: var(--button-bg);
             color: white;
             border: none;
-            padding: 15px 30px;
-            border-radius: 8px;
+            padding: 0; /* Padding diatur oleh width/height */
+            border-radius: 50%; /* Membuat tombol bulat */
             cursor: pointer;
-            font-size: 1.5em;
-            margin-top: 20px;
-            z-index: 101; /* Pastikan tombol start berada di atas layar game over */
+            font-size: 2.2em; /* Ukuran emoji panah */
+            width: 70px; /* Ukuran tombol lebih besar */
+            height: 70px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.2s ease, transform 0.1s ease;
         }
 
-        #start-button:hover {
-            background-color: #45a049;
+        .arrow-button:hover {
+            background-color: var(--button-hover-bg);
+            transform: scale(1.05); /* Sedikit membesar saat hover */
         }
 
-        #restart-button {
-            background-color: #f44336;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1.5em;
-            margin-top: 20px;
+        .arrow-button:active {
+            transform: scale(0.95); /* Sedikit mengecil saat ditekan */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
-        #restart-button:hover {
-            background-color: #d32f2f;
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.5em;
+            }
+            canvas {
+                width: 270px; /* Sedikit lebih kecil di layar sempit */
+                height: 270px;
+            }
+            #game-container {
+                padding: 15px;
+            }
+            #score-board {
+                font-size: 1.3em;
+            }
+            .game-button {
+                padding: 10px 20px;
+                font-size: 0.9em;
+            }
+            #start-button {
+                font-size: 1.5em;
+                padding: 15px 30px;
+            }
+            .overlay {
+                font-size: 1.5em;
+            }
+            .overlay h2 {
+                font-size: 2em;
+            }
+            .overlay p {
+                font-size: 0.8em;
+            }
+            .arrow-button {
+                width: 60px;
+                height: 60px;
+                font-size: 1.8em;
+            }
+            #pause-button {
+                width: 35px;
+                height: 35px;
+                font-size: 1.2em;
+                top: 20px;
+                right: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <h1>Ular Emoji</h1>
-        <canvas id="gameCanvas" width="300" height="300"></canvas>
-        <div id="score-board">Skor: <span id="score">0</span></div>
-    </div>
-
-    <div id="controls">
-        <button class="arrow-button" onclick="changeDirection('up')">⬆️</button>
-        <div id="horizontal-buttons">
-            <button class="arrow-button" onclick="changeDirection('left')">⬅️</button>
-            <button class="arrow-button" onclick="changeDirection('right')">➡️</button>
+    <div id="game-area">
+        <div id="game-container">
+            <h1>Ular Emoji Pro</h1>
+            <canvas id="gameCanvas" width="450" height="450"></canvas>
+            <div id="score-board">Skor: <span id="current-score">0</span></div>
+            <div id="high-score-board">Skor Tertinggi: <span id="high-score">0</span></div>
         </div>
-        <button class="arrow-button" onclick="changeDirection('down')">⬇️</button>
+
+        <button id="pause-button" style="display: none;">⏸️</button>
+
+        <div id="controls-wrapper">
+            <div class="controls-row">
+                <button class="arrow-button" data-direction="up">⬆️</button>
+            </div>
+            <div class="controls-row">
+                <button class="arrow-button" data-direction="left">⬅️</button>
+                <button class="arrow-button" data-direction="right">➡️</button>
+            </div>
+            <div class="controls-row">
+                <button class="arrow-button" data-direction="down">⬇️</button>
+            </div>
+        </div>
+
+        <button id="start-button" class="game-button">Mulai Main</button>
     </div>
 
-    <button id="start-button">Mulai Game</button>
+    <div id="intro-screen" class="overlay">
+        <h2>Selamat Datang!</h2>
+        <p>Gunakan tombol panah di keyboard atau di layar untuk menggerakkan ular.</p>
+        <p>Makan emoji untuk tumbuh dan mendapatkan skor!</p>
+        <p>Jangan menabrak dinding atau dirimu sendiri.</p>
+        <button id="intro-start-button" class="game-button">Mulai Petualangan</button>
+    </div>
 
-    <div id="game-over-screen">
-        <p>Game Over!</p>
+    <div id="pause-screen" class="overlay">
+        <h2>Game Dijeda</h2>
+        <p>Tekan 'P' atau klik tombol jeda untuk melanjutkan.</p>
+        <button id="resume-button" class="game-button">Lanjutkan Game</button>
+    </div>
+
+    <div id="game-over-screen" class="overlay">
+        <h2>Game Over!</h2>
         <p>Skor Akhir Anda: <span id="final-score">0</span></p>
-        <button id="restart-button">Main Lagi</button>
+        <p>Skor Tertinggi: <span id="final-high-score">0</span></p>
+        <button id="play-again-button" class="game-button">Main Lagi</button>
+        <button id="back-to-menu-button" class="game-button" style="margin-top: 15px;">Kembali ke Menu</button>
     </div>
 
     <script>
+        // --- Game Setup and Constants ---
+        const GameState = {
+            INTRO: 'intro',
+            PLAYING: 'playing',
+            PAUSED: 'paused',
+            GAME_OVER: 'gameOver'
+        };
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const scoreSpan = document.getElementById('score');
-        const startButton = document.getElementById('start-button');
-        const gameOverScreen = document.getElementById('game-over-screen');
-        const finalScoreSpan = document.getElementById('final-score');
-        const controlsDiv = document.getElementById('controls');
-        const restartButton = document.getElementById('restart-button'); // Ambil tombol restart
 
-        const gridSize = 30; // Ubah gridSize menjadi lebih besar untuk emoji
-        let snake = [{ x: 5, y: 5 }]; // Posisi awal ular dalam koordinat grid
+        // UI Elements
+        const currentScoreSpan = document.getElementById('current-score');
+        const highScoreSpan = document.getElementById('high-score');
+        const startButton = document.getElementById('start-button');
+        const introStartButton = document.getElementById('intro-start-button');
+        const pauseButton = document.getElementById('pause-button');
+        const controlsWrapper = document.getElementById('controls-wrapper');
+        const restartButton = document.getElementById('play-again-button');
+        const backToMenuButton = document.getElementById('back-to-menu-button');
+        const resumeButton = document.getElementById('resume-button');
+        const finalScoreSpan = document.getElementById('final-score');
+        const finalHighScoreSpan = document.getElementById('final-high-score');
+
+        // Overlays
+        const introScreen = document.getElementById('intro-screen');
+        const pauseScreen = document.getElementById('pause-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+
+        // Game Parameters
+        const GRID_SIZE = 30; // Increased grid size for larger emojis
+        canvas.width = 450; // 15 * 30
+        canvas.height = 450; // 15 * 30
+
+        let snake = [];
         let food = {};
-        let direction = 'right';
+        let currentDirection = 'right';
         let score = 0;
         let gameInterval;
-        let gameSpeed = 150;
-        const snakeEmoji = '🐍';
-        const foodEmojis = ['🍎', '🍕', '🍇', '🍔', '🍩', '🍌', '🥭', '🍒', '🍓', '🍍']; // Tambah lebih banyak emoji
-        let currentFoodEmoji = '';
+        let gameSpeed = 200; // Slower initial speed (ms)
+        let level = 1;
+        let currentGameState = GameState.INTRO;
+        let lastInputDirection = 'right'; // To prevent immediate reverse on fast keypress
 
-        // Fungsi utilitas untuk mendapatkan angka acak
+        // Emoji Assets (More variety for food)
+        const SNAKE_HEAD_EMOJI = '😀'; // Example head emoji
+        const SNAKE_BODY_EMOJI = '🐍';
+        const FOOD_EMOJIS = ['🍎', '🍕', '🍇', '🍔', '🍩', '🍌', '🥭', '🍒', '🍓', '🍍', '🍣', '🌮', '🌶️', '🥦', '🥕'];
+        let currentFoodEmoji = '';
+        const WALL_EMOJI = '🧱'; // Example for wall if needed, not used in this version
+
+        // Audio (Placeholders - you'd need actual audio files)
+        const AUDIO_EAT = new Audio('audio/eat.wav'); // Example path
+        const AUDIO_GAME_OVER = new Audio('audio/gameover.wav'); // Example path
+        const AUDIO_CLICK = new Audio('audio/click.wav'); // Example path
+        const AUDIO_LEVEL_UP = new Audio('audio/levelup.wav'); // Example path
+
+        // --- Utility Functions ---
+        function playSound(audioElement) {
+            // Optional: Check if audio is muted or supported
+            // if (audioElement && !gameSettings.muted) {
+            //     audioElement.currentTime = 0; // Rewind to start
+            //     audioElement.play().catch(e => console.error("Audio playback failed:", e));
+            // }
+        }
+
         function getRandomInt(max) {
             return Math.floor(Math.random() * max);
         }
 
-        function getRandomFoodEmoji() {
-            return foodEmojis[getRandomInt(foodEmojis.length)];
+        function getHighScore() {
+            return parseInt(localStorage.getItem('snakeHighScore') || '0', 10);
         }
 
+        function setHighScore(newScore) {
+            localStorage.setItem('snakeHighScore', newScore.toString());
+            highScoreSpan.textContent = newScore;
+        }
+
+        // --- Game Logic Functions ---
         function generateFood() {
             let newFood;
             let collision;
             do {
                 newFood = {
-                    x: getRandomInt(canvas.width / gridSize),
-                    y: getRandomInt(canvas.height / gridSize)
+                    x: getRandomInt(canvas.width / GRID_SIZE),
+                    y: getRandomInt(canvas.height / GRID_SIZE)
                 };
                 collision = false;
-                // Pastikan makanan tidak muncul di dalam ular
                 for (let i = 0; i < snake.length; i++) {
                     if (snake[i].x === newFood.x && snake[i].y === newFood.y) {
                         collision = true;
                         break;
                     }
                 }
-            } while (collision); // Terus ulangi sampai tidak ada tabrakan
+            } while (collision);
 
             food = newFood;
-            currentFoodEmoji = getRandomFoodEmoji();
+            currentFoodEmoji = FOOD_EMOJIS[getRandomInt(FOOD_EMOJIS.length)];
+            // Optional: Trigger a food spawn animation (e.g., scale up quickly)
         }
 
         function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
 
-            // Gambar makanan emoji
-            // Penting: fontSize harus sama dengan gridSize agar emoji pas dalam "kotak"
-            ctx.font = `${gridSize - 5}px sans-serif`; // Sedikit lebih kecil agar tidak terlalu mepet
+            // Draw food emoji
+            ctx.font = `${GRID_SIZE - 5}px var(--font-family-sans)`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(currentFoodEmoji, food.x * gridSize + (gridSize / 2), food.y * gridSize + (gridSize / 2));
+            ctx.fillText(currentFoodEmoji, food.x * GRID_SIZE + (GRID_SIZE / 2), food.y * GRID_SIZE + (GRID_SIZE / 2));
 
-
-            // Gambar ular emoji
+            // Draw snake body and head
             for (let i = 0; i < snake.length; i++) {
-                ctx.fillText(snakeEmoji, snake[i].x * gridSize + (gridSize / 2), snake[i].y * gridSize + (gridSize / 2));
+                const emoji = (i === snake.length - 1) ? SNAKE_HEAD_EMOJI : SNAKE_BODY_EMOJI; // Head is the last segment
+                ctx.fillText(emoji, snake[i].x * GRID_SIZE + (GRID_SIZE / 2), snake[i].y * GRID_SIZE + (GRID_SIZE / 2));
             }
         }
 
         function update() {
+            if (currentGameState !== GameState.PLAYING) return;
+
+            // Use lastInputDirection to ensure smooth turns even if key is pressed fast
+            currentDirection = lastInputDirection;
+
             const head = { x: snake[snake.length - 1].x, y: snake[snake.length - 1].y };
 
-            switch (direction) {
+            switch (currentDirection) {
                 case 'up':
                     head.y--;
                     break;
@@ -237,89 +490,217 @@
                     break;
             }
 
-            // Deteksi tabrakan dengan dinding
-            if (head.x < 0 || head.x >= canvas.width / gridSize ||
-                head.y < 0 || head.y >= canvas.height / gridSize) {
+            // Boundary collision
+            if (head.x < 0 || head.x >= canvas.width / GRID_SIZE ||
+                head.y < 0 || head.y >= canvas.height / GRID_SIZE) {
                 gameOver();
                 return;
             }
 
-            // Deteksi tabrakan dengan diri sendiri
-            for (let i = 0; i < snake.length; i++) { // Loop dari awal hingga akhir, kecuali kepala baru
+            // Self-collision
+            for (let i = 0; i < snake.length; i++) {
                 if (head.x === snake[i].x && head.y === snake[i].y) {
                     gameOver();
                     return;
                 }
             }
 
-            snake.push(head); // Tambahkan kepala baru
+            snake.push(head); // Add new head
 
-            // Cek apakah ular memakan makanan
+            // Check if food is eaten
             if (head.x === food.x && head.y === food.y) {
                 score += 10;
-                scoreSpan.textContent = score;
-                generateFood(); // Buat makanan baru
-                // Tingkatkan kecepatan setiap beberapa skor
-                if (score % 50 === 0 && gameSpeed > 50) {
-                    gameSpeed -= 10; // Kurangi interval waktu, berarti lebih cepat
+                currentScoreSpan.textContent = score;
+                // Optional: Flash screen or play animation on food eat
+                // canvas.style.backgroundColor = 'yellow'; // Example temporary effect
+                // setTimeout(() => canvas.style.backgroundColor = 'var(--canvas-bg)', 100);
+                playSound(AUDIO_EAT);
+                generateFood(); // Spawn new food
+
+                // Increase speed and level
+                if (score % 50 === 0 && gameSpeed > 50) { // Level up every 50 points
+                    gameSpeed -= 10; // Make it faster
+                    level++;
+                    playSound(AUDIO_LEVEL_UP);
                     clearInterval(gameInterval);
                     gameInterval = setInterval(update, gameSpeed);
                 }
             } else {
-                snake.shift(); // Hapus ekor jika tidak memakan makanan
+                snake.shift(); // Remove tail
             }
 
             draw();
         }
 
-        // Fungsi untuk mengubah arah dari tombol di layar
         function changeDirection(newDirection) {
-            // Mencegah ular berbalik arah secara langsung (misal: dari kanan langsung ke kiri)
-            if ((newDirection === 'up' && direction === 'down') ||
-                (newDirection === 'down' && direction === 'up') ||
-                (newDirection === 'left' && direction === 'right') ||
-                (newDirection === 'right' && direction === 'left')) {
+            // Prevent immediate reverse
+            if ((newDirection === 'up' && currentDirection === 'down') ||
+                (newDirection === 'down' && currentDirection === 'up') ||
+                (newDirection === 'left' && currentDirection === 'right') ||
+                (newDirection === 'right' && currentDirection === 'left')) {
                 return;
             }
-            direction = newDirection;
+            lastInputDirection = newDirection;
         }
 
-        // Event listener untuk keyboard (tetap ada untuk PC)
+        // --- Game State Management ---
+        function setGameState(state) {
+            currentGameState = state;
+            // Hide all overlays
+            introScreen.style.display = 'none';
+            pauseScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            startButton.style.display = 'none';
+            controlsWrapper.style.display = 'none';
+            pauseButton.style.display = 'none';
+
+            switch (currentGameState) {
+                case GameState.INTRO:
+                    introScreen.style.display = 'flex';
+                    startButton.style.display = 'block'; // Or hide, based on UX flow
+                    break;
+                case GameState.PLAYING:
+                    // Hide intro/game over, show controls and pause button
+                    controlsWrapper.style.display = 'flex';
+                    pauseButton.style.display = 'flex';
+                    // Start game interval if it's not already running
+                    if (!gameInterval) {
+                        gameInterval = setInterval(update, gameSpeed);
+                    }
+                    break;
+                case GameState.PAUSED:
+                    pauseScreen.style.display = 'flex';
+                    clearInterval(gameInterval); // Stop game loop
+                    gameInterval = null; // Clear interval ID
+                    break;
+                case GameState.GAME_OVER:
+                    gameOverScreen.style.display = 'flex';
+                    clearInterval(gameInterval); // Stop game loop
+                    gameInterval = null; // Clear interval ID
+                    // Update final scores
+                    finalScoreSpan.textContent = score;
+                    finalHighScoreSpan.textContent = getHighScore();
+                    break;
+            }
+        }
+
+        function initializeGame() {
+            snake = [{ x: Math.floor(canvas.width / (2 * GRID_SIZE)), y: Math.floor(canvas.height / (2 * GRID_SIZE)) }];
+            currentDirection = 'right';
+            lastInputDirection = 'right';
+            score = 0;
+            currentScoreSpan.textContent = score;
+            gameSpeed = 200; // Reset to initial speed
+            level = 1;
+            generateFood();
+            setHighScore(Math.max(score, getHighScore())); // Update high score on init
+            draw();
+            clearInterval(gameInterval); // Clear any existing interval
+            gameInterval = null;
+        }
+
+        // --- Event Listeners ---
+        // Keyboard controls for desktop
         document.addEventListener('keydown', (e) => {
-            if (gameOverScreen.style.display === 'flex') return; // Jangan izinkan input jika game over
-            changeDirection(e.key.replace('Arrow', '').toLowerCase());
+            if (currentGameState === GameState.PLAYING) {
+                switch (e.key) {
+                    case 'ArrowUp':
+                        changeDirection('up');
+                        break;
+                    case 'ArrowDown':
+                        changeDirection('down');
+                        break;
+                    case 'ArrowLeft':
+                        changeDirection('left');
+                        break;
+                    case 'ArrowRight':
+                        changeDirection('right');
+                        break;
+                    case 'p': // Pause/Resume with 'P' key
+                    case 'P':
+                        togglePause();
+                        break;
+                }
+            } else if (currentGameState === GameState.PAUSED && (e.key === 'p' || e.key === 'P')) {
+                 togglePause(); // Allow resuming from pause with P key
+            } else if (currentGameState === GameState.INTRO && e.key === 'Enter') {
+                // Allows starting game from intro with Enter key
+                startGame();
+            } else if (currentGameState === GameState.GAME_OVER && e.key === 'Enter') {
+                // Allows restarting game from game over with Enter key
+                startGame();
+            }
+        });
+
+        // On-screen mobile controls
+        controlsWrapper.querySelectorAll('.arrow-button').forEach(button => {
+            button.addEventListener('click', () => {
+                playSound(AUDIO_CLICK);
+                changeDirection(button.dataset.direction);
+            });
+        });
+
+        // Game State Button Handlers
+        introStartButton.addEventListener('click', () => {
+            playSound(AUDIO_CLICK);
+            startGame();
+        });
+
+        startButton.addEventListener('click', () => {
+             // This button is mostly for initial load screen (hidden later)
+             playSound(AUDIO_CLICK);
+             startGame();
+        });
+
+        pauseButton.addEventListener('click', () => {
+            playSound(AUDIO_CLICK);
+            togglePause();
+        });
+
+        resumeButton.addEventListener('click', () => {
+            playSound(AUDIO_CLICK);
+            togglePause();
+        });
+
+        restartButton.addEventListener('click', () => {
+            playSound(AUDIO_CLICK);
+            startGame();
+        });
+
+        backToMenuButton.addEventListener('click', () => {
+            playSound(AUDIO_CLICK);
+            setGameState(GameState.INTRO);
+            initializeGame(); // Reset game state but stay on intro
         });
 
 
+        // --- Game Flow Functions ---
         function startGame() {
-            snake = [{ x: Math.floor(canvas.width / (2 * gridSize)), y: Math.floor(canvas.height / (2 * gridSize)) }];
-            direction = 'right';
-            score = 0;
-            scoreSpan.textContent = score;
-            gameSpeed = 150; // Reset kecepatan
-            gameOverScreen.style.display = 'none';
-            startButton.style.display = 'none'; // Sembunyikan tombol mulai/restart
-            controlsDiv.style.display = 'flex'; // Tampilkan kontrol di layar
-            generateFood();
-            clearInterval(gameInterval); // Pastikan tidak ada interval yang berjalan
-            gameInterval = setInterval(update, gameSpeed);
+            initializeGame();
+            setGameState(GameState.PLAYING);
+        }
+
+        function togglePause() {
+            if (currentGameState === GameState.PLAYING) {
+                setGameState(GameState.PAUSED);
+            } else if (currentGameState === GameState.PAUSED) {
+                setGameState(GameState.PLAYING);
+            }
         }
 
         function gameOver() {
-            clearInterval(gameInterval);
-            finalScoreSpan.textContent = score;
-            gameOverScreen.style.display = 'flex';
-            startButton.style.display = 'block'; // Tampilkan tombol mulai untuk memulai lagi
-            controlsDiv.style.display = 'none'; // Sembunyikan kontrol
+            playSound(AUDIO_GAME_OVER);
+            setHighScore(Math.max(score, getHighScore())); // Update high score
+            setGameState(GameState.GAME_OVER);
         }
 
-        // Event listener untuk tombol
-        startButton.addEventListener('click', startGame);
-        restartButton.addEventListener('click', startGame); // Tombol restart memanggil startGame juga
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            setHighScore(getHighScore()); // Load and display high score on start
+            initializeGame(); // Setup initial game state without starting
+            setGameState(GameState.INTRO); // Show intro screen
+        });
 
-        // Inisialisasi awal saat halaman dimuat
-        generateFood();
-        draw();
     </script>
 </body>
 </html>
