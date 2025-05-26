@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Game Tersedia</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background: #e9ecef;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        li span {
+            font-weight: bold;
+            color: #555;
+        }
+        .genre {
+            font-style: italic;
+            color: #666;
+            font-size: 0.9em;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Daftar Game yang Tersedia</h1>
+        <ul id="game-list">
+            </ul>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const games = [
+                { id: 1, nama: 'The Witcher 3: Wild Hunt', genre: 'RPG' },
+                { id: 2, nama: 'Grand Theft Auto V', genre: 'Action-Adventure' },
+                { id: 3, nama: 'Minecraft', genre: 'Sandbox' },
+                { id: 4, nama: 'Red Dead Redemption 2', genre: 'Action-Adventure' },
+                { id: 5, nama: 'Cyberpunk 2077', genre: 'RPG' },
+                { id: 6, nama: 'FIFA 25', genre: 'Sports' },
+                { id: 7, nama: 'Valorant', genre: 'FPS' },
+                { id: 8, nama: 'Dota 2', genre: 'MOBA' },
+                { id: 9, nama: 'Among Us', genre: 'Social Deduction' },
+                { id: 10, nama: 'Stardew Valley', genre: 'Simulation' }
+            ];
+
+            const gameList = document.getElementById('game-list');
+
+            games.forEach(game => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <span>${game.nama}</span>
+                    <span class="genre">(${game.genre})</span>
+                    <button onclick="showGameDetails(${game.id}, '${game.nama}')">Lihat Detail</button>
+                `;
+                gameList.appendChild(listItem);
+            });
+        });
+
+        function showGameDetails(id, namaGame) {
+            alert(`Anda memilih game: ${namaGame} (ID: ${id}). Fitur detail lebih lanjut bisa ditambahkan di sini.`);
+        }
+    </script>
+</body>
+</html>
