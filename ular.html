@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ular Emoji</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #2c3e50;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            color: #ecf0f1;
+        }
+
+        #game-container {
+            text-align: center;
+            background-color: #34495e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+        }
+
+        canvas {
+            background-color: #27ae60;
+            border: 5px solid #2ecc71;
+            display: block;
+            margin: 0 auto;
+        }
+
+        #score-board {
+            margin-top: 15px;
+            font-size: 1.5em;
+            color: #f1c40f;
+        }
+
+        #controls {
+            display: none; /* Sembunyikan secara default, akan ditampilkan saat game dimulai */
+            flex-direction: column; /* Mengatur kontrol dalam kolom */
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .arrow-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2em;
+            text-align: center;
+            line-height: 1;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .arrow-button:hover {
+            background-color: #2980b9;
+        }
+
+        #horizontal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        #game-over-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            z-index: 100;
+        }
+
+        #game-over-screen p {
+            margin-bottom: 20px;
+        }
+
+        #start-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.5em;
+            margin-top: 20px;
+            z-index: 101; /* Pastikan tombol start berada di atas layar game over */
+        }
+
+        #start-button:hover {
+            background-color: #45a049;
+        }
+
+        #restart-button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.5em;
+            margin-top: 20px;
+        }
+
+        #restart-button:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Ular Emoji</h1>
+        <canvas id="gameCanvas" width="300" height="300"></canvas>
+        <div id="score-board">Skor: <span id="score">0</span></div>
+    </div>
+
+    <div id="controls">
+        <button class="arrow-button" onclick="changeDirection('up')">⬆️</button>
+        <div id="horizontal-buttons">
+            <button class="arrow-button" onclick="changeDirection('left')">⬅️</button>
+            <button class="arrow-button" onclick="changeDirection('right')">➡️</button>
+        </div>
+        <button class="arrow-button" onclick="changeDirection('down')">⬇️</button>
+    </div>
+
+    <button id="start-button">Mulai Game</button>
+
+    <div id="game-over-screen">
+        <p>Game Over!</p>
+        <p>Skor Akhir Anda: <span id="final-score">0</span></p>
+        <button id="restart-button">Main Lagi</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreSpan = document.getElementById('score');
+        const startButton = document.getElementById('start-button');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScoreSpan = document.getElementById('final-score');
+        const controlsDiv = document.getElementById('controls');
+        const restartButton = document.getElementById('restart-button'); // Ambil tombol restart
+
+        const gridSize = 30; // Ubah gridSize menjadi lebih besar untuk emoji
+        let snake = [{ x: 5, y: 5 }]; // Posisi awal ular dalam koordinat grid
+        let food = {};
+        let direction = 'right';
+        let score = 0;
+        let gameInterval;
+        let gameSpeed = 150;
+        const snakeEmoji = '🐍';
+        const foodEmojis = ['🍎', '🍕', '🍇', '🍔', '🍩', '🍌', '🥭', '🍒', '🍓', '🍍']; // Tambah lebih banyak emoji
+        let currentFoodEmoji = '';
+
+        // Fungsi utilitas untuk mendapatkan angka acak
+        function getRandomInt(max) {
+            return Math.floor(Math.random() * max);
+        }
+
+        function getRandomFoodEmoji() {
+            return foodEmojis[getRandomInt(foodEmojis.length)];
+        }
+
+        function generateFood() {
+            let newFood;
+            let collision;
+            do {
+                newFood = {
+                    x: getRandomInt(canvas.width / gridSize),
+                    y: getRandomInt(canvas.height / gridSize)
+                };
+                collision = false;
+                // Pastikan makanan tidak muncul di dalam ular
+                for (let i = 0; i < snake.length; i++) {
+                    if (snake[i].x === newFood.x && snake[i].y === newFood.y) {
+                        collision = true;
+                        break;
+                    }
+                }
+            } while (collision); // Terus ulangi sampai tidak ada tabrakan
+
+            food = newFood;
+            currentFoodEmoji = getRandomFoodEmoji();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Gambar makanan emoji
+            // Penting: fontSize harus sama dengan gridSize agar emoji pas dalam "kotak"
+            ctx.font = `${gridSize - 5}px sans-serif`; // Sedikit lebih kecil agar tidak terlalu mepet
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(currentFoodEmoji, food.x * gridSize + (gridSize / 2), food.y * gridSize + (gridSize / 2));
+
+
+            // Gambar ular emoji
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillText(snakeEmoji, snake[i].x * gridSize + (gridSize / 2), snake[i].y * gridSize + (gridSize / 2));
+            }
+        }
+
+        function update() {
+            const head = { x: snake[snake.length - 1].x, y: snake[snake.length - 1].y };
+
+            switch (direction) {
+                case 'up':
+                    head.y--;
+                    break;
+                case 'down':
+                    head.y++;
+                    break;
+                case 'left':
+                    head.x--;
+                    break;
+                case 'right':
+                    head.x++;
+                    break;
+            }
+
+            // Deteksi tabrakan dengan dinding
+            if (head.x < 0 || head.x >= canvas.width / gridSize ||
+                head.y < 0 || head.y >= canvas.height / gridSize) {
+                gameOver();
+                return;
+            }
+
+            // Deteksi tabrakan dengan diri sendiri
+            for (let i = 0; i < snake.length; i++) { // Loop dari awal hingga akhir, kecuali kepala baru
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    gameOver();
+                    return;
+                }
+            }
+
+            snake.push(head); // Tambahkan kepala baru
+
+            // Cek apakah ular memakan makanan
+            if (head.x === food.x && head.y === food.y) {
+                score += 10;
+                scoreSpan.textContent = score;
+                generateFood(); // Buat makanan baru
+                // Tingkatkan kecepatan setiap beberapa skor
+                if (score % 50 === 0 && gameSpeed > 50) {
+                    gameSpeed -= 10; // Kurangi interval waktu, berarti lebih cepat
+                    clearInterval(gameInterval);
+                    gameInterval = setInterval(update, gameSpeed);
+                }
+            } else {
+                snake.shift(); // Hapus ekor jika tidak memakan makanan
+            }
+
+            draw();
+        }
+
+        // Fungsi untuk mengubah arah dari tombol di layar
+        function changeDirection(newDirection) {
+            // Mencegah ular berbalik arah secara langsung (misal: dari kanan langsung ke kiri)
+            if ((newDirection === 'up' && direction === 'down') ||
+                (newDirection === 'down' && direction === 'up') ||
+                (newDirection === 'left' && direction === 'right') ||
+                (newDirection === 'right' && direction === 'left')) {
+                return;
+            }
+            direction = newDirection;
+        }
+
+        // Event listener untuk keyboard (tetap ada untuk PC)
+        document.addEventListener('keydown', (e) => {
+            if (gameOverScreen.style.display === 'flex') return; // Jangan izinkan input jika game over
+            changeDirection(e.key.replace('Arrow', '').toLowerCase());
+        });
+
+
+        function startGame() {
+            snake = [{ x: Math.floor(canvas.width / (2 * gridSize)), y: Math.floor(canvas.height / (2 * gridSize)) }];
+            direction = 'right';
+            score = 0;
+            scoreSpan.textContent = score;
+            gameSpeed = 150; // Reset kecepatan
+            gameOverScreen.style.display = 'none';
+            startButton.style.display = 'none'; // Sembunyikan tombol mulai/restart
+            controlsDiv.style.display = 'flex'; // Tampilkan kontrol di layar
+            generateFood();
+            clearInterval(gameInterval); // Pastikan tidak ada interval yang berjalan
+            gameInterval = setInterval(update, gameSpeed);
+        }
+
+        function gameOver() {
+            clearInterval(gameInterval);
+            finalScoreSpan.textContent = score;
+            gameOverScreen.style.display = 'flex';
+            startButton.style.display = 'block'; // Tampilkan tombol mulai untuk memulai lagi
+            controlsDiv.style.display = 'none'; // Sembunyikan kontrol
+        }
+
+        // Event listener untuk tombol
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame); // Tombol restart memanggil startGame juga
+
+        // Inisialisasi awal saat halaman dimuat
+        generateFood();
+        draw();
+    </script>
+</body>
+</html>
