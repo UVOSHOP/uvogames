@@ -23,7 +23,8 @@
             --text-color: #ecf0f1;
             --game-over-bg: rgba(0, 0, 0, 0.85);
             --font-family-pixel: 'Press Start 2P', cursive;
-            --font-family-sans: 'Rubik', sans-serif; /* Changed to Rubik for general text */
+            --font-family-sans: 'Rubik', sans-serif;
+            --green-box-emoji-color: #2ecc71; /* Warna hijau untuk kotak badan ular */
         }
 
         body {
@@ -46,9 +47,9 @@
 
         #main-wrapper {
             display: flex;
-            flex-direction: row; /* Horizontal layout for game and navigation */
-            gap: 30px; /* Space between game and navigation */
-            align-items: flex-start; /* Align items to the top */
+            flex-direction: column; /* Default: Stack vertically for better mobile first */
+            gap: 20px;
+            align-items: center;
         }
 
         #game-area {
@@ -259,6 +260,29 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
+        /* Navigation Menu Toggle Button */
+        #toggle-nav-button {
+            background-color: var(--button-bg);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-family: var(--font-family-pixel);
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            text-transform: uppercase;
+            margin-top: 20px; /* Jarak dari bawah game area */
+            z-index: 15; /* Pastikan di atas layer lain */
+            display: block; /* Tampilkan selalu */
+        }
+
+        #toggle-nav-button:hover {
+            background-color: var(--button-hover-bg);
+            transform: translateY(-2px);
+        }
+
         /* Navigation Menu */
         #navigation-menu {
             background-color: var(--container-bg);
@@ -266,12 +290,21 @@
             border-radius: 15px;
             box-shadow: 0 0 25px rgba(0, 0, 0, 0.7);
             border: 3px solid var(--border-color);
-            min-width: 250px; /* Lebar minimum untuk menu */
-            display: flex;
+            min-width: 250px;
+            display: none; /* Sembunyikan secara default */
             flex-direction: column;
             align-items: center;
-            gap: 15px; /* Spasi antar item menu */
+            gap: 15px;
             font-family: var(--font-family-sans);
+            position: fixed; /* Jadikan menu tetap di posisi */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); /* Posisikan di tengah layar */
+            z-index: 101; /* Di atas overlay lainnya */
+        }
+
+        #navigation-menu.show {
+            display: flex; /* Tampilkan saat class 'show' ditambahkan */
         }
 
         #navigation-menu h2 {
@@ -310,7 +343,7 @@
             border: none;
             cursor: pointer;
             transition: background-color 0.2s ease, transform 0.1s ease;
-            font-family: var(--font-family-sans); /* Use sans-serif for menu buttons */
+            font-family: var(--font-family-sans);
         }
 
         #navigation-menu button:hover {
@@ -323,75 +356,51 @@
 
 
         /* Responsive adjustments */
-        @media (max-width: 800px) { /* Adjust for smaller screens like tablets */
+        @media (min-width: 801px) { /* On larger screens, arrange horizontally */
             #main-wrapper {
-                flex-direction: column; /* Stack game and navigation vertically */
+                flex-direction: row;
+                align-items: flex-start;
+                gap: 30px;
+            }
+            #toggle-nav-button {
+                display: none; /* Sembunyikan tombol toggle di desktop */
+            }
+            #navigation-menu {
+                position: static; /* Biarkan menu mengalir normal di desktop */
+                transform: none;
+                display: flex; /* Selalu tampil di desktop */
+            }
+        }
+
+        @media (max-width: 800px) {
+            #main-wrapper {
+                flex-direction: column;
                 align-items: center;
                 gap: 20px;
             }
             #navigation-menu {
-                min-width: unset; /* Remove min-width */
-                width: 90%; /* Take up more width */
-                max-width: 400px; /* Max width for menu */
+                min-width: unset;
+                width: 90%;
+                max-width: 400px;
             }
         }
 
         @media (max-width: 600px) {
-            h1 {
-                font-size: 1.5em;
-            }
-            canvas {
-                width: 270px;
-                height: 270px;
-            }
-            #game-container {
-                padding: 15px;
-            }
-            #score-board {
-                font-size: 1.3em;
-            }
-            .game-button {
-                padding: 10px 20px;
-                font-size: 0.9em;
-            }
-            #start-button {
-                font-size: 1.5em;
-                padding: 15px 30px;
-            }
-            .overlay {
-                font-size: 1.5em;
-            }
-            .overlay h2 {
-                font-size: 2em;
-            }
-            .overlay p {
-                font-size: 0.8em;
-            }
-            .arrow-button {
-                width: 60px;
-                height: 60px;
-                font-size: 1.8em;
-            }
-            #pause-button {
-                width: 35px;
-                height: 35px;
-                font-size: 1.2em;
-                top: 20px;
-                right: 20px;
-            }
-            #navigation-menu {
-                padding: 15px;
-            }
-            #navigation-menu h2 {
-                font-size: 1.2em;
-            }
-            #navigation-menu .menu-info {
-                font-size: 0.8em;
-            }
-            #navigation-menu button {
-                font-size: 0.9em;
-                padding: 10px;
-            }
+            h1 { font-size: 1.5em; }
+            canvas { width: 270px; height: 270px; }
+            #game-container { padding: 15px; }
+            #score-board { font-size: 1.3em; }
+            .game-button { padding: 10px 20px; font-size: 0.9em; }
+            #start-button { font-size: 1.5em; padding: 15px 30px; }
+            .overlay { font-size: 1.5em; }
+            .overlay h2 { font-size: 2em; }
+            .overlay p { font-size: 0.8em; }
+            .arrow-button { width: 60px; height: 60px; font-size: 1.8em; }
+            #pause-button { width: 35px; height: 35px; font-size: 1.2em; top: 20px; right: 20px; }
+            #navigation-menu { padding: 15px; }
+            #navigation-menu h2 { font-size: 1.2em; }
+            #navigation-menu .menu-info { font-size: 0.8em; }
+            #navigation-menu button { font-size: 0.9em; padding: 10px; }
         }
     </style>
 </head>
@@ -421,6 +430,7 @@
             </div>
 
             <button id="start-button" class="game-button">Mulai Main</button>
+            <button id="toggle-nav-button" class="game-button">Menu Navigasi</button>
         </div>
 
         <div id="navigation-menu">
@@ -428,7 +438,8 @@
             <div class="menu-info">Versi: <span>1.1</span></div>
             <div class="menu-info">Dibuat oleh: <span>ADITdeveloper</span></div>
             <a href="javascript:history.back()"><button>Kembali ke Web Sebelumnya</button></a>
-            </div>
+            <button id="close-nav-button">Tutup Menu</button>
+        </div>
     </div>
 
     <div id="intro-screen" class="overlay">
@@ -459,7 +470,8 @@
             INTRO: 'intro',
             PLAYING: 'playing',
             PAUSED: 'paused',
-            GAME_OVER: 'gameOver'
+            GAME_OVER: 'gameOver',
+            NAV_OPEN: 'navOpen' // New state for navigation menu open
         };
 
         const canvas = document.getElementById('gameCanvas');
@@ -482,6 +494,9 @@
         const introScreen = document.getElementById('intro-screen');
         const pauseScreen = document.getElementById('pause-screen');
         const gameOverScreen = document.getElementById('game-over-screen');
+        const navigationMenu = document.getElementById('navigation-menu');
+        const toggleNavButton = document.getElementById('toggle-nav-button');
+        const closeNavButton = document.getElementById('close-nav-button');
 
         // Game Parameters
         const GRID_SIZE = 30;
@@ -493,25 +508,29 @@
         let currentDirection = 'right';
         let score = 0;
         let gameInterval;
-        let gameSpeed = 250; // **LEBIH LAMBAT: Kecepatan awal (ms)**
+        let gameSpeed = 250; // Initial speed in ms (slower)
         let level = 1;
         let currentGameState = GameState.INTRO;
         let lastInputDirection = 'right';
+        let isGamePaused = false; // Track if game was paused before opening nav
 
-        // Emoji Assets (More variety for food)
-        const SNAKE_HEAD_EMOJI = '😀';
-        const SNAKE_BODY_EMOJI = '🐍';
+        // Emoji Assets
+        const SNAKE_HEAD_EMOJI = '🐍'; // Kepala ular emoji
+        const SNAKE_BODY_EMOJI = '🟩'; // Kotak hijau emoji untuk badan ular
         const FOOD_EMOJIS = [
             '🍎', '🍕', '🍇', '🍔', '🍩', '🍌', '🥭', '🍒', '🍓', '🍍', '🍣', '🌮', '🌶️', '🥦', '🥕',
             '🥔', '🥐', '🍞', '🧀', '🍗', '🥚', '🍦', '🍫', '🍬', '🍭', '🍮', '☕', '🥛', '🍼', '🍯',
             '🍚', '🍜', '🍲', '🍛', '🍳', '🧇', '🥞', '🥓', '🥪', '🍟', '🍿', '🧂', '🧈', '🥫', '🍄',
             '🌰', '🥜', '🌾', '🌱', '🌿', '🍃', '🍀', '🌸', '🌷', '🌹', '🌺', '🌻', '🌼', '🌽', '🌶️',
-            '🥒', '🍆', '🫑', '🧅', '🧄', '🧅', '🍄', '🥝', '🥥', '🥑', '🍋', '🍊', '🍉', '🍈', '🫐',
-            '🍑', '🍐', '🍏', '🍎', '🍓', '🍅', '🍆', '🥔', '🥕', '🌽', '🌶️', '🥒', '🥬', '🥦', '🧄'
+            '🥒', '🍆', '🫑', '🧅', '🧄', '🥝', '🥥', '🥑', '🍋', '🍊', '🍉', '🍈', '🫐', '🍑', '🍐',
+            '🍏', '🍅', '🫚', '🫛', '🫔', '🌯', '🫓', '🥟', '🍤', '🍥', '🍡', '🍢', '🍘', '🥠', '🥡',
+            '🥡', '🦀', '🦐', '🦑', '🦞', '🐠', '🐡', '🐙', '🐚', '🦀', '🦐', '🦑', '🦞', '🐠', '🐡',
+            '🐻', '🐼', '🦊', '🦁', '🐯', '🐒', '🐶', '🐺', '🐱', '🐭', '🐹', '🐰', '🐸', '🐨', '🐷',
+            '🐔', '🐧', '🐦', '🦅', '🦉', '🦆', '🦢', '🕊️', '🦋', '🐛', '🐝', '🐞', '🦗', '🕷️', '🦂'
         ];
         let currentFoodEmoji = '';
 
-        // Audio (Placeholders - you'd need actual audio files)
+        // Audio (Placeholders)
         const AUDIO_EAT = new Audio('audio/eat.wav');
         const AUDIO_GAME_OVER = new Audio('audio/gameover.wav');
         const AUDIO_CLICK = new Audio('audio/click.wav');
@@ -519,12 +538,10 @@
 
         // --- Utility Functions ---
         function playSound(audioElement) {
-            // Check if audio element exists and is ready
-            if (audioElement && audioElement.readyState >= 2) { // READYSTATE_HAVE_CURRENT_DATA
-                audioElement.currentTime = 0; // Rewind to start
+            if (audioElement && audioElement.readyState >= 2) {
+                audioElement.currentTime = 0;
                 audioElement.play().catch(e => {
-                    // console.error("Audio playback failed:", e); // Uncomment for debugging
-                    // Common error: Autoplay policy (user interaction required)
+                    // console.error("Audio playback failed:", e);
                 });
             }
         }
@@ -568,7 +585,7 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Draw food emoji
-            ctx.font = `${GRID_SIZE - 5}px var(--font-family-sans)`; /* Using Rubik for general text */
+            ctx.font = `${GRID_SIZE - 5}px var(--font-family-sans)`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(currentFoodEmoji, food.x * GRID_SIZE + (GRID_SIZE / 2), food.y * GRID_SIZE + (GRID_SIZE / 2));
@@ -583,23 +600,15 @@
         function update() {
             if (currentGameState !== GameState.PLAYING) return;
 
-            currentDirection = lastInputDirection; // Apply the last valid input
+            currentDirection = lastInputDirection;
 
             const head = { x: snake[snake.length - 1].x, y: snake[snake.length - 1].y };
 
             switch (currentDirection) {
-                case 'up':
-                    head.y--;
-                    break;
-                case 'down':
-                    head.y++;
-                    break;
-                case 'left':
-                    head.x--;
-                    break;
-                case 'right':
-                    head.x++;
-                    break;
+                case 'up': head.y--; break;
+                case 'down': head.y++; break;
+                case 'left': head.x--; break;
+                case 'right': head.x++; break;
             }
 
             // Boundary collision
@@ -626,8 +635,7 @@
                 playSound(AUDIO_EAT);
                 generateFood();
 
-                // Increase speed and level
-                if (score % 50 === 0 && gameSpeed > 80) { // Keep a minimum speed (e.g., 80ms)
+                if (score % 50 === 0 && gameSpeed > 80) {
                     gameSpeed -= 10;
                     level++;
                     playSound(AUDIO_LEVEL_UP);
@@ -642,57 +650,73 @@
         }
 
         function changeDirection(newDirection) {
-            // Prevent immediate reverse
             if ((newDirection === 'up' && currentDirection === 'down') ||
                 (newDirection === 'down' && currentDirection === 'up') ||
                 (newDirection === 'left' && currentDirection === 'right') ||
                 (newDirection === 'right' && currentDirection === 'left')) {
                 return;
             }
-            lastInputDirection = newDirection; // Update last valid input
+            lastInputDirection = newDirection;
         }
 
         // --- Game State Management ---
         function setGameState(state) {
             currentGameState = state;
-            // Hide all overlays and main game elements
+            // Hide all overlays and primary game control elements
             introScreen.style.display = 'none';
             pauseScreen.style.display = 'none';
             gameOverScreen.style.display = 'none';
             startButton.style.display = 'none';
             controlsWrapper.style.display = 'none';
             pauseButton.style.display = 'none';
-            // Also hide the main game container if on an overlay (full screen)
-            document.getElementById('main-wrapper').style.filter = 'none'; // Clear blur if any
+            navigationMenu.classList.remove('show'); // Hide navigation by default
+            toggleNavButton.style.display = 'none'; // Hide toggle nav button by default
 
+            document.getElementById('main-wrapper').style.filter = 'none'; // Clear blur
+
+            // Determine what to show/hide based on state
             switch (currentGameState) {
                 case GameState.INTRO:
                     introScreen.style.display = 'flex';
-                    // Hide main game area to show intro clearly
-                    document.getElementById('game-area').style.display = 'none';
-                    document.getElementById('navigation-menu').style.display = 'flex'; // Keep navigation visible
+                    document.getElementById('game-area').style.display = 'flex'; // Show game area
+                    toggleNavButton.style.display = 'block'; // Show toggle nav button
+                    startButton.style.display = 'block'; // Show the start button on intro screen
                     break;
                 case GameState.PLAYING:
-                    document.getElementById('game-area').style.display = 'flex'; // Show game area
+                    document.getElementById('game-area').style.display = 'flex';
                     controlsWrapper.style.display = 'flex';
                     pauseButton.style.display = 'flex';
+                    toggleNavButton.style.display = 'block'; // Show toggle nav button
                     if (!gameInterval) {
                         gameInterval = setInterval(update, gameSpeed);
                     }
                     break;
                 case GameState.PAUSED:
                     pauseScreen.style.display = 'flex';
-                    document.getElementById('main-wrapper').style.filter = 'blur(5px)'; // Apply blur effect
+                    document.getElementById('main-wrapper').style.filter = 'blur(5px)';
                     clearInterval(gameInterval);
                     gameInterval = null;
                     break;
                 case GameState.GAME_OVER:
                     gameOverScreen.style.display = 'flex';
-                    document.getElementById('main-wrapper').style.filter = 'blur(5px)'; // Apply blur effect
+                    document.getElementById('main-wrapper').style.filter = 'blur(5px)';
                     clearInterval(gameInterval);
                     gameInterval = null;
                     finalScoreSpan.textContent = score;
                     finalHighScoreSpan.textContent = getHighScore();
+                    toggleNavButton.style.display = 'block'; // Show toggle nav button
+                    break;
+                case GameState.NAV_OPEN:
+                    navigationMenu.classList.add('show'); // Show navigation menu
+                    document.getElementById('main-wrapper').style.filter = 'blur(5px)';
+                    // If game was playing, pause it. If paused, keep paused.
+                    if (gameInterval) { // If game is running
+                        isGamePaused = false; // It was playing
+                        clearInterval(gameInterval);
+                        gameInterval = null;
+                    } else if (currentGameState === GameState.PAUSED) {
+                        isGamePaused = true; // It was already paused
+                    }
                     break;
             }
         }
@@ -703,7 +727,7 @@
             lastInputDirection = 'right';
             score = 0;
             currentScoreSpan.textContent = score;
-            gameSpeed = 250; // Reset to initial slower speed
+            gameSpeed = 250;
             level = 1;
             generateFood();
             setHighScore(Math.max(score, getHighScore()));
@@ -722,13 +746,17 @@
                     case 'ArrowRight': changeDirection('right'); break;
                     case 'p':
                     case 'P': togglePause(); break;
+                    case 'm': // 'M' for Menu
+                    case 'M': toggleNavigationMenu(); break;
                 }
             } else if (currentGameState === GameState.PAUSED && (e.key === 'p' || e.key === 'P')) {
-                 togglePause();
+                togglePause();
             } else if (currentGameState === GameState.INTRO && e.key === 'Enter') {
                 startGame();
             } else if (currentGameState === GameState.GAME_OVER && e.key === 'Enter') {
                 startGame();
+            } else if (currentGameState === GameState.NAV_OPEN && (e.key === 'Escape' || e.key === 'm' || e.key === 'M')) {
+                toggleNavigationMenu(); // Close nav on Escape or M
             }
         });
 
@@ -746,7 +774,7 @@
             startGame();
         });
 
-        startButton.addEventListener('click', () => { // This button should only be visible when intro/gameover screens are not
+        startButton.addEventListener('click', () => {
              playSound(AUDIO_CLICK);
              startGame();
         });
@@ -772,6 +800,17 @@
             initializeGame();
         });
 
+        // Navigation Menu Handlers
+        toggleNavButton.addEventListener('click', () => {
+            playSound(AUDIO_CLICK);
+            toggleNavigationMenu();
+        });
+
+        closeNavButton.addEventListener('click', () => {
+            playSound(AUDIO_CLICK);
+            toggleNavigationMenu();
+        });
+
 
         // --- Game Flow Functions ---
         function startGame() {
@@ -787,6 +826,29 @@
             }
         }
 
+        function toggleNavigationMenu() {
+            if (currentGameState === GameState.NAV_OPEN) {
+                // If nav is open, go back to previous game state (playing or paused)
+                if (isGamePaused) { // If game was paused before opening nav
+                    setGameState(GameState.PAUSED);
+                } else if (gameInterval) { // If game was running (gameInterval is not null)
+                    setGameState(GameState.PLAYING);
+                } else if (currentGameState === GameState.INTRO) { // If nav opened from intro
+                    setGameState(GameState.INTRO);
+                } else if (currentGameState === GameState.GAME_OVER) { // If nav opened from game over
+                     setGameState(GameState.GAME_OVER);
+                } else {
+                     // Fallback to intro if no clear previous state
+                     setGameState(GameState.INTRO);
+                }
+            } else {
+                // If nav is closed, open it and save current game state
+                isGamePaused = (currentGameState === GameState.PAUSED) || (gameInterval === null && currentGameState === GameState.PLAYING);
+                setGameState(GameState.NAV_OPEN);
+            }
+        }
+
+
         function gameOver() {
             playSound(AUDIO_GAME_OVER);
             setHighScore(Math.max(score, getHighScore()));
@@ -797,7 +859,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             setHighScore(getHighScore());
             initializeGame();
-            setGameState(GameState.INTRO);
+            setGameState(GameState.INTRO); // Start at the intro screen
         });
 
     </script>
