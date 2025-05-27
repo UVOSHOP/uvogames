@@ -1,7 +1,10 @@
 # 🎮 UVOGAMES
 
 **UVOGAMES** adalah kumpulan berbagai game seru dan ringan yang dapat langsung dimainkan di browser tanpa perlu download atau instalasi!
-
+<p align="center">
+  <a href="https://uvoshop.github.io/uvogames/" target="_blank">
+    <img src="[https://img.shields.io/badge/MAINKE-UVOGAMES-red?style=for-the-badge&logo=google-chrome](https://png.pngtree.com/png-clipart/20230508/original/pngtree-start-button-in-red-duo-tone-rounded-rectangle-shape-and-black-png-image_9148857.png)" alt="Mainkan UVOGAMES" />
+  </a>
 Dikembangkan dengan antarmuka sederhana dan ramah pengguna, UVOGAMES cocok dimainkan kapan saja, di mana saja, baik di PC maupun ponsel.
 
 ---
