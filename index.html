@@ -1,103 +1,229 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar Game Tersedia</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-            color: #333;
-        }
-        .container {
-            max-width: 800px;
-            margin: auto;
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #0056b3;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        li {
-            background: #e9ecef;
-            margin-bottom: 10px;
-            padding: 15px;
-            border-radius: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        li span {
-            font-weight: bold;
-            color: #555;
-        }
-        .genre {
-            font-style: italic;
-            color: #666;
-            font-size: 0.9em;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UVOGAMES</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: sans-serif;
+      background-color: #121212;
+      color: white;
+    }
+
+    header {
+      background-color: #1f1f1f;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      font-size: 1.5rem;
+      font-weight: bold;
+      background-image: linear-gradient(90deg, red, orange, yellow, green, cyan, blue, violet);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      animation: rainbow 6s linear infinite;
+      background-size: 400% 100%;
+    }
+
+    @keyframes rainbow {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
+    }
+
+    .menu-btn {
+      position: absolute;
+      left: 1rem;
+      top: 1rem;
+      font-size: 1rem;
+      background: none;
+      border: 2px solid white;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 1001;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -260px;
+      width: 260px;
+      height: 100%;
+      background: white;
+      color: black;
+      padding: 1rem;
+      transition: 0.3s;
+      z-index: 1000;
+    }
+
+    .sidebar.open {
+      left: 0;
+    }
+
+    .sidebar img {
+      width: 100%;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+
+    .sidebar p {
+      text-align: center;
+      font-size: 1rem;
+      margin: 5px 0;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      padding: 20px;
+    }
+
+    .game {
+      background: #1e1e1e;
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      transition: transform 0.2s ease;
+    }
+
+    .game:hover {
+      transform: scale(1.03);
+    }
+
+    .game img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: #333;
+      object-fit: cover;
+    }
+
+    .game-title {
+      padding: 0.5rem;
+      color: #ccc;
+      text-align: center;
+    }
+
+    .play-btn {
+      margin-bottom: 1rem;
+      padding: 5px 15px;
+      background: #00bcd4;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      transition: 0.2s;
+    }
+
+    .play-btn:hover {
+      background: #0097a7;
+    }
+
+    footer {
+      text-align: center;
+      color: #aaa;
+      padding: 1rem;
+      border-top: 1px solid #333;
+      margin-top: 2rem;
+    }
+
+    /* Tetap 4 kolom di semua layar */
+    @media (max-width: 800px) {
+      .container {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media (max-width: 500px) {
+      html { font-size: 14px; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Daftar Game yang Tersedia</h1>
-        <ul id="game-list">
-            </ul>
-    </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const games = [
-                { id: 1, nama: 'The Witcher 3: Wild Hunt', genre: 'RPG' },
-                { id: 2, nama: 'Grand Theft Auto V', genre: 'Action-Adventure' },
-                { id: 3, nama: 'Minecraft', genre: 'Sandbox' },
-                { id: 4, nama: 'Red Dead Redemption 2', genre: 'Action-Adventure' },
-                { id: 5, nama: 'Cyberpunk 2077', genre: 'RPG' },
-                { id: 6, nama: 'FIFA 25', genre: 'Sports' },
-                { id: 7, nama: 'Valorant', genre: 'FPS' },
-                { id: 8, nama: 'Dota 2', genre: 'MOBA' },
-                { id: 9, nama: 'Among Us', genre: 'Social Deduction' },
-                { id: 10, nama: 'Stardew Valley', genre: 'Simulation' }
-            ];
+  <header>
+    <button class="menu-btn" onclick="toggleSidebar()">☰ Menu</button>
+    UVOGAMES
+  </header>
 
-            const gameList = document.getElementById('game-list');
+  <div class="sidebar" id="sidebar">
+    <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjUE7LesOTqq1Fh8jzi8BFXz314fWtzjUT0tEQGhQQKA9v7zyg3zpFOd3c34O6NmzKJSXFUntQURIralFe3XtGDxJ6GdJFuUH3Xp0M768_4XvG-AV43tUrbsdVMGxz7lqkbj63r30FeYColmR5yg0FpeO6UqZ4EScg7tPIiBuZC5DsQlPmy2a_MspUurqSC/s16000/ADITdeveloper.png" alt="ADITdeveloper" />
+    <p>Versi 1.0</p>
+    <p><strong>UVOGAMES</strong></p>
+    <p>by ADITdeveloper</p>
+  </div>
 
-            games.forEach(game => {
-                const listItem = document.createElement('li');
-                listItem.innerHTML = `
-                    <span>${game.nama}</span>
-                    <span class="genre">(${game.genre})</span>
-                    <button onclick="showGameDetails(${game.id}, '${game.nama}')">Lihat Detail</button>
-                `;
-                gameList.appendChild(listItem);
-            });
-        });
+  <div class="container" id="games-container">
+    <!-- Game items akan dibuat oleh JS -->
+  </div>
 
-        function showGameDetails(id, namaGame) {
-            alert(`Anda memilih game: ${namaGame} (ID: ${id}). Fitur detail lebih lanjut bisa ditambahkan di sini.`);
-        }
-    </script>
+  <footer>
+    &copy; 2025 UVOGAMES. Developed by ADITdeveloper.
+  </footer>
+
+  <script>
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    // Data contoh game: bisa diganti sesuai kebutuhan
+    const games = [
+      { title: "Space Adventure", img: "https://via.placeholder.com/300/111111/00ffff?text=Game+1", link: "game1.html" },
+      { title: "Zombie Attack", img: "https://via.placeholder.com/300/222222/ff0000?text=Game+2", link: "game2.html" },
+      { title: "Puzzle Mania", img: "https://via.placeholder.com/300/333333/ffff00?text=Game+3", link: "game3.html" },
+      { title: "Racing Thunder", img: "https://via.placeholder.com/300/444444/ff00ff?text=Game+4", link: "game4.html" },
+      { title: "Jungle Run", img: "https://via.placeholder.com/300/555555/00ff00?text=Game+5", link: "game5.html" },
+      { title: "Ocean Quest", img: "https://via.placeholder.com/300/666666/0000ff?text=Game+6", link: "game6.html" },
+      { title: "City Builder", img: "https://via.placeholder.com/300/777777/ffffff?text=Game+7", link: "game7.html" },
+      { title: "Alien Invasion", img: "https://via.placeholder.com/300/888888/ff6600?text=Game+8", link: "game8.html" },
+      { title: "Mystery Mansion", img: "https://via.placeholder.com/300/999999/cc00cc?text=Game+9", link: "game9.html" },
+      { title: "Sky Warriors", img: "https://via.placeholder.com/300/aaaaaa/00cccc?text=Game+10", link: "game10.html" },
+      { title: "Battle Arena", img: "https://via.placeholder.com/300/bbbbbb/ff99cc?text=Game+11", link: "game11.html" },
+      { title: "Farm Life", img: "https://via.placeholder.com/300/cccccc/663300?text=Game+12", link: "game12.html" },
+      { title: "Dungeon Crawl", img: "https://via.placeholder.com/300/dddddd/003366?text=Game+13", link: "game13.html" },
+      { title: "Space Miner", img: "https://via.placeholder.com/300/eeeeee/990000?text=Game+14", link: "game14.html" },
+      { title: "Hero Quest", img: "https://via.placeholder.com/300/ffdddd/000000?text=Game+15", link: "game15.html" },
+      { title: "Magic World", img: "https://via.placeholder.com/300/ddffdd/222222?text=Game+16", link: "game16.html" },
+      { title: "Speed Racer", img: "https://via.placeholder.com/300/ddddff/444444?text=Game+17", link: "game17.html" },
+      { title: "Zombie Survival", img: "https://via.placeholder.com/300/ccddff/666666?text=Game+18", link: "game18.html" },
+      { title: "Castle Defense", img: "https://via.placeholder.com/300/bbddff/888888?text=Game+19", link: "game19.html" },
+      { title: "Treasure Hunt", img: "https://via.placeholder.com/300/aabbcc/aaaaaa?text=Game+20", link: "game20.html" },
+    ];
+
+    const container = document.getElementById('games-container');
+
+    // Buat elemen game secara dinamis
+    games.forEach(game => {
+      const gameDiv = document.createElement('div');
+      gameDiv.className = 'game';
+
+      const img = document.createElement('img');
+      img.src = game.img;
+      img.alt = game.title;
+
+      const title = document.createElement('div');
+      title.className = 'game-title';
+      title.textContent = game.title;
+
+      const playBtn = document.createElement('a');
+      playBtn.href = game.link;
+      playBtn.className = 'play-btn';
+      playBtn.textContent = 'Mainkan';
+
+      gameDiv.appendChild(img);
+      gameDiv.appendChild(title);
+      gameDiv.appendChild(playBtn);
+
+      container.appendChild(gameDiv);
+    });
+  </script>
+
 </body>
 </html>
