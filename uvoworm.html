@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UVOWORM - Zona Cacing</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: #0a0a0a;
+            color: #00ff00;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #main-menu, #game-over-menu, #settings-menu, #help-menu, #bot-settings {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 20, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        #game-over-menu, #settings-menu, #help-menu, #bot-settings {
+            display: none;
+        }
+
+        .menu-title {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 10px #00ff00;
+            color: #00ff00;
+            text-align: center;
+        }
+
+        .menu-button {
+            background-color: #003300;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+            width: 250px;
+            text-align: center;
+        }
+
+        .menu-button:hover {
+            background-color: #00ff00;
+            color: #000;
+            box-shadow: 0 0 15px #00ff00;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: #003300;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        #game-board {
+            border: 2px solid #00ff00;
+            box-shadow: 0 0 20px #00ff00;
+            background-color: #000;
+            position: relative;
+        }
+
+        #score-display {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            color: #00ff00;
+        }
+
+        #pause-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #003300;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .snake {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #00ff00;
+            border-radius: 3px;
+        }
+
+        .snake-head {
+            background-color: #ffffff;
+            border: 2px solid #00ff00;
+        }
+
+        .food {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #ff0000;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        .bot-snake {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #0000ff;
+            border-radius: 3px;
+        }
+
+        .bot-head {
+            background-color: #ffffff;
+            border: 2px solid #0000ff;
+        }
+
+        .obstacle {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #555555;
+            border-radius: 2px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(0.9); }
+        }
+
+        .settings-option {
+            display: flex;
+            justify-content: space-between;
+            width: 300px;
+            margin: 15px 0;
+            align-items: center;
+        }
+
+        .settings-label {
+            font-size: 1.2rem;
+            margin-right: 20px;
+        }
+
+        .settings-input {
+            background-color: #002200;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 5px;
+            width: 100px;
+        }
+
+        .help-text {
+            max-width: 600px;
+            margin: 20px;
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+
+        .game-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-size: 1rem;
+            color: #00aa00;
+        }
+
+        .power-up {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            animation: pulse 0.5s infinite;
+        }
+
+        .speed-up {
+            background-color: #ffff00;
+            box-shadow: 0 0 10px #ffff00;
+        }
+
+        .slow-down {
+            background-color: #ff00ff;
+            box-shadow: 0 0 10px #ff00ff;
+        }
+
+        .invincible {
+            background-color: #ffffff;
+            box-shadow: 0 0 10px #ffffff;
+        }
+
+        .score-multiplier {
+            background-color: #00ffff;
+            box-shadow: 0 0 10px #00ffff;
+        }
+
+        #leaderboard {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0, 20, 0, 0.7);
+            padding: 10px;
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .leaderboard-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            margin: 3px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="main-menu" class="menu">
+            <h1 class="menu-title">UVOWORM</h1>
+            <button class="menu-button" id="start-game">START GAME</button>
+            <button class="menu-button" id="bot-game">BOT GAME</button>
+            <button class="menu-button" id="settings">SETTINGS</button>
+            <button class="menu-button" id="help">HELP</button>
+            <div class="game-info">
+                Zona Cacing - UVOWORM v1.0<br>
+                Created with HTML5, CSS3, JavaScript
+            </div>
+        </div>
+
+        <div id="game-over-menu" class="menu">
+            <h1 class="menu-title">GAME OVER</h1>
+            <div id="final-score" style="font-size: 2rem; margin-bottom: 2rem;">Score: 0</div>
+            <button class="menu-button" id="play-again">PLAY AGAIN</button>
+            <button class="menu-button" id="main-menu-button">MAIN MENU</button>
+            <button class="back-button" id="game-over-back">BACK</button>
+        </div>
+
+        <div id="settings-menu" class="menu">
+            <h1 class="menu-title">SETTINGS</h1>
+            <div class="settings-option">
+                <span class="settings-label">Grid Size:</span>
+                <select class="settings-input" id="grid-size">
+                    <option value="20">Small</option>
+                    <option value="30" selected>Medium</option>
+                    <option value="40">Large</option>
+                </select>
+            </div>
+            <div class="settings-option">
+                <span class="settings-label">Game Speed:</span>
+                <select class="settings-input" id="game-speed">
+                    <option value="150">Slow</option>
+                    <option value="100" selected>Normal</option>
+                    <option value="70">Fast</option>
+                    <option value="40">Extreme</option>
+                </select>
+            </div>
+            <div class="settings-option">
+                <span class="settings-label">Walls:</span>
+                <select class="settings-input" id="wall-type">
+                    <option value="solid">Solid</option>
+                    <option value="pass-through" selected>Pass Through</option>
+                    <option value="none">None</option>
+                </select>
+            </div>
+            <div class="settings-option">
+                <span class="settings-label">Obstacles:</span>
+                <input type="number" class="settings-input" id="obstacles-count" min="0" max="50" value="10">
+            </div>
+            <div class="settings-option">
+                <span class="settings-label">Power-ups:</span>
+                <select class="settings-input" id="power-ups">
+                    <option value="true" selected>On</option>
+                    <option value="false">Off</option>
+                </select>
+            </div>
+            <button class="menu-button" id="save-settings">SAVE SETTINGS</button>
+            <button class="back-button" id="settings-back">BACK</button>
+        </div>
+
+        <div id="help-menu" class="menu">
+            <h1 class="menu-title">HELP & CONTROLS</h1>
+            <div class="help-text">
+                <p><strong>Controls:</strong></p>
+                <p>Use <strong>Arrow Keys</strong> or <strong>WASD</strong> to control your worm.</p>
+                <p>Press <strong>P</strong> or the pause button to pause the game.</p>
+                <p>Press <strong>ESC</strong> to return to menu during game.</p>
+                
+                <p><strong>Game Elements:</strong></p>
+                <p><span style="color: #00ff00">Green</span> - Your worm</p>
+                <p><span style="color: #ff0000">Red</span> - Food (grow when eaten)</p>
+                <p><span style="color: #555555">Gray</span> - Obstacles (avoid them)</p>
+                <p><span style="color: #0000ff">Blue</span> - Bot worms (in bot mode)</p>
+                
+                <p><strong>Power-ups:</strong></p>
+                <p><span style="color: #ffff00">Yellow</span> - Speed boost</p>
+                <p><span style="color: #ff00ff">Pink</span> - Slow down</p>
+                <p><span style="color: #ffffff">White</span> - Invincibility</p>
+                <p><span style="color: #00ffff">Cyan</span> - Score multiplier</p>
+            </div>
+            <button class="back-button" id="help-back">BACK</button>
+        </div>
+
+        <div id="bot-settings" class="menu">
+            <h1 class="menu-title">BOT SETTINGS</h1>
+            <div class="settings-option">
+                <span class="settings-label">Number of Bots:</span>
+                <input type="number" class="settings-input" id="bot-count" min="1" max="10" value="3">
+            </div>
+            <div class="settings-option">
+                <span class="settings-label">Bot Difficulty:</span>
+                <select class="settings-input" id="bot-difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+            <button class="menu-button" id="start-bot-game">START BOT GAME</button>
+            <button class="back-button" id="bot-settings-back">BACK</button>
+        </div>
+
+        <canvas id="game-board"></canvas>
+        <div id="score-display">Score: 0</div>
+        <button id="pause-button">PAUSE</button>
+        <div id="leaderboard">
+            <div class="leaderboard-title">LEADERBOARD</div>
+            <div id="leaderboard-entries"></div>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        let canvas, ctx;
+        let gridSize = 20;
+        let tileSize;
+        let gameSpeed = 100;
+        let gameInterval;
+        let isPaused = false;
+        let isGameOver = false;
+        let score = 0;
+        let highScores = JSON.parse(localStorage.getItem('uvowormHighScores')) || [];
+        let wallType = 'pass-through';
+        let obstaclesCount = 10;
+        let powerUpsEnabled = true;
+        let botCount = 3;
+        let botDifficulty = 'medium';
+        let isBotGame = false;
+
+        // Game objects
+        let snake = [];
+        let food = {};
+        let obstacles = [];
+        let bots = [];
+        let powerUps = [];
+        let currentDirection = 'right';
+        let nextDirection = 'right';
+        let invincible = false;
+        let speedMultiplier = 1;
+        let scoreMultiplier = 1;
+        let powerUpTimers = {};
+
+        // Initialize the game
+        function init() {
+            canvas = document.getElementById('game-board');
+            ctx = canvas.getContext('2d');
+            
+            // Set up event listeners
+            document.getElementById('start-game').addEventListener('click', startGame);
+            document.getElementById('bot-game').addEventListener('click', showBotSettings);
+            document.getElementById('start-bot-game').addEventListener('click', startBotGame);
+            document.getElementById('settings').addEventListener('click', showSettings);
+            document.getElementById('help').addEventListener('click', showHelp);
+            document.getElementById('play-again').addEventListener('click', () => {
+                if (isBotGame) startBotGame();
+                else startGame();
+            });
+            document.getElementById('main-menu-button').addEventListener('click', showMainMenu);
+            document.getElementById('save-settings').addEventListener('click', saveSettings);
+            document.getElementById('pause-button').addEventListener('click', togglePause);
+            
+            // Back buttons
+            document.getElementById('settings-back').addEventListener('click', showMainMenu);
+            document.getElementById('help-back').addEventListener('click', showMainMenu);
+            document.getElementById('game-over-back').addEventListener('click', showMainMenu);
+            document.getElementById('bot-settings-back').addEventListener('click', showMainMenu);
+            
+            // Keyboard controls
+            document.addEventListener('keydown', handleKeyPress);
+            
+            // Load settings
+            loadSettings();
+            
+            // Resize canvas
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Update leaderboard
+            updateLeaderboard();
+        }
+
+        // Resize canvas to fit window
+        function resizeCanvas() {
+            const maxWidth = Math.min(window.innerWidth - 40, 800);
+            const maxHeight = Math.min(window.innerHeight - 40, 600);
+            
+            const size = Math.min(maxWidth, maxHeight);
+            canvas.width = size;
+            canvas.height = size;
+            
+            tileSize = Math.floor(canvas.width / gridSize);
+            
+            if (snake.length > 0) {
+                drawGame();
+            }
+        }
+
+        // Start the game
+        function startGame() {
+            isBotGame = false;
+            resetGame();
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('game-over-menu').style.display = 'none';
+            document.getElementById('game-board').style.display = 'block';
+            document.getElementById('score-display').style.display = 'block';
+            document.getElementById('pause-button').style.display = 'block';
+            
+            // Start game loop
+            clearInterval(gameInterval);
+            gameInterval = setInterval(gameLoop, gameSpeed / speedMultiplier);
+        }
+
+        // Start bot game
+        function startBotGame() {
+            isBotGame = true;
+            resetGame();
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('bot-settings').style.display = 'none';
+            document.getElementById('game-over-menu').style.display = 'none';
+            document.getElementById('game-board').style.display = 'block';
+            document.getElementById('score-display').style.display = 'block';
+            document.getElementById('pause-button').style.display = 'block';
+            
+            // Initialize bots
+            initBots();
+            
+            // Start game loop
+            clearInterval(gameInterval);
+            gameInterval = setInterval(gameLoop, gameSpeed / speedMultiplier);
+        }
+
+        // Reset game state
+        function resetGame() {
+            // Reset snake
+            snake = [];
+            const startX = Math.floor(gridSize / 4);
+            for (let i = 0; i < 3; i++) {
+                snake.push({ x: startX - i, y: Math.floor(gridSize / 2) });
+            }
+            
+            // Reset game state
+            currentDirection = 'right';
+            nextDirection = 'right';
+            score = 0;
+            document.getElementById('score-display').textContent = `Score: ${score}`;
+            isGameOver = false;
+            isPaused = false;
+            document.getElementById('pause-button').textContent = 'PAUSE';
+            
+            // Reset power-ups
+            invincible = false;
+            speedMultiplier = 1;
+            scoreMultiplier = 1;
+            powerUps = [];
+            powerUpTimers = {};
+            
+            // Generate food and obstacles
+            generateFood();
+            generateObstacles();
+            
+            // Clear bots if not in bot game
+            if (!isBotGame) {
+                bots = [];
+            }
+            
+            // Draw initial state
+            drawGame();
+        }
+
+        // Initialize bots
+        function initBots() {
+            bots = [];
+            botCount = parseInt(document.getElementById('bot-count').value);
+            botDifficulty = document.getElementById('bot-difficulty').value;
+            
+            for (let i = 0; i < botCount; i++) {
+                const bot = {
+                    segments: [],
+                    direction: ['up', 'down', 'left', 'right'][Math.floor(Math.random() * 4)],
+                    nextDirection: null,
+                    color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                    score: 0,
+                    decisionInterval: botDifficulty === 'easy' ? 10 : (botDifficulty === 'medium' ? 7 : 5),
+                    decisionCounter: 0
+                };
+                
+                // Position bot away from player and other bots
+                let startX, startY;
+                let validPosition = false;
+                
+                while (!validPosition) {
+                    startX = Math.floor(Math.random() * (gridSize - 10)) + 5;
+                    startY = Math.floor(Math.random() * (gridSize - 10)) + 5;
+                    
+                    // Check distance from player
+                    const playerStartX = Math.floor(gridSize / 4);
+                    const playerStartY = Math.floor(gridSize / 2);
+                    const distanceToPlayer = Math.sqrt(Math.pow(startX - playerStartX, 2) + Math.pow(startY - playerStartY, 2));
+                    
+                    // Check distance from other bots
+                    let tooClose = false;
+                    for (const otherBot of bots) {
+                        const otherStartX = otherBot.segments[0].x;
+                        const otherStartY = otherBot.segments[0].y;
+                        const distance = Math.sqrt(Math.pow(startX - otherStartX, 2) + Math.pow(startY - otherStartY, 2));
+                        if (distance < 8) {
+                            tooClose = true;
+                            break;
+                        }
+          
