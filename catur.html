@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CATUR - UVOGAMES</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%99%9A%3C/text%3E%3C/svg%3E" />
+    <style>
+        /* CSS Variables for easy theme changes */
+        :root {
+            --bg-color: #282c34;
+            --text-color: #ffffff;
+            --accent-color: #61dafb;
+            --dark-square: #b58863;
+            --light-square: #f0d9b5;
+            --selected-color: #ffeb3b; /* Yellow for selected */
+            --possible-move-border-color: #4CAF50; /* Green border for moves */
+            --possible-move-dot-color: rgba(76, 175, 80, 0.7); /* Green dot for moves */
+            --promotion-bg: #3a3f47;
+            --promotion-border: #61dafb;
+            --game-over-bg: rgba(0, 0, 0, 0.8);
+            --game-over-dialog-bg: #3a3f47;
+            --win-color: #4CAF50;
+            --lose-color: #FF5722;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: row; /* Layout: sidebar left, main content right */
+            align-items: flex-start; /* Align content to the top */
+            justify-content: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            gap: 30px; /* Space between sidebar and main content */
+        }
+
+        /* Sidebar (Left Navigation) */
+        .sidebar {
+            background-color: #3a3f47;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            flex-shrink: 0; /* Prevent sidebar from shrinking */
+            min-width: 200px; /* Minimum width for the sidebar */
+        }
+
+        .sidebar h1 {
+            font-size: 2em;
+            margin-bottom: 5px;
+            color: var(--accent-color);
+        }
+
+        .sidebar p {
+            font-size: 1em;
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+
+        .sidebar button {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+            width: 100%; /* Button fills sidebar width */
+            margin-top: 10px; /* Space between buttons */
+        }
+
+        .sidebar button:hover {
+            background-color: #21a1f1;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .player-info-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 480px; /* Max width matching chessboard */
+            gap: 20px;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+
+        .player-info {
+            background-color: #3a3f47;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            flex: 1; /* Take up available space */
+            min-width: 180px; /* Minimum width for player info box */
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .player-info h2 {
+            margin-top: 0;
+            color: var(--accent-color);
+            font-size: 1.5em;
+        }
+
+        .player-info p {
+            font-size: 1.1em;
+            margin: 10px 0;
+        }
+
+        #chessboard {
+            position: relative; /* Needed for absolute positioning of moving pieces */
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px);
+            border: 5px solid #555;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            max-width: 480px; /* 8 * 60px + 2*5px border */
+            max-height: 480px;
+            animation: fadeIn 0.5s ease-out; /* Initial fade-in animation */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .square {
+            position: relative; /* For possible move dot */
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5em;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.1s ease;
+        }
+
+        .light {
+            background-color: var(--light-square);
+        }
+
+        .dark {
+            background-color: var(--dark-square);
+        }
+
+        .selected {
+            background-color: var(--selected-color) !important;
+            box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.2); /* Subtle inner shadow for selected */
+        }
+
+        .possible-move {
+            border: 3px solid var(--possible-move-border-color); /* Green border */
+            box-sizing: border-box; /* Include border in element's total width and height */
+            animation: pulse-border 1s infinite alternate; /* Animated border */
+        }
+
+        .possible-move::after { /* Dot in the center for possible moves */
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: var(--possible-move-dot-color);
+            opacity: 0.8;
+            animation: pulse-dot 1s infinite alternate; /* Animated dot */
+        }
+
+        @keyframes pulse-border {
+            from { border-color: var(--possible-move-border-color); }
+            to { border-color: #6eff7a; } /* Slightly brighter green */
+        }
+
+        @keyframes pulse-dot {
+            from { transform: scale(0.8); opacity: 0.7; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .piece {
+            position: relative; /* For smoother transitions */
+            cursor: grab;
+            font-family: 'Segoe UI Symbol', 'Twemoji Mozilla', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Android Emoji', sans-serif;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease-out; /* Animation for piece movement */
+            pointer-events: none; /* Prevent piece itself from capturing clicks during animation */
+            z-index: 10; /* Ensure moving piece is on top */
+        }
+
+        /* Promotion Overlay */
+        .promotion-overlay, .game-over-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--game-over-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+            animation: fadeInOverlay 0.3s ease-out;
+        }
+
+        @keyframes fadeInOverlay {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .promotion-dialog, .game-over-dialog {
+            background-color: var(--game-over-dialog-bg);
+            border: 2px solid var(--promotion-border);
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+            animation: scaleIn 0.3s ease-out;
+            max-width: 90%; /* For mobile */
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .promotion-dialog h2, .game-over-dialog h2 {
+            margin-top: 0;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+        }
+
+        .promotion-options {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .promotion-option {
+            background-color: #4a4f57;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            font-size: 3em; /* Size of the piece unicode */
+            line-height: 1;
+        }
+
+        .promotion-option:hover {
+            background-color: #5e646f;
+            transform: translateY(-5px);
+        }
+        .promotion-option.selected-promo {
+             border: 2px solid var(--accent-color);
+             box-shadow: 0 0 10px var(--accent-color);
+             transform: translateY(-5px);
+        }
+
+        /* Game Over Dialog Specifics */
+        .game-over-dialog h2 {
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+
+        .game-over-dialog p {
+            font-size: 1.2em;
+            margin-bottom: 25px;
+        }
+
+        .game-over-dialog .win {
+            color: var(--win-color);
+        }
+
+        .game-over-dialog .lose {
+            color: var(--lose-color);
+        }
+
+        .game-over-dialog button {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .game-over-dialog button:hover {
+            background-color: #21a1f1;
+            transform: translateY(-2px);
+        }
+
+        /* Responsive Design for Mobile */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column; /* Stack vertically on small screens */
+                align-items: center;
+                padding: 10px;
+                gap: 20px;
+            }
+
+            .sidebar {
+                width: 90%; /* Take more width on mobile */
+                margin-bottom: 20px;
+            }
+
+            .main-content {
+                width: 100%;
+                align-items: center;
+            }
+
+            .player-info-container {
+                flex-direction: column; /* Player info stacked vertically */
+                width: 90%;
+            }
+
+            .player-info {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            #chessboard {
+                width: 90vw; /* Chessboard width 90% of viewport width */
+                height: 90vw; /* Maintain aspect ratio */
+                grid-template-columns: repeat(8, 1fr); /* Adjust square size automatically */
+                grid-template-rows: repeat(8, 1fr);
+            }
+
+            .square {
+                width: auto; /* Let grid manage width */
+                height: auto;
+                font-size: 1.8em; /* Adjust piece size */
+            }
+
+            .promotion-dialog, .game-over-dialog {
+                width: 90%;
+                padding: 20px;
+            }
+
+            .promotion-options {
+                flex-wrap: wrap; /* Wrap options on small screens */
+                gap: 10px;
+            }
+
+            .promotion-option {
+                font-size: 2em; /* Smaller piece size on mobile */
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h1>CATUR - UVOGAMES</h1>
+        <p>by ADITdeveloper</p>
+        <button onclick="history.back()">Kembali ke Halaman Sebelumnya</button>
+        <button onclick="initializeBoard()">Mulai Ulang Game</button>
+    </div>
+
+    <div class="main-content">
+        <div class="player-info-container">
+            <div class="player-info">
+                <h2>Pemain Putih</h2>
+                <p id="white-turn-indicator">Giliran: Putih</p>
+            </div>
+            <div class="player-info">
+                <h2>Pemain Hitam (Bot)</h2>
+                <p id="black-turn-indicator">Giliran: Hitam</p>
+            </div>
+        </div>
+        <div id="chessboard"></div>
+    </div>
+
+    <div id="promotion-overlay" class="promotion-overlay" style="display: none;">
+        <div class="promotion-dialog">
+            <h2>Pilih Bidak untuk Promosi:</h2>
+            <div id="promotion-options" class="promotion-options">
+                </div>
+        </div>
+    </div>
+
+    <div id="game-over-overlay" class="game-over-overlay" style="display: none;">
+        <div class="game-over-dialog">
+            <h2 id="game-over-message"></h2>
+            <p id="game-over-details"></p>
+            <button onclick="initializeBoard()">Main Lagi?</button>
+        </div>
+    </div>
+
+    <script src="catur.js"></script>
+</body>
+</html>
