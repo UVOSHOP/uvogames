@@ -37,6 +37,12 @@
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
+        
+        html, body {
+            overflow: hidden; /* Mencegah scrolling */
+            width: 100%;
+            height: 100%;
+        }
 
         body {
             font-family: var(--font-family);
@@ -52,7 +58,7 @@
             margin: 0;
             padding: 10px;
             box-sizing: border-box;
-            overflow-x: hidden;
+            /* overflow-x: hidden; */ /* Dihapus karena sudah diatur di html, body */
         }
 
         .game-wrapper { /* Wrapper untuk game dan menu */
@@ -70,7 +76,7 @@
             border-radius: 15px;
             box-shadow: 0 0 25px rgba(0, 255, 255, 0.6);
             border: 1px solid var(--neon-blue);
-            transition: filter 0.3s ease; /* Untuk efek blur saat menu aktif */
+            transition: filter 0.3s ease, pointer-events 0.3s ease; /* Untuk efek blur saat menu aktif */
         }
         .game-container.menu-active {
             filter: blur(3px);
@@ -136,7 +142,8 @@
             background-color: transparent;
             border: 1px solid var(--cell-border);
             box-sizing: border-box;
-            transition: transform 0.2s ease, opacity 0.2s ease;
+            transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, border-radius 0.2s ease; /* Transisi lebih halus */
+            will-change: transform, opacity, background-color; /* Optimasi kinerja */
         }
         .grid-cell.clearing {
             transform: scale(0.1) rotate(180deg); /* Tambah rotasi */
@@ -186,6 +193,7 @@
             height: 80px;
             animation: pieceAppearAnim 0.5s ease-out forwards;
             opacity: 0;
+            will-change: transform, opacity; /* Optimasi kinerja */
         }
         @keyframes pieceAppearAnim {
             from { opacity: 0; transform: translateY(20px) scale(0.8); }
@@ -196,6 +204,7 @@
             display: grid;
             position: absolute; 
             cursor: grab;
+            will-change: transform, left, top; /* Optimasi kinerja */
         }
         .block.in-preview {
             position: relative;
@@ -237,25 +246,6 @@
         .color-gold, .board-cell-gold { background: linear-gradient(135deg, var(--color-gold-block), #D4AF37); box-shadow: 0 0 4px var(--color-gold-block), inset 0 0 3px rgba(255,255,255,0.2); border-radius: 3px; }
         .color-lightslategray, .board-cell-lightslategray { background: linear-gradient(135deg, var(--color-lightslategray-block), #5c677d); box-shadow: 0 0 4px var(--color-lightslategray-block), inset 0 0 3px rgba(255,255,255,0.2); border-radius: 3px; }
 
-        /* #restart-button {
-            padding: 12px 25px; 
-            font-size: 1.2em;
-            background-color: var(--neon-pink);
-            color: white;
-            border: none;
-            border-radius: 8px; 
-            cursor: pointer;
-            text-shadow: 0 0 6px black;
-            box-shadow: var(--glow-medium-pink), 0 0 10px var(--neon-pink) inset;
-            transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
-        }
-        #restart-button:hover {
-            transform: scale(1.08);
-            background-color: #ff33cc;
-            box-shadow: 0 0 8px #fff, 0 0 15px var(--neon-pink), 0 0 12px var(--neon-pink) inset;
-        }
-        #restart-button:active { transform: scale(1.02); } */
-        
         .game-over-message {
             position: absolute;
             top: 50%; left: 50%;
@@ -274,6 +264,7 @@
             position: absolute; font-size: 1.8em; font-weight: bold;
             pointer-events: none; z-index: 500; text-shadow: 0 0 5px black;
             animation: floatUpFadeOut 1.8s ease-out forwards;
+            will-change: transform, opacity; /* Optimasi kinerja */
         }
         @keyframes floatUpFadeOut {
             0% { transform: translateY(0) scale(0.8); opacity: 1; }
@@ -628,13 +619,15 @@
         resumeGameButton.addEventListener('click', closeMenu);
 
         resetScoreButton.addEventListener('click', () => {
-            if (confirm("Apakah kamu yakin ingin menghapus skor tertinggi? Tindakan ini tidak bisa dibatalkan.")) {
+            if (confirm("Apakah kamu yakin ingin menghapus skor dan skor tertinggi? Tindakan ini tidak bisa dibatalkan.")) {
                 highScore = 0;
+                currentScore = 0; // Reset current score as well
                 saveHighScore();
                 highScoreElement.textContent = highScore;
+                animateScoreUpdate(currentScore); // Update current score display
                 // Beri feedback
                 const feedbackText = document.createElement('div');
-                feedbackText.textContent = "Skor Tertinggi Direset!";
+                feedbackText.textContent = "Skor Direset!";
                 feedbackText.style.color = "var(--neon-red)";
                 feedbackText.style.textAlign = "center";
                 feedbackText.style.marginTop = "10px";
