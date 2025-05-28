@@ -110,7 +110,10 @@ function handleSquareClick(event) {
     }
 
     // If a drag operation was just completed, prevent a click event from firing immediately
+    // This is a common issue with touch, where touchend can also trigger a click.
     if (draggedPiece) {
+        // A small delay helps differentiate between a drag and a tap.
+        // Or, we can just return and rely on the drag end to handle the move.
         draggedPiece = null; // Clear dragged piece immediately
         return; // Prevent click handling after a drag
     }
@@ -120,12 +123,14 @@ function handleSquareClick(event) {
     const col = parseInt(clickedSquare.dataset.col);
 
     const pieceOnClickedSquare = board[row][col];
+    // Check if the piece is white (player's piece) using its character case
     const isPlayersPiece = pieceOnClickedSquare && pieceOnClickedSquare === pieceOnClickedSquare.toLowerCase();
 
     if (selectedSquare) {
         const startRow = parseInt(selectedSquare.dataset.row);
         const startCol = parseInt(selectedSquare.dataset.col);
 
+        // If the same square is clicked again, deselect it
         if (startRow === row && startCol === col) {
             clearSelectionAndMoves();
         } else if (isValidMove(startRow, startCol, row, col, board, currentPlayer)) {
@@ -148,12 +153,15 @@ function handleSquareClick(event) {
             });
             clearSelectionAndMoves();
         } else {
+            // Clicked on a different square, but not a valid move for the selected piece
+            // If the clicked square contains a player's own piece, select it instead.
             clearSelectionAndMoves();
             if (isPlayersPiece) {
                 selectPiece(clickedSquare);
             }
         }
     } else {
+        // No square is selected. If the clicked square has a player's piece, select it.
         if (isPlayersPiece) {
             selectPiece(clickedSquare);
         }
@@ -187,13 +195,18 @@ function getEventCoords(e) {
 }
 
 function handleDragStart(e) {
+    // Prevent dragging if it's not the player's turn or an overlay is active
     if (currentPlayer === 'black' || promotionOverlay.style.display === 'flex' || gameOverOverlay.style.display === 'flex') {
-        return; // Don't allow drag if not player's turn or during overlays
+        return;
     }
-    e.preventDefault(); // Prevent default touch behavior (e.g., scrolling)
+    e.preventDefault(); // Prevent default touch behavior (e.g., scrolling, zooming)
 
     currentDraggingPieceElement = e.target;
-    const pieceChar = currentDraggingPieceElement.parentNode.dataset.piece || board[parseInt(currentDraggingPieceElement.parentNode.dataset.row)][parseInt(currentDraggingPieceElement.parentNode.dataset.col)];
+    // Get the piece character from the board data directly, as the element might not have dataset.piece
+    const row = parseInt(currentDraggingPieceElement.parentNode.dataset.row);
+    const col = parseInt(currentDraggingPieceElement.parentNode.dataset.col);
+    const pieceChar = board[row][col];
+
     const isPlayersPiece = pieceChar && pieceChar === pieceChar.toLowerCase();
 
     if (!isPlayersPiece) {
@@ -214,6 +227,7 @@ function handleDragStart(e) {
     offsetY = coords.y - rect.top;
 
     draggedPiece.classList.add('dragging');
+    // Position the cloned piece at the exact initial screen coordinates
     draggedPiece.style.left = `${rect.left}px`;
     draggedPiece.style.top = `${rect.top}px`;
 
@@ -250,16 +264,18 @@ function handleDragEnd(e) {
     document.removeEventListener('touchend', handleDragEnd);
     document.removeEventListener('touchcancel', handleDragEnd);
 
-
+    // Get the final coordinates of the drop
     const endCoords = getEventCoords(e);
+
     // Find the square where the piece was dropped
-    const targetSquareElement = document.elementFromPoint(endCoords.x, endCoords.y);
+    // Use elementFromPoint to find the DOM element at the drop coordinates
+    const targetElement = document.elementFromPoint(endCoords.x, endCoords.y);
 
     let droppedOnValidSquare = false;
     let endRow, endCol;
 
-    // Check if the target is a chessboard square
-    const targetSquare = targetSquareElement ? targetSquareElement.closest('.square') : null;
+    // Check if the target is a chessboard square or inside one
+    const targetSquare = targetElement ? targetElement.closest('.square') : null;
 
     if (targetSquare) {
         endRow = parseInt(targetSquare.dataset.row);
@@ -291,12 +307,12 @@ function handleDragEnd(e) {
 
     if (!droppedOnValidSquare) {
         // If not a valid move, put the piece back to its original square
-        // The original piece element might have been removed by renderBoard if an earlier click was handled
-        // Re-rendering the board is the safest way to reset state.
+        // The safest way to reset is to re-render the entire board.
         renderBoard();
     }
     
-    draggedPiece = null; // Reset for next drag
+    // Reset drag variables
+    draggedPiece = null;
     currentDraggingPieceElement = null;
     originalPieceParent = null;
     dragStartSquare = null;
@@ -588,7 +604,8 @@ function isValidMove(startRow, startCol, endRow, endCol, currentBoard, playerTur
 
     // Now, simulate the move to check if it results in check on the king
     let tempBoard = JSON.parse(JSON.stringify(currentBoard));
-    const capturedPiece = tempBoard[endRow][endCol]; // Store what was on the target square
+    // No need to store capturedPiece here, as we're just checking for check
+    // The piece is simply overwritten on the target square.
 
     tempBoard[endRow][endCol] = piece;
     tempBoard[startRow][startCol] = '';
@@ -694,7 +711,7 @@ function movePiece(startRow, startCol, endRow, endCol, callback) {
     }
 
     // Handle En Passant Capture on the newBoardState
-    let capturedPawnForEnPassant = null;
+    let capturedPawnForEnPassant = null; // This variable is not strictly needed for function logic, but useful for debugging
     if (pieceType === 'p' && enPassantTargetSquare && endRow === enPassantTargetSquare[0] && endCol === enPassantTargetSquare[1] && newBoardState[endRow][endCol] === '') {
         const capturedPawnRow = isWhite ? endRow + 1 : endRow - 1;
         capturedPawnForEnPassant = newBoardState[capturedPawnRow][endCol]; // Store for potential undo/debug
@@ -872,6 +889,9 @@ function getAllPossibleMoves(currentBoard, playerColor) {
                 if ((isWhitePiece && isCurrentPlayerWhite) || (!isWhitePiece && !isCurrentPlayerWhite)) {
                     for (let tr = 0; tr < 8; tr++) {
                         for (let tc = 0; tc < 8; tc++) {
+                            // When checking isValidMove here, make sure it doesn't modify global state variables
+                            // that are sensitive to the current turn's actual moves (like enPassantTargetSquare)
+                            // A defensive copy of the board is already used within isValidMove.
                             if (isValidMove(r, c, tr, tc, currentBoard, playerColor)) {
                                 moves.push({ startRow: r, startCol: c, endRow: tr, endCol: tc, piece: piece });
                             }
@@ -936,6 +956,7 @@ function botMove() {
         }
 
         // Fallback to a completely random move if no capturing moves (or if logic above didn't pick one)
+        // This ensures a move is always picked if possibleMoves is not empty.
         if (!bestMove) {
             bestMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
         }
