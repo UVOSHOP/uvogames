@@ -191,7 +191,7 @@ function handleDragStart(e) {
     if (currentPlayer === 'black' || promotionOverlay.style.display === 'flex' || gameOverOverlay.style.display === 'flex') {
         return; // Don't allow drag if not player's turn or during overlays
     }
-    e.preventDefault(); // Prevent default touch behavior (e.g., scrolling, zooming)
+    e.preventDefault(); // Prevent default touch/mouse behavior (e.g., scrolling, zooming)
 
     currentDraggingPieceElement = e.target;
     // Check if the element being dragged is actually a piece.
@@ -220,6 +220,7 @@ function handleDragStart(e) {
     offsetY = coords.y - rect.top;
 
     draggedPiece.classList.add('dragging');
+    // Position the piece absolutely on the screen relative to the viewport
     draggedPiece.style.left = `${rect.left}px`;
     draggedPiece.style.top = `${rect.top}px`;
 
@@ -257,22 +258,21 @@ function handleDragEnd(e) {
     document.removeEventListener('touchcancel', handleDragEnd);
 
 
-    const endCoords = getEventCoords(e);
-    // Find the square where the piece was dropped using elementFromPoint
-    // For touch, use changedTouches[0] for the final position
-    const clientX = e.changedTouches ? e.changedTouches[0].clientX : endCoords.x;
-    const clientY = e.changedTouches ? e.changedTouches[0].clientY : endCoords.y;
-    const targetSquareElement = document.elementFromPoint(clientX, clientY);
+    // Get the final coordinates of the drag
+    const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+    const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+    
+    // Find the element at the drop point
+    const targetElement = document.elementFromPoint(clientX, clientY);
 
     let droppedOnValidSquare = false;
-    let endRow, endCol;
-
-    // Check if the target is a chessboard square or a piece within a square
-    const targetSquare = targetSquareElement ? targetSquareElement.closest('.square') : null;
+    
+    // Ensure the target is a chessboard square
+    const targetSquare = targetElement ? targetElement.closest('.square') : null;
 
     if (targetSquare) {
-        endRow = parseInt(targetSquare.dataset.row);
-        endCol = parseInt(targetSquare.dataset.col);
+        const endRow = parseInt(targetSquare.dataset.row);
+        const endCol = parseInt(targetSquare.dataset.col);
 
         const startRow = parseInt(dragStartSquare.dataset.row);
         const startCol = parseInt(dragStartSquare.dataset.col);
@@ -298,8 +298,7 @@ function handleDragEnd(e) {
     }
 
     if (!droppedOnValidSquare) {
-        // If not a valid move, put the piece back to its original square
-        // Re-rendering the board is the safest way to reset state and clear the dragged piece.
+        // If not a valid move, put the piece back to its original square by re-rendering
         renderBoard();
     }
     
@@ -525,6 +524,9 @@ function isValidMove(startRow, startCol, endRow, endCol, currentBoard, playerTur
             // Normal 1-square move
             if (rowDiffKing <= 1 && colDiffKing <= 1 && (rowDiffKing + colDiffKing > 0)) {
                 // Check if king is moving into an attacked square
+                // The `byWhitePlayer` argument for `isSquareAttacked` refers to the attacking side.
+                // So, if we're checking if white king moves into check, the attacking pieces are black,
+                // meaning `byWhitePlayer` should be `false`.
                 if (!isSquareAttacked(endRow, endCol, isWhite ? false : true, currentBoard)) {
                     moveIsValidByPieceRules = true;
                 }
@@ -595,8 +597,7 @@ function isValidMove(startRow, startCol, endRow, endCol, currentBoard, playerTur
 
     // Now, simulate the move to check if it results in check on the king
     let tempBoard = JSON.parse(JSON.stringify(currentBoard));
-    const capturedPiece = tempBoard[endRow][endCol]; // Store what was on the target square
-
+    // The piece is already on tempBoard[startRow][startCol]. We need to make the move.
     tempBoard[endRow][endCol] = piece;
     tempBoard[startRow][startCol] = '';
 
@@ -726,6 +727,7 @@ function movePiece(startRow, startCol, endRow, endCol, callback) {
     animatingPiece.style.position = 'absolute';
     animatingPiece.style.zIndex = '20';
     animatingPiece.style.pointerEvents = 'none'; // Don't block clicks
+    animatingPiece.style.touchAction = 'none'; // Don't block touch
 
     const boardRect = chessboard.getBoundingClientRect();
     const startRect = startSquare.getBoundingClientRect();
