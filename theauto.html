@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>UVO-THE AUTO</title>
+    <style>
+        /* CSS GLOBAL */
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #333;
+            font-family: 'Courier New', Courier, monospace; /* Contoh font pixel-art friendly */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw; /* Atau ukuran tetap jika tidak full-screen */
+            height: 100vh;
+            max-width: 800px; /* Batas untuk tampilan desktop */
+            max-height: 600px;
+            background-color: #555; /* Warna dasar map */
+            overflow: hidden; /* Penting untuk menjaga elemen di dalam */
+            border: 2px solid #111;
+        }
+
+        #game-world {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            /* Perspektif untuk efek 3D isometrik */
+            perspective: 1000px; /* Sesuaikan nilainya */
+        }
+
+        /* --- GAYA ISOMETRIK & PIXEL ART (CONTOH DASAR) --- */
+        .iso-object {
+            position: absolute;
+            /* Ukuran dasar, akan di-override */
+            width: 50px;
+            height: 50px;
+            background-color: #888; /* Placeholder */
+            border: 1px solid #222;
+            /* Transformasi isometrik dasar - sesuaikan ini! */
+            /* Ini adalah bagian yang paling tricky dan butuh banyak eksperimen */
+            /* transform: rotateX(60deg) rotateZ(-45deg); */
+            /* transform-origin: center center; */
+            image-rendering: pixelated; /* Penting untuk pixel art */
+        }
+
+        .player {
+            background-color: blue; /* Placeholder */
+            width: 30px;
+            height: 45px;
+            z-index: 100;
+            /* Ganti dengan sprite sheet untuk animasi */
+            background-image: url('assets/images/player_idle.png'); /* Contoh */
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+
+        .npc {
+            background-color: green; /* Placeholder */
+            width: 30px;
+            height: 45px;
+            z-index: 90;
+            /* background-image: url('assets/images/npc1.png'); */
+        }
+
+        .vehicle {
+            background-color: red; /* Placeholder */
+            width: 80px;
+            height: 40px;
+            z-index: 80;
+            /* background-image: url('assets/images/car_red.png'); */
+        }
+        .vehicle .smoke {
+            position: absolute;
+            bottom: 5px;
+            left: -10px;
+            width: 10px;
+            height: 10px;
+            background-color: rgba(200,200,200,0.5);
+            border-radius: 50%;
+            display: none; /* Tampilkan dengan JS */
+        }
+
+
+        .building {
+            background-color: #777; /* Placeholder */
+            /* Ukuran dan posisi akan diatur di JS atau HTML */
+            z-index: 10;
+            /* background-image: url('assets/images/building1_iso.png'); */
+        }
+
+        .road {
+            background-color: #444; /* Placeholder */
+            /* background-image: url('assets/images/road_straight_iso.png'); */
+            z-index: 1;
+        }
+        .sidewalk {
+            background-color: #666;
+            z-index: 2;
+        }
+        .lamp-post {
+            width: 10px;
+            height: 60px;
+            background-color: #222;
+            z-index: 11;
+        }
+
+
+        /* --- UI (USER INTERFACE) --- */
+        #ui-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Biar bisa klik tembus ke game world */
+            z-index: 200;
+        }
+
+        /* Status Atas Kiri */
+        #status-display {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0,0,0,0.5);
+            padding: 5px;
+            border-radius: 3px;
+            font-size: 12px;
+            pointer-events: auto;
+        }
+        #money-display, #wanted-display {
+            margin-bottom: 3px;
+        }
+        .star { display: inline-block; color: yellow; margin-left: 2px;}
+
+        /* Mini Map Kanan Atas */
+        #mini-map {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 80px;
+            height: 60px;
+            background-color: rgba(0,0,0,0.7);
+            border: 1px solid #888;
+            border-radius: 3px;
+            pointer-events: auto;
+        }
+        #mini-map .mini-player {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background-color: blue;
+            border-radius: 50%;
+        }
+
+        /* Analog Kiri Bawah */
+        #virtual-analog {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 100px;
+            height: 100px;
+            background-color: rgba(50,50,50,0.5);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto;
+            user-select: none; /* Mencegah seleksi teks saat drag */
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+        #analog-stick {
+            width: 40px;
+            height: 40px;
+            background-color: rgba(100,100,100,0.8);
+            border-radius: 50%;
+            position: relative; /* Untuk pergerakan di dalam analog */
+        }
+
+        /* Tombol Aksi Kanan Bawah */
+        #action-buttons {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            pointer-events: auto;
+        }
+        .action-button {
+            width: 50px;
+            height: 50px;
+            background-color: rgba(80,80,80,0.7);
+            border: 2px solid #ccc;
+            border-radius: 50%;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+        .action-button:active {
+            background-color: rgba(120,120,120,0.9);
+        }
+
+        /* Inventory Bawah Tengah */
+        #inventory-bar {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0,0,0,0.6);
+            padding: 5px;
+            border-radius: 5px;
+            display: none; /* Tampilkan saat tombol inventory ditekan */
+            flex-direction: row;
+            pointer-events: auto;
+        }
+        .inventory-slot {
+            width: 40px;
+            height: 40px;
+            background-color: #555;
+            border: 1px solid #888;
+            margin: 0 3px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* background-image: url('assets/images/weapon_icon.png'); */
+        }
+        .inventory-slot.selected {
+            border-color: yellow;
+        }
+
+        /* Dialog Box */
+        #dialog-box {
+            position: absolute;
+            bottom: 100px; /* Di atas tombol/inventory */
+            left: 10%;
+            width: 80%;
+            background-color: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #fff;
+            font-size: 14px;
+            display: none; /* Tampilkan saat ada dialog */
+            pointer-events: auto;
+        }
+        #dialog-text {
+            margin: 0;
+        }
+        #dialog-npc-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #ffdd57;
+        }
+
+        /* Misi UI Atas */
+        #mission-objective {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0,0,0,0.6);
+            padding: 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            max-width: 60%;
+            text-align: center;
+            display: none; /* Tampilkan saat ada misi */
+        }
+
+        /* --- RESPONSIVE SEDERHANA --- */
+        @media (max-width: 600px) { /* Contoh breakpoint untuk HP */
+            #virtual-analog { width: 120px; height: 120px; bottom: 15px; left: 15px;}
+            #analog-stick { width: 50px; height: 50px; }
+            .action-button { width: 60px; height: 60px; font-size: 12px; }
+            #action-buttons { bottom: 15px; right: 15px; }
+            #status-display { font-size: 10px; }
+            #mini-map { width: 70px; height: 50px; }
+            #dialog-box { font-size: 12px; bottom: 120px; }
+            #inventory-bar { padding: 3px; }
+            .inventory-slot { width: 35px; height: 35px; }
+        }
+
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="game-world">
+            <div id="player" class="iso-object player" style="left: 100px; top: 150px;"></div>
+
+            <div id="npc1" class="iso-object npc" style="left: 200px; top: 100px;">NPC</div>
+
+            <div id="car1" class="iso-object vehicle" style="left: 250px; top: 200px;">
+                MOBIL
+                <div class="smoke"></div>
+            </div>
+
+            <div class="iso-object building" style="width: 150px; height: 200px; left: 50px; top: 50px; background-color: #a0a0a0;">Gedung</div>
+            <div class="iso-object road" style="width: 300px; height: 50px; left: 50px; top: 250px; background-color: #606060;">Jalan</div>
+            <div class="iso-object road" style="width: 50px; height: 200px; left: 200px; top: 50px; background-color: #606060;">Jalan Vertikal</div>
+
+            <div id="kosan-tua" class="iso-object building" style="width: 80px; height: 100px; left: 80px; top: 130px; background-color: #8B4513;">Kosan</div>
+            <div id="kantor-polisi" class="iso-object building" style="width: 120px; height: 150px; left: 350px; top: 80px; background-color: #4682B4;">Polisi</div>
+            <div id="toko-umum" class="iso-object building" style="width: 100px; height: 80px; left: 300px; top: 250px; background-color: #3CB371;">Toko</div>
+
+        </div>
+
+        <div id="ui-container">
+            <div id="status-display">
+                <div id="money-display">Uang: $0</div>
+                <div id="wanted-display">Wanted: <span id="wanted-stars"></span></div>
+            </div>
+
+            <div id="mini-map">
+                <div class="mini-player" id="mini-map-player"></div>
+                </div>
+
+            <div id="mission-objective">Ambil paket di gang belakang.</div>
+
+            <div id="dialog-box">
+                <div id="dialog-npc-name">Nama NPC</div>
+                <p id="dialog-text">Halo, bisa bantu saya?</p>
+            </div>
+
+            <div id="virtual-analog">
+                <div id="analog-stick"></div>
+            </div>
+            <div id="action-buttons">
+                <div id="btn-interact" class="action-button">AMBIL/NAIK</div>
+                <div id="btn-action" class="action-button">PUKUL/TEMBAK</div>
+                <div id="btn-inventory" class="action-button">INV</div>
+            </div>
+
+            <div id="inventory-bar">
+                <div class="inventory-slot" data-item="fist">P</div> <div class="inventory-slot" data-item="pistol">PI</div> <div class="inventory-slot"></div>
+                <div class="inventory-slot"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="theauto.js"></script>
+</body>
+</html>
