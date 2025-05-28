@@ -273,6 +273,7 @@
             transition: transform 0.3s ease-out;
             pointer-events: none; /* Allows clicks to go through to the square by default */
             z-index: 10;
+            touch-action: none; /* Prevent piece-specific touch behaviors */
         }
 
         .piece.dragging {
