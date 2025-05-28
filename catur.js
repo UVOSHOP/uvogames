@@ -110,10 +110,9 @@ function handleSquareClick(event) {
     }
 
     // If a drag operation was just completed, prevent a click event from firing immediately
-    // This helps prevent accidental double-actions after a drag-end.
     if (draggedPiece) {
         draggedPiece = null; // Clear dragged piece immediately
-        return;
+        return; // Prevent click handling after a drag
     }
 
     const clickedSquare = event.currentTarget;
@@ -191,15 +190,10 @@ function handleDragStart(e) {
     if (currentPlayer === 'black' || promotionOverlay.style.display === 'flex' || gameOverOverlay.style.display === 'flex') {
         return; // Don't allow drag if not player's turn or during overlays
     }
-    e.preventDefault(); // Prevent default touch/mouse behavior (e.g., scrolling, zooming)
+    e.preventDefault(); // Prevent default touch behavior (e.g., scrolling)
 
     currentDraggingPieceElement = e.target;
-    // Check if the element being dragged is actually a piece.
-    if (!currentDraggingPieceElement.classList.contains('piece')) {
-        return;
-    }
-
-    const pieceChar = board[parseInt(currentDraggingPieceElement.parentNode.dataset.row)][parseInt(currentDraggingPieceElement.parentNode.dataset.col)];
+    const pieceChar = currentDraggingPieceElement.parentNode.dataset.piece || board[parseInt(currentDraggingPieceElement.parentNode.dataset.row)][parseInt(currentDraggingPieceElement.parentNode.dataset.col)];
     const isPlayersPiece = pieceChar && pieceChar === pieceChar.toLowerCase();
 
     if (!isPlayersPiece) {
@@ -208,7 +202,7 @@ function handleDragStart(e) {
     }
 
     draggedPiece = currentDraggingPieceElement;
-    originalPieceParent = draggedPiece.parentNode; // This is the square it came from
+    originalPieceParent = draggedPiece.parentNode;
     dragStartSquare = originalPieceParent;
 
     const coords = getEventCoords(e);
@@ -220,7 +214,6 @@ function handleDragStart(e) {
     offsetY = coords.y - rect.top;
 
     draggedPiece.classList.add('dragging');
-    // Position the piece absolutely on the screen relative to the viewport
     draggedPiece.style.left = `${rect.left}px`;
     draggedPiece.style.top = `${rect.top}px`;
 
@@ -230,7 +223,7 @@ function handleDragStart(e) {
 
     // Add global listeners for dragging and dropping
     document.addEventListener('mousemove', handleDrag);
-    document.addEventListener('touchmove', handleDrag, { passive: false }); // Use passive:false for preventDefault
+    document.addEventListener('touchmove', handleDrag);
     document.addEventListener('mouseup', handleDragEnd);
     document.addEventListener('touchend', handleDragEnd);
     document.addEventListener('touchcancel', handleDragEnd); // Handle cases where touch is interrupted
@@ -252,27 +245,25 @@ function handleDragEnd(e) {
 
     // Remove global listeners
     document.removeEventListener('mousemove', handleDrag);
-    document.removeEventListener('touchmove', handleDrag, { passive: false });
+    document.removeEventListener('touchmove', handleDrag);
     document.removeEventListener('mouseup', handleDragEnd);
     document.removeEventListener('touchend', handleDragEnd);
     document.removeEventListener('touchcancel', handleDragEnd);
 
 
-    // Get the final coordinates of the drag
-    const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
-    const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-    
-    // Find the element at the drop point
-    const targetElement = document.elementFromPoint(clientX, clientY);
+    const endCoords = getEventCoords(e);
+    // Find the square where the piece was dropped
+    const targetSquareElement = document.elementFromPoint(endCoords.x, endCoords.y);
 
     let droppedOnValidSquare = false;
-    
-    // Ensure the target is a chessboard square
-    const targetSquare = targetElement ? targetElement.closest('.square') : null;
+    let endRow, endCol;
+
+    // Check if the target is a chessboard square
+    const targetSquare = targetSquareElement ? targetSquareElement.closest('.square') : null;
 
     if (targetSquare) {
-        const endRow = parseInt(targetSquare.dataset.row);
-        const endCol = parseInt(targetSquare.dataset.col);
+        endRow = parseInt(targetSquare.dataset.row);
+        endCol = parseInt(targetSquare.dataset.col);
 
         const startRow = parseInt(dragStartSquare.dataset.row);
         const startCol = parseInt(dragStartSquare.dataset.col);
@@ -280,6 +271,7 @@ function handleDragEnd(e) {
         if (isValidMove(startRow, startCol, endRow, endCol, board, currentPlayer)) {
             pendingPromotionMove = [startRow, startCol, endRow, endCol];
 
+            // Use the movePiece function with a direct board update
             movePiece(startRow, startCol, endRow, endCol, (newBoard) => {
                 board = newBoard; // Update main board state
 
@@ -298,7 +290,9 @@ function handleDragEnd(e) {
     }
 
     if (!droppedOnValidSquare) {
-        // If not a valid move, put the piece back to its original square by re-rendering
+        // If not a valid move, put the piece back to its original square
+        // The original piece element might have been removed by renderBoard if an earlier click was handled
+        // Re-rendering the board is the safest way to reset state.
         renderBoard();
     }
     
@@ -459,7 +453,7 @@ function isValidMove(startRow, startCol, endRow, endCol, currentBoard, playerTur
         return false;
     }
 
-    // First, check basic piece movement rules (capturing ally pieces is handled in isOccupiedByAlly)
+    // First, check basic piece movement rules (capturing ally pieces is handled here)
     if (isOccupiedByAlly(endRow, endCol, isWhite, currentBoard)) {
         return false;
     }
@@ -524,9 +518,6 @@ function isValidMove(startRow, startCol, endRow, endCol, currentBoard, playerTur
             // Normal 1-square move
             if (rowDiffKing <= 1 && colDiffKing <= 1 && (rowDiffKing + colDiffKing > 0)) {
                 // Check if king is moving into an attacked square
-                // The `byWhitePlayer` argument for `isSquareAttacked` refers to the attacking side.
-                // So, if we're checking if white king moves into check, the attacking pieces are black,
-                // meaning `byWhitePlayer` should be `false`.
                 if (!isSquareAttacked(endRow, endCol, isWhite ? false : true, currentBoard)) {
                     moveIsValidByPieceRules = true;
                 }
@@ -597,7 +588,8 @@ function isValidMove(startRow, startCol, endRow, endCol, currentBoard, playerTur
 
     // Now, simulate the move to check if it results in check on the king
     let tempBoard = JSON.parse(JSON.stringify(currentBoard));
-    // The piece is already on tempBoard[startRow][startCol]. We need to make the move.
+    const capturedPiece = tempBoard[endRow][endCol]; // Store what was on the target square
+
     tempBoard[endRow][endCol] = piece;
     tempBoard[startRow][startCol] = '';
 
@@ -687,7 +679,7 @@ function movePiece(startRow, startCol, endRow, endCol, callback) {
     const pieceType = pieceToMove.toLowerCase();
     const isWhite = pieceToMove === pieceToMove.toLowerCase();
 
-    // Create a temporary board for data update
+    // Create a temporary board for animation and initial data update
     let newBoardState = JSON.parse(JSON.stringify(board));
 
     // Handle Castling Rook Movement on the newBoardState
@@ -702,33 +694,35 @@ function movePiece(startRow, startCol, endRow, endCol, callback) {
     }
 
     // Handle En Passant Capture on the newBoardState
-    let capturedPawnForEnPassant = null; // Store for potential debug
+    let capturedPawnForEnPassant = null;
     if (pieceType === 'p' && enPassantTargetSquare && endRow === enPassantTargetSquare[0] && endCol === enPassantTargetSquare[1] && newBoardState[endRow][endCol] === '') {
         const capturedPawnRow = isWhite ? endRow + 1 : endRow - 1;
-        capturedPawnForEnPassant = newBoardState[capturedPawnRow][endCol];
+        capturedPawnForEnPassant = newBoardState[capturedPawnRow][endCol]; // Store for potential undo/debug
         newBoardState[capturedPawnRow][endCol] = '';
     }
 
-    // Apply the main piece move to newBoardState
+    // Temporarily apply the main piece move to newBoardState for animation setup
     newBoardState[endRow][endCol] = pieceToMove;
     newBoardState[startRow][startCol] = '';
 
-    // Animate the main piece movement (visual only, data already updated in newBoardState)
+
+    // Animate the main piece movement
     const startSquare = document.querySelector(`[data-row="${startRow}"][data-col="${startCol}"]`);
     const endSquare = document.querySelector(`[data-row="${endRow}"][data-col="${endCol}"]`);
     const pieceElement = startSquare.querySelector('.piece');
 
-    if (!pieceElement) { // Fallback if piece element somehow isn't found
+    if (!pieceElement) { // Fallback if piece element somehow isn't found (shouldn't happen often)
         callback(newBoardState); // Just update board data immediately
         return;
     }
 
+    // Clone the piece for animation to avoid conflicts with re-rendering original square
     const animatingPiece = pieceElement.cloneNode(true);
     animatingPiece.style.position = 'absolute';
     animatingPiece.style.zIndex = '20';
     animatingPiece.style.pointerEvents = 'none'; // Don't block clicks
-    animatingPiece.style.touchAction = 'none'; // Don't block touch
 
+    // Get board's top-left for absolute positioning
     const boardRect = chessboard.getBoundingClientRect();
     const startRect = startSquare.getBoundingClientRect();
     const endRect = endSquare.getBoundingClientRect();
@@ -739,6 +733,7 @@ function movePiece(startRow, startCol, endRow, endCol, callback) {
     chessboard.appendChild(animatingPiece);
     pieceElement.remove(); // Remove original piece from its square immediately
 
+    // Trigger CSS transition for animation
     requestAnimationFrame(() => {
         const deltaX = (endRect.left - startRect.left);
         const deltaY = (endRect.top - startRect.top);
@@ -746,10 +741,12 @@ function movePiece(startRow, startCol, endRow, endCol, callback) {
         animatingPiece.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
     });
 
+    // After animation, finalize the board state and trigger callback
     setTimeout(() => {
         animatingPiece.remove(); // Remove the animating clone
 
         // Update global game state variables based on the final move
+        // These need to reflect the state *after* the move
         enPassantTargetSquare = null;
         if (pieceType === 'p' && Math.abs(startRow - endRow) === 2) {
             enPassantTargetSquare = [isWhite ? endRow + 1 : endRow - 1, endCol];
