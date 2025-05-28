@@ -29,22 +29,21 @@
             padding: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden; /* Prevent all scrolling */
-            touch-action: pan-y; /* Allow vertical panning only if content exceeds height, but we want to prevent it generally */
+            overflow: hidden; /* Prevent all scrolling unless explicit */
+            touch-action: pan-y; /* Allow vertical panning only if content exceeds height, but we prevent it generally */
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
-            flex-direction: row; /* Default for desktop */
-            align-items: flex-start;
+            flex-direction: row; /* Default for desktop: sidebar left, main content right */
+            align-items: flex-start; /* Align content to the top */
             justify-content: center;
             background-color: var(--bg-color);
             color: var(--text-color);
             padding: 20px; /* Overall padding */
             box-sizing: border-box;
             gap: 30px;
-            /* Ensure body takes full height and width but doesn't scroll */
             position: relative; /* For copyright positioning */
         }
 
@@ -61,7 +60,7 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 1.2em;
-            z-index: 1001; /* Above sidebar */
+            z-index: 1001; /* Above sidebar and content */
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
             transition: background-color 0.3s ease;
         }
@@ -82,21 +81,21 @@
             text-align: center;
             flex-shrink: 0;
             min-width: 200px;
-            transition: transform 0.3s ease-out; /* For sliding effect */
+            transition: transform 0.3s ease-out; /* For sliding effect on mobile */
+            overflow-y: auto; /* Allow scrolling if content is too long */
         }
 
         @media (max-width: 768px) {
             .sidebar {
-                position: fixed;
+                position: fixed; /* Fixed position on mobile */
                 top: 0;
                 left: 0;
                 height: 100%;
                 width: 250px; /* Adjust width as needed for mobile */
                 transform: translateX(-100%); /* Start off-screen */
-                z-index: 1000;
+                z-index: 1000; /* Below menu button, above main content */
                 border-radius: 0; /* No border-radius for full height overlay */
                 padding-top: 60px; /* Space for menu button */
-                overflow-y: auto; /* Allow scrolling if content is too long */
             }
 
             .sidebar.active {
@@ -110,7 +109,7 @@
             body {
                 flex-direction: column; /* Stack elements vertically on mobile */
                 align-items: center; /* Center items horizontally */
-                padding: 10px; /* Adjust padding when sidebar is off-screen */
+                padding: 10px; /* Adjust overall padding for mobile */
                 gap: 20px;
                 justify-content: flex-start; /* Align content to start on mobile */
             }
@@ -153,7 +152,7 @@
             justify-content: flex-start; /* Align content to top */
             gap: 20px;
             flex-grow: 1; /* Allows main content to take remaining space */
-            max-width: calc(100vw - 200px - 60px); /* 100vw - sidebar-min-width - 2*padding */
+            max-width: calc(100vw - 200px - 60px); /* 100vw - sidebar-min-width - 2*body-padding */
             height: calc(100vh - 40px); /* Fill available height, minus body padding */
             box-sizing: border-box;
             overflow: hidden; /* Prevent overflow on main content as well */
@@ -163,9 +162,9 @@
             .main-content {
                 width: 100%;
                 max-width: 100%; /* Take full width on mobile */
-                height: calc(100vh - 20px - 50px); /* Adjust height to make space for copyright */
+                height: calc(100vh - 20px - 50px); /* Adjust height to make space for copyright at bottom */
                 min-height: auto; /* Allow height to shrink */
-                padding-top: 50px; /* Space for fixed menu button when it's closed */
+                padding-top: 50px; /* Space for fixed menu button when sidebar is closed */
                 justify-content: center; /* Center content vertically on small screens */
             }
         }
@@ -210,7 +209,7 @@
             grid-template-rows: repeat(8, minmax(0, 1fr));   /* Flexible rows */
             border: 5px solid #555;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-            width: clamp(280px, 90vw, 480px); /* Responsive width */
+            width: clamp(280px, 90vw, 480px); /* Responsive width: min 280px, max 480px, 90% of viewport width in between */
             height: clamp(280px, 90vw, 480px); /* Keep aspect ratio square */
             animation: fadeIn 0.5s ease-out;
             touch-action: none; /* Crucial: Prevent browser touch scrolling/zooming on the board */
@@ -276,18 +275,18 @@
         }
 
         .piece {
-            position: relative;
+            position: relative; /* For smoother transitions */
             cursor: grab; /* Indicates draggable */
             font-family: 'Segoe UI Symbol', 'Twemoji Mozilla', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Android Emoji', sans-serif;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
             transition: transform 0.3s ease-out;
-            pointer-events: auto; /* Allows clicks to register on the piece itself */
+            pointer-events: auto; /* Allows clicks/touches to register on the piece itself for drag start */
             touch-action: none; /* Prevents default browser actions on piece */
             z-index: 10;
         }
 
         .piece.dragging {
-            pointer-events: none; /* Ensure no interaction during drag */
+            pointer-events: none; /* Important: Disable pointer events on the piece WHILE dragging to allow event to target square underneath */
             position: fixed; /* Fixes position relative to viewport */
             z-index: 100; /* Bring to front during drag */
             cursor: grabbing;
