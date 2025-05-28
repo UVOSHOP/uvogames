@@ -81,11 +81,11 @@ function renderBoard() {
 
 function updateTurnIndicator() {
     if (currentPlayer === 'white') {
-        whiteTurnIndicator.textContent = 'Giliran: Putih';
-        blackTurnIndicator.textContent = 'Giliran: Hitam (Menunggu)';
+        whiteTurnIndicator.textContent = 'Giliran Anda';
+        blackTurnIndicator.textContent = 'Menunggu';
     } else {
-        whiteTurnIndicator.textContent = 'Giliran: Putih (Menunggu)';
-        blackTurnIndicator.textContent = 'Giliran: Hitam';
+        whiteTurnIndicator.textContent = 'Menunggu';
+        blackTurnIndicator.textContent = 'Giliran Bot';
     }
 }
 
