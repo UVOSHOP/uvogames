@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UVOBLOCK - v1.1 by ADITdeveloper</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
             --board-bg: #1a1a2e;
@@ -46,24 +47,87 @@
 
         body {
             font-family: var(--font-family);
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e, #1a1a2e);
+            /* Latar belakang gradasi biru tua ke biru sedang */
+            background: linear-gradient(135deg, #0A0C20, #1A2E40, #2C4B6B, #3D6A8E);
             background-size: 400% 400%;
             animation: subtleBackgroundGradient 25s ease infinite;
             color: var(--text-color);
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start; /* Pindahkan konten ke atas */
             min-height: 100vh;
             margin: 0;
             padding: 10px;
             box-sizing: border-box;
-            /* overflow-x: hidden; */ /* Dihapus karena sudah diatur di html, body */
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 400px; /* Sesuaikan dengan lebar game-container */
+            padding: 20px 0;
+            position: relative; /* Untuk penempatan skor di tengah */
+        }
+
+        .score-display-main {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3.5em; /* Ukuran font besar untuk skor utama */
+            font-weight: bold;
+            color: #fff; /* Warna putih untuk skor */
+            text-shadow: 0 0 10px rgba(255,255,255,0.7); /* Efek cahaya */
+            z-index: 1; /* Pastikan di atas elemen lain di header */
+        }
+
+        .highscore-icon-display {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 1.4em;
+            font-weight: bold;
+            color: var(--neon-gold); /* Warna emas/oranye untuk highscore */
+            text-shadow: var(--glow-gold);
+            z-index: 2; /* Di atas skor utama jika berdekatan */
+        }
+        .highscore-icon-display .fa-crown {
+            color: var(--neon-gold);
+            font-size: 1.2em;
+        }
+
+        .menu-icon-button {
+            background: none;
+            border: none;
+            color: var(--neon-blue); /* Warna biru muda untuk ikon roda gigi */
+            font-size: 2.2em; /* Ukuran ikon roda gigi */
+            cursor: pointer;
+            position: relative;
+            text-shadow: var(--glow-strong-blue);
+            z-index: 2; /* Di atas skor utama jika berdekatan */
+            padding: 0; /* Hapus padding default button */
+            line-height: 1; /* Pastikan ikon tidak terpotong */
+        }
+        .menu-icon-button:hover {
+            transform: scale(1.1);
+        }
+        .menu-icon-button .notification-dot {
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            width: 8px;
+            height: 8px;
+            background-color: var(--neon-red);
+            border-radius: 50%;
+            box-shadow: 0 0 5px var(--neon-red);
         }
 
         .game-wrapper { /* Wrapper untuk game dan menu */
             position: relative;
             width: fit-content; /* Agar menu bisa overlay dengan benar */
+            margin-top: 20px; /* Jarak dari header */
         }
 
         .game-container {
@@ -81,47 +145,6 @@
         .game-container.menu-active {
             filter: blur(3px);
             pointer-events: none; /* Nonaktifkan interaksi game saat menu aktif */
-        }
-
-
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            max-width: 360px;
-            padding: 0 5px;
-        }
-        
-        #menu-button {
-            background-color: var(--neon-blue);
-            color: #1a1a2e;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
-            font-size: 0.9em;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: var(--glow-strong-blue);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        #menu-button:hover {
-            transform: scale(1.05);
-        }
-
-        .info-area {
-            display: flex;
-            gap: 10px; /* Spasi antara skor dan highscore */
-        }
-
-        .score-display, .highscore-display {
-            font-size: 1.4em;
-            font-weight: bold;
-            color: var(--neon-pink);
-            text-shadow: var(--glow-medium-pink);
-            background-color: rgba(0,0,0,0.3);
-            padding: 5px 10px;
-            border-radius: 5px;
         }
         
         #game-board {
@@ -425,18 +448,19 @@
         /* Responsiveness */
         @media (max-width: 480px) {
             body { padding: 5px; }
-            .game-wrapper { width: 100%; }
+            .header-section { max-width: 310px; padding: 15px 0;}
+            .score-display-main { font-size: 2.8em; }
+            .highscore-icon-display { font-size: 1.2em; }
+            .menu-icon-button { font-size: 1.8em; }
+            .menu-icon-button .notification-dot { top: 0px; right: 0px; width: 7px; height: 7px; }
+
+            .game-wrapper { width: 100%; margin-top: 15px;}
             .game-container { padding: 10px; gap: 10px;}
             #game-board { width: 306px; height: 306px; }
             .grid-cell { width: 34px; height: 34px; }
             .block-cell { width: 14px; height: 14px; }
             .next-pieces-area { max-width: 310px; min-height: 70px; padding: 5px;}
             .piece-container { width: 90px; height: 65px; }
-            .top-bar { max-width: 306px; }
-            .info-area { gap: 5px; }
-            .score-display, .highscore-display { font-size: 1.1em; padding: 4px 8px; }
-            /* #restart-button { font-size: 1em; padding: 10px 20px; } */
-            #menu-button { padding: 6px 10px; font-size: 0.8em; }
             .floating-text { font-size: 1.5em; }
             .ampalibaba-text { font-size: 2em !important; }
             .boom-text { font-size: 2.5em !important; }
@@ -455,16 +479,16 @@
     </style>
 </head>
 <body>
+    <div class="header-section">
+        <div class="highscore-icon-display">
+            <i class="fas fa-crown"></i> <span id="highscore">0</span>
+        </div>
+        <div class="score-display-main" id="score">0</div> <button class="menu-icon-button" id="menu-button">
+            <i class="fas fa-cog"></i> <span class="notification-dot"></span> </button>
+    </div>
+
     <div class="game-wrapper">
         <div class="game-container" id="game-main-container">
-            <div class="top-bar">
-                <button id="menu-button">MENU</button>
-                <div class="info-area">
-                    <div class="score-display">Skor: <span id="score">0</span></div>
-                    <div class="highscore-display">Tertinggi: <span id="highscore">0</span></div>
-                </div>
-            </div>
-            
             <div id="game-board"></div>
 
             <div class="next-pieces-area">
@@ -553,7 +577,6 @@
             document.getElementById('piece-container-1'),
             document.getElementById('piece-container-2')
         ];
-        // const restartButton = document.getElementById('restart-button'); // Removed
         const gameOverMessageElement = document.getElementById('game-over-message');
         const restartGameOverButton = document.getElementById('restart-game-over');
 
@@ -585,7 +608,7 @@
                     gameBoardElement.appendChild(cell);
                 }
             }
-            if (!isRestartFromMenu) { // Jangan reset skor jika hanya restart dari menu game over
+            if (!isRestartFromMenu) { 
                  currentScore = 0;
             }
             animateScoreUpdate(currentScore);
@@ -597,7 +620,7 @@
             comboCount = 0;
             lastMajorEffect = null;
             gameBoardElement.classList.remove('board-shake-subtle', 'board-shake-strong');
-            closeMenu(); // Pastikan menu tertutup saat game dimulai/direstart
+            closeMenu(); 
         }
 
         // --- MENU FUNCTIONS ---
@@ -611,7 +634,6 @@
             isMenuOpen = false;
             menuOverlay.style.display = 'none';
             gameMainContainer.classList.remove('menu-active');
-            // Jika ada modal redeem terbuka, tutup juga
             redeemModal.style.display = 'none';
         }
 
@@ -621,11 +643,10 @@
         resetScoreButton.addEventListener('click', () => {
             if (confirm("Apakah kamu yakin ingin menghapus skor dan skor tertinggi? Tindakan ini tidak bisa dibatalkan.")) {
                 highScore = 0;
-                currentScore = 0; // Reset current score as well
+                currentScore = 0; 
                 saveHighScore();
                 highScoreElement.textContent = highScore;
-                animateScoreUpdate(currentScore); // Update current score display
-                // Beri feedback
+                animateScoreUpdate(currentScore); 
                 const feedbackText = document.createElement('div');
                 feedbackText.textContent = "Skor Direset!";
                 feedbackText.style.color = "var(--neon-red)";
@@ -638,13 +659,9 @@
         });
 
         backToMainMenuButton.addEventListener('click', () => {
-            // Jika ini bagian dari web yang lebih besar, arahkan ke URL menu utama
-            // window.location.href = "url_menu_utama.html"; 
-            // Untuk single page, history.back() adalah opsi sederhana
             if (history.length > 1) {
                 history.back();
             } else {
-                // Jika tidak ada history, mungkin reload atau tampilkan pesan
                 alert("Tidak ada halaman sebelumnya di histori.");
             }
         });
@@ -652,7 +669,7 @@
         // --- REDEEM CODE FUNCTIONS ---
         openRedeemButton.addEventListener('click', () => {
             redeemModal.style.display = 'flex';
-            redeemCodeInput.value = ''; // Kosongkan input
+            redeemCodeInput.value = ''; 
             redeemCodeInput.focus();
         });
 
@@ -661,13 +678,13 @@
         });
 
         redeemSubmitButton.addEventListener('click', () => {
-            const code = redeemCodeInput.value.trim().toUpperCase(); // Normalisasi kode
+            const code = redeemCodeInput.value.trim().toUpperCase(); 
             if (REDEEM_CODES.hasOwnProperty(code)) {
                 const scoreBonus = REDEEM_CODES[code];
                 currentScore += scoreBonus;
                 animateScoreUpdate(currentScore);
                 showFloatingText(`+${scoreBonus} Skor!`, Math.floor(GRID_SIZE / 2) - 2, Math.floor(GRID_SIZE / 2) - 1, 'code-success');
-                delete REDEEM_CODES[code]; // Opsional: buat kode hanya bisa dipakai sekali per sesi game
+                delete REDEEM_CODES[code]; 
                 redeemModal.style.display = 'none';
             } else {
                 showFloatingText("Kode Invalid!", Math.floor(GRID_SIZE / 2) - 2, Math.floor(GRID_SIZE / 2) - 1, 'code-fail');
@@ -682,14 +699,13 @@
             for (let r = 0; r < GRID_SIZE; r++) {
                 for (let c = 0; c < GRID_SIZE; c++) {
                     const cellElement = gameBoardElement.children[r * GRID_SIZE + c];
-                    // Remove all previous block color classes and 'filled'
-                    cellElement.className = 'grid-cell'; // Reset to base class
+                    cellElement.className = 'grid-cell'; 
                     if (boardState[r][c] !== 0) {
-                        cellElement.classList.add('filled', boardState[r][c]); // Add the block color class
+                        cellElement.classList.add('filled', boardState[r][c]); 
                     }
                 }
             }
-            clearShadow(); // Always clear shadows when board re-renders or state changes
+            clearShadow(); 
         }
 
         function createBlockElement(blockDef, isPreview = false) {
@@ -716,8 +732,8 @@
 
             blockDef.cells.forEach(([r, c]) => {
                 const cell = document.createElement('div');
-                cell.classList.add(`color-${blockDef.color}`); // Use the base color class
-                if (isPreview) cell.classList.add('block-cell'); // Smaller cells for preview
+                cell.classList.add(`color-${blockDef.color}`); 
+                if (isPreview) cell.classList.add('block-cell'); 
                 
                 cell.style.gridRowStart = r - minR + 1;
                 cell.style.gridColumnStart = c - minC + 1;
@@ -791,7 +807,6 @@
             draggedPiece.element.style.left = `${event.clientX - dragOffsetX}px`;
             draggedPiece.element.style.top = `${event.clientY - dragOffsetY}px`;
 
-            // Update shadow
             updateShadow(event.clientX, event.clientY, draggedPiece.blockDef);
         }
 
@@ -828,7 +843,7 @@
         }
 
         function updateShadow(clientX, clientY, blockDef) {
-            clearShadow(); // Clear previous shadow
+            clearShadow(); 
 
             const boardRect = gameBoardElement.getBoundingClientRect();
             const boardCellActualSize = gameBoardElement.querySelector('.grid-cell').offsetWidth;
@@ -839,7 +854,6 @@
             const targetCol = Math.floor(relativeX / boardCellActualSize);
             const targetRow = Math.floor(relativeY / boardCellActualSize);
 
-            // Calculate actual cells for shadow
             const cellsForShadow = [];
             let canPlaceShadow = true;
             for (const [rOffset, cOffset] of blockDef.cells) {
@@ -856,7 +870,7 @@
                 currentShadowCells = cellsForShadow;
                 currentShadowCells.forEach(({r, c}) => {
                     const cellElement = gameBoardElement.children[r * GRID_SIZE + c];
-                    if (cellElement && boardState[r][c] === 0) { // Only add shadow if cell is empty
+                    if (cellElement && boardState[r][c] === 0) { 
                         cellElement.classList.add('shadow');
                     }
                 });
@@ -893,7 +907,7 @@
                     showFloatingText("Back-to-Back!", baseRow -1 < 0 ? 0 : baseRow -1, baseCol, 'backtoback-text');
                     scoreBonus += 150; 
                 }
-                lastMajorEffect = currentMajorEffect || (linesClearedCount > 0 ? 'clear' : null); // Track any clear as potential start of back-to-back for major effects
+                lastMajorEffect = currentMajorEffect || (linesClearedCount > 0 ? 'clear' : null); 
 
 
                 if (comboCount > 0 && linesClearedCount > 0) {
@@ -914,7 +928,7 @@
                 }
             } else { 
                 comboCount = 0;
-                if (lastMajorEffect !== 'boom' && lastMajorEffect !== 'ampalibaba' && lastMajorEffect !== 'perfect') { // Don't reset if it was a major effect, allow back-to-back next turn
+                if (lastMajorEffect !== 'boom' && lastMajorEffect !== 'ampalibaba' && lastMajorEffect !== 'perfect') { 
                     lastMajorEffect = null;
                 }
             }
@@ -952,11 +966,10 @@
                 const r = baseRow + rOffset;
                 const c = baseCol + cOffset;
                 if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
-                    // Use idColor for boardState to properly apply CSS classes
                     boardState[r][c] = blockDef.idColor; 
                     cellsFilled++;
                     const cellElement = gameBoardElement.children[r * GRID_SIZE + c];
-                    cellElement.classList.add('placed-animation', blockDef.idColor); // Add idColor directly
+                    cellElement.classList.add('placed-animation', blockDef.idColor); 
                     cellElement.addEventListener('animationend', () => cellElement.classList.remove('placed-animation'), { once: true });
                 }
             });
@@ -999,22 +1012,20 @@
         function isBoardEmpty() { return boardState.every(row => row.every(cell => cell === 0)); }
 
         function checkGameOver() {
-            // Check if any of the *unplaced* pieces can be placed on the board
             for (let i = 0; i < currentPieces.length; i++) {
                 if (!currentPieces[i] || currentPieces[i].placed) {
-                    continue; // Skip if piece is null or already placed
+                    continue; 
                 }
                 const blockDef = currentPieces[i].def;
                 for (let r = 0; r < GRID_SIZE; r++) {
                     for (let c = 0; c < GRID_SIZE; c++) {
                         if (isValidPlacement(blockDef, r, c)) {
-                            return false; // Found a valid placement for at least one unplaced piece, so not game over
+                            return false; 
                         }
                     }
                 }
             }
-            // If we reach here, no unplaced piece can be placed
-            return currentPieces.some(p => p && !p.placed); // True if there are unplaced pieces and none can be placed
+            return currentPieces.some(p => p && !p.placed); 
         }
 
         function showGameOver() {
@@ -1053,16 +1064,13 @@
             textElement.classList.add('floating-text', ...extraClasses);
             textElement.textContent = text;
             const boardCellActualSize = gameBoardElement.querySelector('.grid-cell')?.offsetWidth || CELL_SIZE_BOARD_CSS;
-            // Calculate a position near the center of the board
             let textLeft = (gameBoardElement.offsetWidth / 2) - (textElement.offsetWidth / 2);
-            let textTop = (gameBoardElement.offsetHeight / 2) - 30; // Slightly above center
+            let textTop = (gameBoardElement.offsetHeight / 2) - 30; 
 
-            // If specific row/col are provided, adjust position
             if (boardRow !== undefined && boardCol !== undefined) {
                 textLeft = boardCol * boardCellActualSize + (boardCellActualSize / 2) - (textElement.offsetWidth / 2);
                 textTop = boardRow * boardCellActualSize - 20; 
-                // Ensure it stays within board bounds if block is near edge
-                textLeft = Math.max(0, Math.min(textLeft, gameBoardElement.offsetWidth - 60)); // 60 for some margin
+                textLeft = Math.max(0, Math.min(textLeft, gameBoardElement.offsetWidth - 60)); 
             }
             
             textElement.style.left = `${textLeft}px`; 
@@ -1072,8 +1080,7 @@
         }
 
         // --- EVENT LISTENERS ---
-        // restartButton.addEventListener('click', () => initGame(false)); // REMOVED
-        restartGameOverButton.addEventListener('click', () => initGame(false)); // Full reset from game over
+        restartGameOverButton.addEventListener('click', () => initGame(false)); 
         
         // --- MULAI GAME ---
         initGame(false);
