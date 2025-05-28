@@ -11,7 +11,7 @@ const gameOverDetails = document.getElementById('game-over-details');
 
 let board = []; // 2D array representing the chessboard state
 let currentPlayer = 'white'; // 'white' or 'black'
-let selectedSquare = null; // Stores the DOM element of the currently selected square
+let selectedSquare = null; // Stores the DOM element of the currently selected square (for click/tap)
 let enPassantTargetSquare = null; // Stores [row, col] of the square behind a pawn that moved two squares
 let canWhiteCastleKingSide = true;
 let canWhiteCastleQueenSide = true;
@@ -26,6 +26,14 @@ const pieces = {
     'R': '&#9814;', 'N': '&#9816;', 'B': '&#9815;', 'Q': '&#9813;', 'K': '&#9812;', 'P': '&#9817;', // Black
     'r': '&#9820;', 'n': '&#9822;', 'b': '&#9821;', 'q': '&#9819;', 'k': '&#9818;', 'p': '&#9823;'  // White
 };
+
+// --- Drag and Drop Variables for Touch/Mouse ---
+let draggedPiece = null;
+let currentDraggingPieceElement = null; // The piece element currently being dragged
+let initialX, initialY; // Initial touch/mouse position
+let offsetX, offsetY; // Offset from touch/mouse to piece top-left
+let originalPieceParent = null; // To put the piece back if drag is invalid
+let dragStartSquare = null; // The square element where the drag started
 
 // --- Game State Management ---
 
@@ -71,8 +79,12 @@ function renderBoard() {
                 const pieceElement = document.createElement('span');
                 pieceElement.classList.add('piece');
                 pieceElement.innerHTML = pieces[pieceChar];
+                // Add event listeners for both mouse and touch for drag-and-drop
+                pieceElement.addEventListener('mousedown', handleDragStart);
+                pieceElement.addEventListener('touchstart', handleDragStart);
                 square.appendChild(pieceElement);
             }
+            // Add click listener for selecting and moving (alternative to drag)
             square.addEventListener('click', handleSquareClick);
             chessboard.appendChild(square);
         }
@@ -89,12 +101,18 @@ function updateTurnIndicator() {
     }
 }
 
-// --- Player Interaction ---
+// --- Player Interaction (Click/Tap) ---
 
 function handleSquareClick(event) {
     if (currentPlayer === 'black' || promotionOverlay.style.display === 'flex' || gameOverOverlay.style.display === 'flex') {
         console.log("Not player's turn or game state preventing action.");
         return;
+    }
+
+    // If a drag operation was just completed, prevent a click event from firing immediately
+    if (draggedPiece) {
+        draggedPiece = null; // Clear dragged piece immediately
+        return; // Prevent click handling after a drag
     }
 
     const clickedSquare = event.currentTarget;
@@ -159,6 +177,133 @@ function clearSelectionAndMoves() {
     });
 }
 
+// --- Drag and Drop Logic (for both mouse and touch) ---
+
+function getEventCoords(e) {
+    if (e.touches && e.touches.length > 0) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+    return { x: e.clientX, y: e.clientY };
+}
+
+function handleDragStart(e) {
+    if (currentPlayer === 'black' || promotionOverlay.style.display === 'flex' || gameOverOverlay.style.display === 'flex') {
+        return; // Don't allow drag if not player's turn or during overlays
+    }
+    e.preventDefault(); // Prevent default touch behavior (e.g., scrolling)
+
+    currentDraggingPieceElement = e.target;
+    const pieceChar = currentDraggingPieceElement.parentNode.dataset.piece || board[parseInt(currentDraggingPieceElement.parentNode.dataset.row)][parseInt(currentDraggingPieceElement.parentNode.dataset.col)];
+    const isPlayersPiece = pieceChar && pieceChar === pieceChar.toLowerCase();
+
+    if (!isPlayersPiece) {
+        currentDraggingPieceElement = null; // Only allow dragging own pieces
+        return;
+    }
+
+    draggedPiece = currentDraggingPieceElement;
+    originalPieceParent = draggedPiece.parentNode;
+    dragStartSquare = originalPieceParent;
+
+    const coords = getEventCoords(e);
+    initialX = coords.x;
+    initialY = coords.y;
+
+    const rect = draggedPiece.getBoundingClientRect();
+    offsetX = coords.x - rect.left;
+    offsetY = coords.y - rect.top;
+
+    draggedPiece.classList.add('dragging');
+    draggedPiece.style.left = `${rect.left}px`;
+    draggedPiece.style.top = `${rect.top}px`;
+
+    document.body.appendChild(draggedPiece); // Move to body to allow full screen drag
+
+    showPossibleMoves(parseInt(dragStartSquare.dataset.row), parseInt(dragStartSquare.dataset.col));
+
+    // Add global listeners for dragging and dropping
+    document.addEventListener('mousemove', handleDrag);
+    document.addEventListener('touchmove', handleDrag);
+    document.addEventListener('mouseup', handleDragEnd);
+    document.addEventListener('touchend', handleDragEnd);
+    document.addEventListener('touchcancel', handleDragEnd); // Handle cases where touch is interrupted
+}
+
+function handleDrag(e) {
+    if (!draggedPiece) return;
+    e.preventDefault(); // Prevent scrolling while dragging
+
+    const coords = getEventCoords(e);
+    draggedPiece.style.left = `${coords.x - offsetX}px`;
+    draggedPiece.style.top = `${coords.y - offsetY}px`;
+}
+
+function handleDragEnd(e) {
+    if (!draggedPiece) return;
+
+    draggedPiece.classList.remove('dragging');
+
+    // Remove global listeners
+    document.removeEventListener('mousemove', handleDrag);
+    document.removeEventListener('touchmove', handleDrag);
+    document.removeEventListener('mouseup', handleDragEnd);
+    document.removeEventListener('touchend', handleDragEnd);
+    document.removeEventListener('touchcancel', handleDragEnd);
+
+
+    const endCoords = getEventCoords(e);
+    // Find the square where the piece was dropped
+    const targetSquareElement = document.elementFromPoint(endCoords.x, endCoords.y);
+
+    let droppedOnValidSquare = false;
+    let endRow, endCol;
+
+    // Check if the target is a chessboard square
+    const targetSquare = targetSquareElement ? targetSquareElement.closest('.square') : null;
+
+    if (targetSquare) {
+        endRow = parseInt(targetSquare.dataset.row);
+        endCol = parseInt(targetSquare.dataset.col);
+
+        const startRow = parseInt(dragStartSquare.dataset.row);
+        const startCol = parseInt(dragStartSquare.dataset.col);
+
+        if (isValidMove(startRow, startCol, endRow, endCol, board, currentPlayer)) {
+            pendingPromotionMove = [startRow, startCol, endRow, endCol];
+
+            // Use the movePiece function with a direct board update
+            movePiece(startRow, startCol, endRow, endCol, (newBoard) => {
+                board = newBoard; // Update main board state
+
+                const movedPieceChar = board[endRow][endCol];
+                if ((movedPieceChar === 'p' && endRow === 0) || (movedPieceChar === 'P' && endRow === 7)) {
+                    showPromotionDialog(endRow, endCol, movedPieceChar === 'p');
+                } else {
+                    checkGameEnd();
+                    if (gameOverOverlay.style.display === 'none') {
+                        switchPlayer();
+                    }
+                }
+            });
+            droppedOnValidSquare = true;
+        }
+    }
+
+    if (!droppedOnValidSquare) {
+        // If not a valid move, put the piece back to its original square
+        // The original piece element might have been removed by renderBoard if an earlier click was handled
+        // Re-rendering the board is the safest way to reset state.
+        renderBoard();
+    }
+    
+    draggedPiece = null; // Reset for next drag
+    currentDraggingPieceElement = null;
+    originalPieceParent = null;
+    dragStartSquare = null;
+    clearSelectionAndMoves(); // Also clear any visual cues from selection
+}
+
+
 // --- Chess Logic Core (isValidMove, etc.) ---
 
 function isOccupiedByAlly(targetRow, targetCol, isWhite, currentBoard) {
@@ -173,28 +318,26 @@ function isWithinBoard(row, col) {
 }
 
 // Function to check if a square is attacked by opponent pieces
-// This is a CRUCIAL, but complex, function for full chess logic.
-// This version is a simplified placeholder. A full implementation would iterate
-// through all opponent pieces and check if any of their valid moves (from opponent's perspective)
-// can target the given square. This often involves temporarily removing the king to avoid infinite recursion
-// in check detection.
 function isSquareAttacked(row, col, byWhitePlayer, currentBoard) {
-    const opponentColor = byWhitePlayer ? 'black' : 'white';
+    // Determine the opponent's pieces' case (uppercase for black, lowercase for white)
+    const opponentPawn = byWhitePlayer ? 'P' : 'p';
+    const opponentKnight = byWhitePlayer ? 'N' : 'n';
+    const opponentBishop = byWhitePlayer ? 'B' : 'b';
+    const opponentRook = byWhitePlayer ? 'R' : 'r';
+    const opponentQueen = byWhitePlayer ? 'Q' : 'q';
+    const opponentKing = byWhitePlayer ? 'K' : 'k';
     
     // Check for attacks from all directions/piece types
-    // For simplicity, we'll check common attacks. A full check involves more.
     
     // Pawn attacks
     const pawnDirection = byWhitePlayer ? 1 : -1; // Pawns attack opposite direction
     if (isWithinBoard(row + pawnDirection, col + 1)) {
-        const piece = currentBoard[row + pawnDirection][col + 1];
-        if (piece && piece.toLowerCase() === 'p' && ((byWhitePlayer && piece === 'P') || (!byWhitePlayer && piece === 'p'))) {
+        if (currentBoard[row + pawnDirection][col + 1] === opponentPawn) {
             return true;
         }
     }
     if (isWithinBoard(row + pawnDirection, col - 1)) {
-        const piece = currentBoard[row + pawnDirection][col - 1];
-        if (piece && piece.toLowerCase() === 'p' && ((byWhitePlayer && piece === 'P') || (!byWhitePlayer && piece === 'p'))) {
+        if (currentBoard[row + pawnDirection][col - 1] === opponentPawn) {
             return true;
         }
     }
@@ -205,8 +348,7 @@ function isSquareAttacked(row, col, byWhitePlayer, currentBoard) {
         const tr = row + dr;
         const tc = col + dc;
         if (isWithinBoard(tr, tc)) {
-            const piece = currentBoard[tr][tc];
-            if (piece && piece.toLowerCase() === 'n' && ((byWhitePlayer && piece === 'P') || (!byWhitePlayer && piece === 'p'))) {
+            if (currentBoard[tr][tc] === opponentKnight) {
                 return true;
             }
         }
@@ -221,10 +363,8 @@ function isSquareAttacked(row, col, byWhitePlayer, currentBoard) {
             if (!isWithinBoard(tr, tc)) break;
             const piece = currentBoard[tr][tc];
             if (piece) {
-                if (piece.toLowerCase() === 'r' || piece.toLowerCase() === 'q') {
-                    if ((byWhitePlayer && piece === 'R') || (byWhitePlayer && piece === 'Q') || (!byWhitePlayer && piece === 'r') || (!byWhitePlayer && piece === 'q')) {
-                        return true;
-                    }
+                if (piece === opponentRook || piece === opponentQueen) {
+                    return true;
                 }
                 break; // Blocked by another piece
             }
@@ -240,10 +380,8 @@ function isSquareAttacked(row, col, byWhitePlayer, currentBoard) {
             if (!isWithinBoard(tr, tc)) break;
             const piece = currentBoard[tr][tc];
             if (piece) {
-                if (piece.toLowerCase() === 'b' || piece.toLowerCase() === 'q') {
-                     if ((byWhitePlayer && piece === 'B') || (byWhitePlayer && piece === 'Q') || (!byWhitePlayer && piece === 'b') || (!byWhitePlayer && piece === 'q')) {
-                        return true;
-                    }
+                if (piece === opponentBishop || piece === opponentQueen) {
+                    return true;
                 }
                 break; // Blocked by another piece
             }
@@ -256,8 +394,7 @@ function isSquareAttacked(row, col, byWhitePlayer, currentBoard) {
         const tr = row + dr;
         const tc = col + dc;
         if (isWithinBoard(tr, tc)) {
-            const piece = currentBoard[tr][tc];
-            if (piece && piece.toLowerCase() === 'k' && ((byWhitePlayer && piece === 'K') || (!byWhitePlayer && piece === 'k'))) {
+            if (currentBoard[tr][tc] === opponentKing) {
                 return true;
             }
         }
@@ -283,19 +420,19 @@ function isKingInCheck(currentBoard, playerColor) {
     }
 
     if (kingRow === undefined) {
-        // This should theoretically not happen if the game is set up correctly
         console.warn(`King for ${playerColor} not found!`);
         return false;
     }
 
     // Check if the king's square is attacked by the opposing player
+    // The `byWhitePlayer` argument for `isSquareAttacked` refers to the attacking side.
+    // So, if we're checking for check on a 'white' king, the attacking pieces are 'black',
+    // meaning `byWhitePlayer` should be `false` (attacking *by* black pieces).
     return isSquareAttacked(kingRow, kingCol, playerColor === 'white' ? false : true, currentBoard);
 }
 
 
 // Validates a move on a given board state.
-// Crucially, this now takes `currentBoard` and `playerTurn` as arguments.
-// It also checks if the move leaves the king in check.
 function isValidMove(startRow, startCol, endRow, endCol, currentBoard, playerTurn) {
     if (!isWithinBoard(startRow, startCol) || !isWithinBoard(endRow, endCol)) {
         return false;
@@ -316,50 +453,14 @@ function isValidMove(startRow, startCol, endRow, endCol, currentBoard, playerTur
         return false;
     }
 
-    // Temporarily make the move on a copy of the board to check if it results in check
-    let tempBoard = JSON.parse(JSON.stringify(currentBoard));
-    const capturedPiece = tempBoard[endRow][endCol];
-    tempBoard[endRow][endCol] = piece;
-    tempBoard[startRow][startCol] = '';
-
-    // Handle En Passant special case for temp board check
-    let actualCapturedPieceForEnPassant = null;
-    if (piece.toLowerCase() === 'p' && enPassantTargetSquare && endRow === enPassantTargetSquare[0] && endCol === enPassantTargetSquare[1] && capturedPiece === '') {
-        const capturedPawnRow = isWhite ? endRow + 1 : endRow - 1;
-        actualCapturedPieceForEnPassant = tempBoard[capturedPawnRow][endCol];
-        tempBoard[capturedPawnRow][endCol] = '';
-    }
-
-    // Handle Castling Rook Movement special case for temp board check
-    if (piece.toLowerCase() === 'k' && Math.abs(startCol - endCol) === 2) {
-        if (endCol === 6) { // Kingside Castling
-            tempBoard[startRow][5] = tempBoard[startRow][7];
-            tempBoard[startRow][7] = '';
-        } else if (endCol === 2) { // Queenside Castling
-            tempBoard[startRow][3] = tempBoard[startRow][0];
-            tempBoard[startRow][0] = '';
-        }
-    }
-
-
-    // Check if moving the piece leaves the king in check
-    if (isKingInCheck(tempBoard, playerTurn)) {
-        return false; // Cannot make a move that leaves your king in check
-    }
-
-    // Revert temp board if needed (not strictly necessary but good for clarity)
-    tempBoard[startRow][startCol] = piece;
-    tempBoard[endRow][endCol] = capturedPiece;
-    if (actualCapturedPieceForEnPassant) {
-        const capturedPawnRow = isWhite ? endRow + 1 : endRow - 1;
-        tempBoard[capturedPawnRow][endCol] = actualCapturedPieceForEnPassant;
-    }
-    // No need to revert rook for castling in tempBoard as it will be discarded
-
-    // Now, apply specific piece movement rules for the actual move (ignoring check for now)
+    // First, check basic piece movement rules (capturing ally pieces is handled here)
     if (isOccupiedByAlly(endRow, endCol, isWhite, currentBoard)) {
         return false;
     }
+
+    let moveIsValidByPieceRules = false;
+    let isCastlingMove = false;
+    let isEnPassantCapture = false;
 
     switch (piece.toLowerCase()) {
         case 'p': // Pawn
@@ -368,43 +469,47 @@ function isValidMove(startRow, startCol, endRow, endCol, currentBoard, playerTur
 
             // Move 1 square forward
             if (endCol === startCol && endRow === startRow + direction && currentBoard[endRow][endCol] === '') {
-                return true;
+                moveIsValidByPieceRules = true;
             }
             // Move 2 squares forward (first move only)
-            if (endCol === startCol && startRow === startRank && endRow === startRow + 2 * direction &&
+            else if (endCol === startCol && startRow === startRank && endRow === startRow + 2 * direction &&
                 currentBoard[endRow][endCol] === '' && currentBoard[startRow + direction][startCol] === '') {
-                return true;
+                moveIsValidByPieceRules = true;
             }
             // Diagonal capture
-            if (Math.abs(endCol - startCol) === 1 && endRow === startRow + direction && currentBoard[endRow][endCol] !== '') {
-                return true;
+            else if (Math.abs(endCol - startCol) === 1 && endRow === startRow + direction && currentBoard[endRow][endCol] !== '') {
+                moveIsValidByPieceRules = true;
             }
             // En Passant
-            if (Math.abs(endCol - startCol) === 1 && endRow === startRow + direction &&
+            else if (Math.abs(endCol - startCol) === 1 && endRow === startRow + direction &&
                 enPassantTargetSquare && enPassantTargetSquare[0] === endRow && enPassantTargetSquare[1] === endCol) {
-                // Check if the captured pawn is actually there (should be in the square BEHIND the target)
                 const capturedPawnRow = isWhite ? endRow + 1 : endRow - 1;
                 const capturedPawn = currentBoard[capturedPawnRow][endCol];
                 if (capturedPawn && ((isWhite && capturedPawn === 'P') || (!isWhite && capturedPawn === 'p'))) {
-                    return true;
+                    moveIsValidByPieceRules = true;
+                    isEnPassantCapture = true; // Mark as en passant for temp board logic
                 }
             }
-            return false;
+            break;
 
         case 'r': // Rook
-            return isValidMoveRookLike(startRow, startCol, endRow, endCol, currentBoard);
+            moveIsValidByPieceRules = isValidMoveRookLike(startRow, startCol, endRow, endCol, currentBoard);
+            break;
 
         case 'n': // Knight
             const rowDiffK = Math.abs(startRow - endRow);
             const colDiffK = Math.abs(startCol - endCol);
-            return (rowDiffK === 2 && colDiffK === 1) || (rowDiffK === 1 && colDiffK === 2);
+            moveIsValidByPieceRules = (rowDiffK === 2 && colDiffK === 1) || (rowDiffK === 1 && colDiffK === 2);
+            break;
 
         case 'b': // Bishop
-            return isValidMoveBishopLike(startRow, startCol, endRow, endCol, currentBoard);
+            moveIsValidByPieceRules = isValidMoveBishopLike(startRow, startCol, endRow, endCol, currentBoard);
+            break;
 
         case 'q': // Queen
-            return isValidMoveRookLike(startRow, startCol, endRow, endCol, currentBoard) ||
+            moveIsValidByPieceRules = isValidMoveRookLike(startRow, startCol, endRow, endCol, currentBoard) ||
                    isValidMoveBishopLike(startRow, startCol, endRow, endCol, currentBoard);
+            break;
 
         case 'k': // King
             const rowDiffKing = Math.abs(startRow - endRow);
@@ -412,39 +517,32 @@ function isValidMove(startRow, startCol, endRow, endCol, currentBoard, playerTur
 
             // Normal 1-square move
             if (rowDiffKing <= 1 && colDiffKing <= 1 && (rowDiffKing + colDiffKing > 0)) {
-                // This 'isSquareAttacked' here is important to prevent king from moving INTO check.
-                // It checks the *destination* square.
+                // Check if king is moving into an attacked square
                 if (!isSquareAttacked(endRow, endCol, isWhite ? false : true, currentBoard)) {
-                    return true;
+                    moveIsValidByPieceRules = true;
                 }
-                return false; // King moves into attacked square
             }
-
             // Castling
-            if (rowDiffKing === 0 && Math.abs(colDiffKing) === 2) { // Horizontal move of 2 squares
-                // Check if king has moved and rook has moved
+            else if (rowDiffKing === 0 && Math.abs(colDiffKing) === 2) { // Horizontal move of 2 squares
                 let canCastle = false;
                 if (isWhite) {
                     if (startRow === 7 && startCol === 4) { // White King's starting position
-                        if (endCol === 6 && canWhiteCastleKingSide) { // Kingside castling
-                            // Check if squares are empty (f1, g1) and rook is present (h1)
+                        if (endCol === 6 && canWhiteCastleKingSide) { // Kingside castling (g1)
                             if (currentBoard[7][5] === '' && currentBoard[7][6] === '' && currentBoard[7][7] === 'r') {
                                 // Check if king is not in check, and squares it passes through/lands on are not attacked
                                 if (!isKingInCheck(currentBoard, 'white') &&
-                                    !isSquareAttacked(7, 4, true, currentBoard) && // Current King pos
-                                    !isSquareAttacked(7, 5, true, currentBoard) && // f1
-                                    !isSquareAttacked(7, 6, true, currentBoard)) { // g1
+                                    !isSquareAttacked(7, 4, false, currentBoard) && // Current King pos
+                                    !isSquareAttacked(7, 5, false, currentBoard) && // f1
+                                    !isSquareAttacked(7, 6, false, currentBoard)) { // g1
                                     canCastle = true;
                                 }
                             }
-                        } else if (endCol === 2 && canWhiteCastleQueenSide) { // Queenside castling
-                            // Check if squares are empty (b1, c1, d1) and rook is present (a1)
+                        } else if (endCol === 2 && canWhiteCastleQueenSide) { // Queenside castling (c1)
                             if (currentBoard[7][1] === '' && currentBoard[7][2] === '' && currentBoard[7][3] === '' && currentBoard[7][0] === 'r') {
-                                // Check if king is not in check, and squares it passes through/lands on are not attacked
                                 if (!isKingInCheck(currentBoard, 'white') &&
-                                    !isSquareAttacked(7, 4, true, currentBoard) && // Current King pos
-                                    !isSquareAttacked(7, 3, true, currentBoard) && // d1
-                                    !isSquareAttacked(7, 2, true, currentBoard)) { // c1
+                                    !isSquareAttacked(7, 4, false, currentBoard) &&
+                                    !isSquareAttacked(7, 3, false, currentBoard) && // d1
+                                    !isSquareAttacked(7, 2, false, currentBoard)) { // c1
                                     canCastle = true;
                                 }
                             }
@@ -452,34 +550,70 @@ function isValidMove(startRow, startCol, endRow, endCol, currentBoard, playerTur
                     }
                 } else { // Black King
                     if (startRow === 0 && startCol === 4) { // Black King's starting position
-                        if (endCol === 6 && canBlackCastleKingSide) { // Kingside castling
+                        if (endCol === 6 && canBlackCastleKingSide) { // Kingside castling (g8)
                             if (currentBoard[0][5] === '' && currentBoard[0][6] === '' && currentBoard[0][7] === 'R') {
                                 if (!isKingInCheck(currentBoard, 'black') &&
-                                    !isSquareAttacked(0, 4, false, currentBoard) &&
-                                    !isSquareAttacked(0, 5, false, currentBoard) &&
-                                    !isSquareAttacked(0, 6, false, currentBoard)) {
+                                    !isSquareAttacked(0, 4, true, currentBoard) &&
+                                    !isSquareAttacked(0, 5, true, currentBoard) &&
+                                    !isSquareAttacked(0, 6, true, currentBoard)) {
                                     canCastle = true;
                                 }
                             }
-                        } else if (endCol === 2 && canBlackCastleQueenSide) { // Queenside castling
+                        } else if (endCol === 2 && canBlackCastleQueenSide) { // Queenside castling (c8)
                             if (currentBoard[0][1] === '' && currentBoard[0][2] === '' && currentBoard[0][3] === '' && currentBoard[0][0] === 'R') {
                                 if (!isKingInCheck(currentBoard, 'black') &&
-                                    !isSquareAttacked(0, 4, false, currentBoard) &&
-                                    !isSquareAttacked(0, 3, false, currentBoard) &&
-                                    !isSquareAttacked(0, 2, false, currentBoard)) {
+                                    !isSquareAttacked(0, 4, true, currentBoard) &&
+                                    !isSquareAttacked(0, 3, true, currentBoard) &&
+                                    !isSquareAttacked(0, 2, true, currentBoard)) {
                                     canCastle = true;
                                 }
                             }
                         }
                     }
                 }
-                return canCastle;
+                if (canCastle) {
+                    moveIsValidByPieceRules = true;
+                    isCastlingMove = true; // Mark as castling for temp board logic
+                }
             }
-            return false;
+            break;
 
         default:
-            return false;
+            return false; // Should not happen with valid piece types
     }
+
+    if (!moveIsValidByPieceRules) {
+        return false;
+    }
+
+    // Now, simulate the move to check if it results in check on the king
+    let tempBoard = JSON.parse(JSON.stringify(currentBoard));
+    const capturedPiece = tempBoard[endRow][endCol]; // Store what was on the target square
+
+    tempBoard[endRow][endCol] = piece;
+    tempBoard[startRow][startCol] = '';
+
+    // Adjust tempBoard for special moves for check validation
+    if (isEnPassantCapture) {
+        const capturedPawnRow = isWhite ? endRow + 1 : endRow - 1;
+        tempBoard[capturedPawnRow][endCol] = ''; // Remove the captured pawn for en passant
+    }
+    if (isCastlingMove) {
+        if (endCol === 6) { // Kingside Castling
+            tempBoard[startRow][5] = tempBoard[startRow][7]; // Move rook
+            tempBoard[startRow][7] = ''; // Clear old rook position
+        } else if (endCol === 2) { // Queenside Castling
+            tempBoard[startRow][3] = tempBoard[startRow][0]; // Move rook
+            tempBoard[startRow][0] = ''; // Clear old rook position
+        }
+    }
+
+    // Check if the current player's king is in check on the temporary board
+    if (isKingInCheck(tempBoard, playerTurn)) {
+        return false; // Cannot make a move that leaves your king in check
+    }
+
+    return true; // The move is valid
 }
 
 
@@ -530,6 +664,13 @@ function showPossibleMoves(startRow, startCol) {
         }
     }
 }
+
+function clearPossibleMoves() {
+    document.querySelectorAll('.possible-move').forEach(square => {
+        square.classList.remove('possible-move');
+    });
+}
+
 
 // --- Animation and Special Moves ---
 
@@ -611,6 +752,7 @@ function movePiece(startRow, startCol, endRow, endCol, callback) {
             enPassantTargetSquare = [isWhite ? endRow + 1 : endRow - 1, endCol];
         }
 
+        // Update castling rights
         if (pieceType === 'k') {
             if (isWhite) {
                 canWhiteCastleKingSide = false;
@@ -621,13 +763,14 @@ function movePiece(startRow, startCol, endRow, endCol, callback) {
             }
         } else if (pieceType === 'r') {
             if (isWhite) {
-                if (startRow === 7 && startCol === 7) canWhiteCastleKingSide = false;
-                if (startRow === 7 && startCol === 0) canWhiteCastleQueenSide = false;
+                if (startRow === 7 && startCol === 7) canWhiteCastleKingSide = false; // White King-side rook
+                if (startRow === 7 && startCol === 0) canWhiteCastleQueenSide = false; // White Queen-side rook
             } else {
-                if (startRow === 0 && startCol === 7) canBlackCastleKingSide = false;
-                if (startRow === 0 && startCol === 0) canBlackCastleQueenSide = false;
+                if (startRow === 0 && startCol === 7) canBlackCastleKingSide = false; // Black King-side rook
+                if (startRow === 0 && startCol === 0) canBlackCastleQueenSide = false; // Black Queen-side rook
             }
         }
+
         callback(newBoardState); // Pass the updated board state
         renderBoard(); // Re-render the board to reflect the new state permanently
     }, 300); // Match CSS transition duration
@@ -650,8 +793,8 @@ function showPromotionDialog(row, col, isWhitePawn) {
             promotePawn(row, col, optionDiv.dataset.piece);
             promotionOverlay.style.display = 'none';
             checkGameEnd(); // Check for game end after promotion
-            if (gameOverOverlay.style.display === 'none') {
-                switchPlayer(); // Only switch if game not over
+            if (gameOverOverlay.style.display === 'none') { // Only switch if game not over
+                switchPlayer();
             }
         });
         promotionOptionsDiv.appendChild(optionDiv);
@@ -681,9 +824,6 @@ function checkGameEnd() {
             // Opponent has no legal moves AND their king is NOT in check -> Stalemate!
             displayGameOver('Draw', 'stalemate');
         }
-    } else if (!findKing(board, 'K') || !findKing(board, 'k')) {
-         // This is a crude check for king removal (e.g. if king was captured)
-        displayGameOver(currentPlayer === 'white' ? 'White' : 'Black', 'King Captured (Invalid Game State)');
     }
     // Add more draw conditions here (e.g., insufficient material, 50-move rule, threefold repetition)
 }
@@ -780,7 +920,6 @@ function botMove() {
                     case 'b': // Fallthrough
                     case 'n': score += 300; break;
                     case 'p': score += 100; break;
-                    // King is not captured, but if it were, it'd be game end
                 }
             }
 
