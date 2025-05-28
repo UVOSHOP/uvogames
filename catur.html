@@ -27,17 +27,18 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
-            flex-direction: row;
+            flex-direction: row; /* Default for desktop */
             align-items: flex-start;
             justify-content: center;
             min-height: 100vh;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            padding: 20px;
+            padding: 20px; /* Overall padding */
             box-sizing: border-box;
             gap: 30px;
-            overflow: hidden; /* Prevent scrolling */
+            overflow: hidden; /* Prevent scrolling on both axes */
+            touch-action: pan-y; /* Allow vertical pan but prevent horizontal */
         }
 
         /* Menu Button for Mobile */
@@ -88,6 +89,7 @@
                 z-index: 1000;
                 border-radius: 0; /* No border-radius for full height overlay */
                 padding-top: 60px; /* Space for menu button */
+                overflow-y: auto; /* Allow scrolling if content is too long */
             }
 
             .sidebar.active {
@@ -99,7 +101,10 @@
             }
 
             body {
+                flex-direction: column; /* Stack elements vertically on mobile */
+                align-items: center; /* Center items horizontally */
                 padding: 10px; /* Adjust padding when sidebar is off-screen */
+                gap: 20px;
             }
         }
 
@@ -137,10 +142,13 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center; /* Vertically center content */
             gap: 20px;
             flex-grow: 1; /* Allows main content to take remaining space */
-            max-width: calc(100vw - 250px - 60px); /* Adjust based on sidebar width + gap + padding */
-            box-sizing: border-box; /* Include padding in width */
+            /* Max width calculation to ensure it doesn't overlap sidebar or create scroll */
+            max-width: calc(100vw - 200px - 60px); /* 100vw - sidebar-min-width - 2*padding */
+            height: calc(100vh - 40px); /* Fill available height, minus body padding */
+            box-sizing: border-box;
             overflow: hidden; /* Prevent overflow on main content as well */
         }
 
@@ -148,18 +156,19 @@
             .main-content {
                 width: 100%;
                 max-width: 100%; /* Take full width on mobile */
+                height: auto; /* Auto height on mobile to fit content */
+                min-height: calc(100vh - 20px); /* Ensure it takes full viewport height for scrolling */
                 padding-top: 0; /* Remove top padding if needed */
             }
         }
-
 
         .player-info-container {
             display: flex;
             justify-content: space-around; /* Distribute space evenly */
             width: 100%;
-            max-width: 480px;
+            max-width: 480px; /* Matches chessboard max-width */
             gap: 10px; /* Smaller gap */
-            flex-wrap: wrap;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
         }
 
         .player-info {
@@ -167,32 +176,34 @@
             padding: 10px 15px; /* Smaller padding */
             border-radius: 8px;
             text-align: center;
-            flex: 1;
-            min-width: 150px; /* Smaller min-width */
+            flex: 1; /* Allow flexing to take available space */
+            min-width: 120px; /* Ensure a minimum width for the info box */
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Lighter shadow */
         }
 
         .player-info h2 {
             margin: 0 0 5px 0; /* Smaller margin */
             color: var(--accent-color);
-            font-size: 1.2em; /* Smaller font size */
+            font-size: 1.1em; /* Smaller font size */
         }
 
         .player-info p {
-            font-size: 0.9em; /* Smaller font size */
+            font-size: 0.8em; /* Smaller font size */
             margin: 0;
+            white-space: nowrap; /* Prevent text wrapping */
         }
 
         #chessboard {
             position: relative;
             display: grid;
-            grid-template-columns: repeat(8, 60px);
-            grid-template-rows: repeat(8, 60px);
+            grid-template-columns: repeat(8, minmax(0, 1fr)); /* Flexible columns */
+            grid-template-rows: repeat(8, minmax(0, 1fr));   /* Flexible rows */
             border: 5px solid #555;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-            max-width: 480px;
-            max-height: 480px;
+            width: clamp(280px, 90vw, 480px); /* Responsive width */
+            height: clamp(280px, 90vw, 480px); /* Keep aspect ratio square */
             animation: fadeIn 0.5s ease-out;
+            touch-action: none; /* Prevent browser touch scrolling on the board */
         }
 
         @keyframes fadeIn {
@@ -202,15 +213,16 @@
 
         .square {
             position: relative;
-            width: 60px;
-            height: 60px;
+            width: 100%; /* Fill grid cell */
+            height: 100%; /* Fill grid cell */
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 2.5em;
+            font-size: clamp(2em, 8vw, 2.5em); /* Responsive font size for pieces */
             cursor: pointer;
             user-select: none;
             transition: background-color 0.1s ease;
+            box-sizing: border-box; /* Include padding/border in size */
         }
 
         .light {
@@ -235,8 +247,8 @@
         .possible-move::after {
             content: '';
             position: absolute;
-            width: 20px;
-            height: 20px;
+            width: 30%; /* Responsive dot size */
+            height: 30%; /* Responsive dot size */
             border-radius: 50%;
             background-color: var(--possible-move-dot-color);
             opacity: 0.8;
@@ -255,12 +267,19 @@
 
         .piece {
             position: relative;
-            cursor: grab;
+            cursor: grab; /* Indicates draggable */
             font-family: 'Segoe UI Symbol', 'Twemoji Mozilla', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Android Emoji', sans-serif;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
             transition: transform 0.3s ease-out;
-            pointer-events: none;
+            pointer-events: none; /* Allows clicks to go through to the square by default */
             z-index: 10;
+        }
+
+        .piece.dragging {
+            pointer-events: none; /* Ensure no interaction during drag */
+            position: fixed; /* Fixes position relative to viewport */
+            z-index: 100; /* Bring to front during drag */
+            cursor: grabbing;
         }
 
         /* Promotion Overlay */
@@ -277,6 +296,7 @@
             z-index: 1000;
             backdrop-filter: blur(5px);
             animation: fadeInOverlay 0.3s ease-out;
+            touch-action: none; /* Prevent background scrolling during overlay */
         }
 
         @keyframes fadeInOverlay {
@@ -368,93 +388,14 @@
             transform: translateY(-2px);
         }
 
-        /* Responsive Design for Mobile */
-        @media (max-width: 768px) {
-            body {
-                flex-direction: column;
-                align-items: center;
-                padding: 10px;
-                gap: 20px;
-            }
-
-            .sidebar {
-                width: 250px; /* Specific width for mobile sidebar */
-            }
-
-            .main-content {
-                width: 100%;
-                align-items: center;
-            }
-
-            .player-info-container {
-                flex-direction: column;
-                width: 90%;
-            }
-
-            .player-info {
-                width: 100%;
-                margin-bottom: 10px;
-                padding: 8px 10px; /* Further reduced padding */
-            }
-            .player-info h2 {
-                font-size: 1.1em; /* Further reduced font size */
-            }
-            .player-info p {
-                font-size: 0.8em; /* Further reduced font size */
-            }
-
-            #chessboard {
-                width: 90vw;
-                height: 90vw;
-                grid-template-columns: repeat(8, 1fr);
-                grid-template-rows: repeat(8, 1fr);
-            }
-
-            .square {
-                width: auto;
-                height: auto;
-                font-size: 1.8em;
-            }
-
-            .promotion-dialog, .game-over-dialog {
-                width: 90%;
-                padding: 20px;
-            }
-
-            .promotion-options {
-                flex-wrap: wrap;
-                gap: 10px;
-            }
-
-            .promotion-option {
-                font-size: 2em;
-                padding: 10px;
-            }
-        }
-        /* Fullscreen adjustment to ensure board fits nicely */
-        @media (max-height: 600px) {
-            body {
-                padding: 10px;
-            }
-            #chessboard {
-                width: auto;
-                height: auto;
-                max-width: 80vh; /* Adjust based on viewport height */
-                max-height: 80vh;
-                grid-template-columns: repeat(8, 1fr);
-                grid-template-rows: repeat(8, 1fr);
-            }
-            .square {
-                font-size: 2em; /* Smaller pieces on smaller height screens */
-            }
-        }
-
         .copyright {
-            margin-top: 30px;
+            margin-top: auto; /* Push to bottom when flex-direction is column */
+            padding-top: 20px; /* Space from content above */
             font-size: 0.8em;
             color: #777;
             text-align: center;
-            width: 100%;
+            width: 100%; /* Ensure it spans full width */
+            flex-shrink: 0; /* Prevent it from shrinking */
         }
     </style>
 </head>
@@ -481,7 +422,7 @@
         </div>
         <div id="chessboard"></div>
         <div class="copyright">
-            &copy; <span id="current-year"></span> UVOGAMES. All rights reserved.
+            &copy; <span id="current-year"></span> UVOGAMES. All rights reserved. ADITdeveloper.
         </div>
     </div>
 
@@ -510,6 +451,27 @@
 
         // Set current year for copyright
         document.getElementById('current-year').textContent = new Date().getFullYear();
+
+        // Close sidebar if clicked outside (for mobile)
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const menuButton = document.querySelector('.menu-button');
+            if (sidebar.classList.contains('active') && !sidebar.contains(event.target) && !menuButton.contains(event.target)) {
+                sidebar.classList.remove('active');
+            }
+        });
+
+        // Prevent body scrolling when sidebar is active
+        const body = document.body;
+        const sidebar = document.getElementById('sidebar');
+        new MutationObserver(() => {
+            if (sidebar.classList.contains('active')) {
+                body.style.overflow = 'hidden';
+            } else {
+                body.style.overflow = 'hidden'; /* Keep it hidden as per original request */
+            }
+        }).observe(sidebar, { attributes: true, attributeFilter: ['class'] });
+
     </script>
     <script src="catur.js"></script>
 </body>
