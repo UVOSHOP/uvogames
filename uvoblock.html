@@ -1,1394 +1,1090 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
-<title>UVOBLOCK - Puzzle Pecah Blok</title>
-<link href="https://fonts.googleapis.com/css2?family=Bangers&amp;family=Press+Start2P&amp;display=swap" rel="stylesheet"/>
-<style>
-        /* CSS RESET */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UVOBLOCK - v1.1 by ADITdeveloper</title>
+    <style>
+        :root {
+            --board-bg: #1a1a2e;
+            --cell-border: #333;
+            --text-color: #e0e0e0;
+            --neon-blue: #00ffff;
+            --neon-pink: #ff00ff;
+            --neon-green: #39ff14;
+            --neon-red: #ff3333;
+            --neon-gold: #ffd700;
+            --neon-orange: #ff8c00;
+            --color-red-block: Tomato;
+            --color-blue-block: DeepSkyBlue;
+            --color-green-block: MediumSeaGreen;
+            --color-orange-block: OrangeRed;
+            --color-purple-block: MediumPurple;
+            --color-pink-block: HotPink;
+            --color-gold-block: Gold;
+            --color-lightslategray-block: LightSlateGray;
+
+            --glow-strong-blue: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px var(--neon-blue), 0 0 20px var(--neon-blue), 0 0 25px var(--neon-blue);
+            --glow-medium-pink: 0 0 3px #fff, 0 0 6px var(--neon-pink), 0 0 9px var(--neon-pink);
+            --glow-gold: 0 0 5px #fff, 0 0 10px var(--neon-gold), 0 0 15px var(--neon-gold);
+            --glow-green: 0 0 5px #fff, 0 0 10px var(--neon-green), 0 0 15px var(--neon-green);
+            --glow-red: 0 0 5px #fff, 0 0 10px var(--neon-red), 0 0 15px var(--neon-red);
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            touch-action: none; /* Prevents default touch actions like scrolling */
+        @keyframes subtleBackgroundGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         body {
+            font-family: var(--font-family);
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e, #1a1a2e);
+            background-size: 400% 400%;
+            animation: subtleBackgroundGradient 25s ease infinite;
+            color: var(--text-color);
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background-color: #4A90E2; /* Inspired by image blue */
-            font-family: 'Press Start 2P', cursive;
-            color: #ecf0f1;
-            overscroll-behavior: none; /* Prevents pull-to-refresh */
-            transition: background-color 1s ease-in-out;
-        }
-
-        #game-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #3B82C9; /* Slightly darker blue for container */
-            border: none;
-            box-shadow: none;
-            padding: 20px;
-            border-radius: 12px;
-            position: relative;
-            max-width: 95vw;
-            max-height: 98vh;
-            aspect-ratio: 1 / 1.6; /* Default, good for portrait */
-            overflow: hidden;
-            flex-grow: 1; /* Allow container to grow */
-            justify-content: space-between; /* Distribute content vertically */
-        }
-
-        /* Orientasi Landscape untuk HP */
-        @media (orientation: landscape) and (max-height: 500px) {
-            #game-container {
-                flex-direction: row;
-                justify-content: space-around;
-                aspect-ratio: 1.8 / 1;
-                width: 98vw;
-                height: 95vh;
-                padding: 15px;
-            }
-            #header {
-                flex-direction: column;
-                align-items: center;
-                margin-bottom: 0;
-                margin-right: 15px;
-                padding: 0;
-            }
-            #game-area {
-                flex-direction: row;
-                gap: 15px;
-                flex-grow: 1;
-                max-width: 60%;
-            }
-            #game-grid {
-                flex-shrink: 0;
-            }
-            #block-preview {
-                flex-direction: column;
-                padding: 10px;
-                min-height: unset;
-                min-width: 100px;
-                height: auto;
-                width: auto;
-                flex-grow: 1;
-                justify-content: space-around;
-                overflow-y: auto;
-                align-items: center;
-                flex-wrap: nowrap;
-                 gap: 10px;
-            }
-            .block-slot {
-                width: var(--block-slot-dynamic-size, 80px);
-                height: var(--block-slot-dynamic-size, 80px);
-            }
-        }
-
-        #header {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 0 10px;
-            color: #FFFFFF;
-            position: relative;
-            z-index: 2;
-        }
-
-        #header-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        #menu-button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 5px;
-            display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        #menu-button .icon {
-            width: clamp(1.2em, 4.5vw, 2em);
-            height: clamp(1.2em, 4.5vw, 2em);
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="%23FFFFFF"><path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"/></svg>');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-        }
-
-        #game-title {
-            font-size: 2.8em;
-            color: #FFFFFF;
-            text-shadow: none;
+            min-height: 100vh;
             margin: 0;
-            white-space: nowrap;
-            font-size: clamp(1.1em, 4.5vw, 2.2em);
-            font-family: 'Bangers', cursive;
-        }
-        /* Specific color classes for UVOBLOCK title */
-        .color-u { color: #FF0000; } /* Red */
-        .color-v { color: #FFA500; } /* Orange */
-        .color-o1 { color: #FFFF00; } /* Yellow */
-        .color-b { color: #00FF00; } /* Green */
-        .color-l { color: #0000FF; } /* Blue */
-        .color-o2 { color: #800080; } /* Purple */
-        .color-c { color: #A52A2A; } /* Brown */
-        .color-k { color: #FFFFFF; } /* White */
-
-        #score-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-            margin-top: 10px;
-        }
-        #crown-score-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        #crown-icon {
-            width: clamp(1em, 3.5vw, 1.5em);
-            height: clamp(1em, 3.5vw, 1.5em);
-            filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
-            background-image: url('https://raw.githubusercontent.com/google/material-design-icons/master/png/social/crown_FILL0_wght400_GRAD0_opsz24.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow-x: hidden;
         }
 
-        #scoreDisplay {
-            font-size: 1.8em;
-            color: #FFFFFF;
-            text-shadow: none;
-            margin: 0;
-            white-space: nowrap;
-            font-size: clamp(0.9em, 3.5vw, 1.6em);
+        .game-wrapper { /* Wrapper untuk game dan menu */
+            position: relative;
+            width: fit-content; /* Agar menu bisa overlay dengan benar */
         }
 
-        #game-area {
+        .game-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 15px;
-            flex-grow: 1;
-            justify-content: center;
-            width: 100%;
+            background-color: rgba(10, 10, 20, 0.8);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.6);
+            border: 1px solid var(--neon-blue);
+            transition: filter 0.3s ease; /* Untuk efek blur saat menu aktif */
+        }
+        .game-container.menu-active {
+            filter: blur(3px);
+            pointer-events: none; /* Nonaktifkan interaksi game saat menu aktif */
         }
 
-        #game-grid {
-            display: grid;
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 360px;
+            padding: 0 5px;
+        }
+        
+        #menu-button {
+            background-color: var(--neon-blue);
+            color: #1a1a2e;
             border: none;
-            background-color: #1A3E72;
-            box-shadow: none;
+            padding: 8px 12px;
             border-radius: 5px;
-            overflow: hidden;
-            aspect-ratio: 1 / 1;
+            font-size: 0.9em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: var(--glow-strong-blue);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #menu-button:hover {
+            transform: scale(1.05);
+        }
+
+        .info-area {
+            display: flex;
+            gap: 10px; /* Spasi antara skor dan highscore */
+        }
+
+        .score-display, .highscore-display {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: var(--neon-pink);
+            text-shadow: var(--glow-medium-pink);
+            background-color: rgba(0,0,0,0.3);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: repeat(9, 1fr);
+            width: 360px; 
+            height: 360px;
+            background-color: var(--board-bg);
+            border: 2px solid var(--neon-blue);
+            box-shadow: inset 0 0 15px rgba(0, 255, 255, 0.4);
+            position: relative;
         }
 
         .grid-cell {
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            background-color: #1F4C86;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: background-color 0.1s ease-out;
-            font-size: 0;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            position: relative;
-        }
-
-        /* Block Textures for Grid Cells (Full Size) */
-        .grid-cell.texture-gold {
-            background-image: url('https://i.imgur.com/your-gold-texture-image.png'); /* Replace with actual gold texture */
-            background-color: #F1C40F;
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        .grid-cell.texture-blue-block {
-            background-image: url('https://i.imgur.com/your-blue-texture-image.png'); /* Replace with actual blue texture */
-            background-color: #3498DB;
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        #block-preview {
-            display: flex;
-            gap: 15px;
-            padding: 10px;
+            width: 40px;
+            height: 40px;
             background-color: transparent;
-            border-radius: 10px;
-            align-items: center;
-            justify-content: space-around;
-            width: 100%;
-            flex-wrap: nowrap;
-            overflow: visible;
-            min-height: var(--block-slot-dynamic-size);
+            border: 1px solid var(--cell-border);
+            box-sizing: border-box;
+            transition: transform 0.2s ease, opacity 0.2s ease;
         }
-
-        .block-slot {
-            width: var(--block-slot-dynamic-size, 80px);
-            height: var(--block-slot-dynamic-size, 80px);
-            border: none;
-            border-radius: 5px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 5px;
-            cursor: grab;
-            transition: transform 0.1s ease-out, opacity 0.1s ease-out;
-            background-color: transparent;
-            flex-shrink: 1;
-            flex-grow: 0;
-            flex-basis: auto;
-            touch-action: none;
-        }
-
-        /* Styling for EMPTY block slots */
-        .block-slot.empty {
-            border: 1px dashed rgba(255, 255, 255, 0.2); /* A subtle border for empty slots */
-            background-color: rgba(0, 0, 0, 0.1); /* Slight background for empty slots */
-            cursor: default;
-            pointer-events: none; /* Crucial: no interaction on empty slots */
-        }
-
-        .block-slot:hover:not(.dragging):not(.empty) { /* Only hover if not dragging and not empty */
-            transform: translateY(-3px);
-        }
-        .block-slot.dragging {
-            cursor: grabbing;
-            transform: scale(1.03);
-            opacity: 0.5;
-        }
-
-        .draggable-block-container {
-            display: grid;
-            grid-auto-rows: var(--block-piece-dynamic-size);
-            pointer-events: none; /* Block container itself shouldn't capture events */
-        }
-
-        .block-piece {
-            width: var(--block-piece-dynamic-size);
-            height: var(--block-piece-dynamic-size);
-            border: none;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: rgba(255,255,255,0.7);
-        }
-
-        /* Block Textures for Preview Pieces (Smaller Size) */
-        .block-piece.texture-gold {
-            background-image: url('https://i.imgur.com/your-gold-texture-image-small.png');
-            background-color: #F1C40F;
-            border-radius: 3px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        .block-piece.texture-blue-block {
-            background-image: url('https://i.imgur.com/your-blue-texture-image-small.png');
-            background-color: #3498DB;
-            border-radius: 3px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .ghost {
-            opacity: 0.8;
-            position: fixed;
-            z-index: 9999;
-            transition: opacity 0.1s ease-out;
-            pointer-events: none;
-        }
-
-        .grid-cell.highlight {
-            background-color: rgba(46, 204, 113, 0.4) !important;
-            border: 2px solid #2ecc71;
-            box-shadow: 0 0 8px rgba(46, 204, 113, 0.8);
-        }
-
-        .grid-cell.invalid {
-            background-color: rgba(231, 76, 60, 0.4) !important;
-            border: 2px solid #e74c3c;
-            box-shadow: 0 0 8px rgba(231, 76, 60, 0.8);
-        }
-
-        .grid-cell.destroying {
-            animation: satisfyingDestroy 0.4s forwards ease-out;
-        }
-
-        @keyframes satisfyingDestroy {
-            0% { transform: scale(1) rotate(0deg); opacity: 1; }
-            50% { transform: scale(1.2) rotate(5deg) translateY(-3px); opacity: 0.7; filter: brightness(1.2); }
-            100% { transform: scale(0.1) rotate(-20deg) translateY(5px); opacity: 0; filter: brightness(0.5); }
-        }
-
-        #game-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.9);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: #ecf0f1;
-            text-align: center;
-            z-index: 100;
-            border-radius: inherit;
-            transition: opacity 0.3s ease-out;
-        }
-
-        #game-overlay.hidden {
+        .grid-cell.clearing {
+            transform: scale(0.1) rotate(180deg); /* Tambah rotasi */
             opacity: 0;
-            pointer-events: none;
+            background-color: var(--neon-gold) !important;
+            border-radius: 50%; /* Jadi lingkaran saat hilang */
+        }
+        .grid-cell.placed-animation {
+            animation: cellPlaceAnim 0.3s ease-out;
+        }
+        @keyframes cellPlaceAnim {
+            0% { transform: scale(0.5); opacity: 0.5; }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .grid-cell.highlight {
+            background-color: rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 0 10px rgba(0, 255, 255, 0.5);
         }
 
-        #overlay-message {
-            font-size: clamp(1.8em, 7vw, 2.8em);
-            color: #e74c3c;
-            margin-bottom: 25px;
-            text-shadow: 0 0 18px #e74c3c, 0 0 8px #e74c3c;
+        .grid-cell.shadow {
+            background-color: rgba(0, 255, 255, 0.3); /* Neon blue shadow */
+            opacity: 0.6;
+            box-shadow: inset 0 0 8px rgba(0, 255, 255, 0.7);
         }
 
-        #finalScoreDisplay {
-            font-size: clamp(1.2em, 5vw, 1.5em);
-            color: #f1c40f;
-            margin-bottom: 25px;
-        }
-
-        #restartButton {
-            padding: 15px 35px;
-            font-size: clamp(1.1em, 5vw, 1.5em);
-            background-color: #2ecc71;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        #restartButton:hover {
-            background-color: #27ae60;
-            transform: translateY(-2px);
-        }
-
-        #restartButton:active {
-            background-color: #219d54;
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Sidebar Menu Styles */
-        #sidebar-menu {
-            position: fixed;
-            top: 0;
-            left: -300px; /* Hidden by default */
-            width: 250px;
-            max-width: 80vw; /* Prevent it from being too wide on small screens */
-            height: 100%;
-            background-color: #2c3e50; /* Darker blue-grey */
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
-            transition: left 0.3s ease-in-out;
-            z-index: 102; /* Above game-container and overlay */
+        .next-pieces-area {
             display: flex;
-            flex-direction: column;
-            padding: 20px;
-            overflow-y: auto;
-            color: #ecf0f1;
-        }
-
-        #sidebar-menu.open {
-            left: 0;
-        }
-
-        #sidebar-header {
-            display: flex;
-            justify-content: space-between;
+            justify-content: space-around;
             align-items: center;
-            margin-bottom: 20px;
+            width: 100%;
+            max-width: 370px;
+            height: auto;
+            padding: 8px;
+            background-color: rgba(26, 26, 46, 0.6);
+            border-radius: 10px;
+            border: 1px solid var(--neon-blue);
+            min-height: 90px;
         }
 
-        #sidebar-header h2 {
-            font-size: clamp(1.2em, 5vw, 2em); /* Smaller font for header */
-            color: #f1c40f;
-            font-family: 'Bangers', cursive;
-            margin: 0;
-            white-space: nowrap; /* Prevent wrapping for smaller fonts */
-        }
-
-        #close-sidebar-button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 5px;
+        .piece-container {
             display: flex;
             align-items: center;
             justify-content: center;
+            width: 110px; 
+            height: 80px;
+            animation: pieceAppearAnim 0.5s ease-out forwards;
+            opacity: 0;
+        }
+        @keyframes pieceAppearAnim {
+            from { opacity: 0; transform: translateY(20px) scale(0.8); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        #close-sidebar-button .icon {
-            width: clamp(1.2em, 4.5vw, 2em);
-            height: clamp(1.2em, 4.5vw, 2em);
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="%23FFFFFF"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
+        .block {
+            display: grid;
+            position: absolute; 
+            cursor: grab;
+        }
+        .block.in-preview {
+            position: relative;
+            border: none;
+        }
+        
+        .block.dragging {
+            opacity: 0.75;
+            transform: scale(1.1); 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+            pointer-events: none; 
+            z-index: 1100; /* Di atas menu saat drag */
+        }
+        .block.invalid-drop-feedback {
+            animation: shakeBlock 0.3s ease-in-out;
+        }
+        @keyframes shakeBlock {
+            0%, 100% { transform: translateX(0) scale(1.1); }
+            25% { transform: translateX(-5px) scale(1.1); }
+            75% { transform: translateX(5px) scale(1.1); }
         }
 
-        .menu-item {
-            padding: 12px 15px; /* Slightly reduced padding */
-            margin-bottom: 8px; /* Slightly reduced margin */
-            background-color: #34495e;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out;
-            font-size: clamp(0.7em, 3.5vw, 1em); /* Smaller font for menu items */
-            text-align: left;
-            display: flex;
-            align-items: center;
-            gap: 8px; /* Slightly reduced gap */
-            white-space: nowrap; /* Prevent wrapping */
+        .block-cell, .board-cell-styled {
+            box-sizing: border-box;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 2px rgba(255,255,255,0.3), inset 0 0 5px rgba(0,0,0,0.2);
         }
-
-        .menu-item:hover {
-            background-color: #3b536b;
+        .block-cell {
+            width: 18px;
+            height: 18px;
         }
+        
+        .color-blue, .board-cell-blue { background: linear-gradient(135deg, var(--color-blue-block), #009acd); box-shadow: 0 0 4px var(--color-blue-block), inset 0 0 3px rgba(255,255,255,0.2); border-radius: 3px; }
+        .color-red, .board-cell-red { background: linear-gradient(135deg, var(--color-red-block), #cc3300); box-shadow: 0 0 4px var(--color-red-block), inset 0 0 3px rgba(255,255,255,0.2); border-radius: 3px; }
+        .color-green, .board-cell-green { background: linear-gradient(135deg, var(--color-green-block), #228B22); box-shadow: 0 0 4px var(--color-green-block), inset 0 0 3px rgba(255,255,255,0.2); border-radius: 3px; }
+        .color-orange, .board-cell-orange { background: linear-gradient(135deg, var(--color-orange-block), #cc5500); box-shadow: 0 0 4px var(--color-orange-block), inset 0 0 3px rgba(255,255,255,0.2); border-radius: 3px; }
+        .color-purple, .board-cell-purple { background: linear-gradient(135deg, var(--color-purple-block), #7A378B); box-shadow: 0 0 4px var(--color-purple-block), inset 0 0 3px rgba(255,255,255,0.2); border-radius: 3px; }
+        .color-pink, .board-cell-pink { background: linear-gradient(135deg, var(--color-pink-block), #cc147a); box-shadow: 0 0 4px var(--color-pink-block), inset 0 0 3px rgba(255,255,255,0.2); border-radius: 3px; }
+        .color-gold, .board-cell-gold { background: linear-gradient(135deg, var(--color-gold-block), #D4AF37); box-shadow: 0 0 4px var(--color-gold-block), inset 0 0 3px rgba(255,255,255,0.2); border-radius: 3px; }
+        .color-lightslategray, .board-cell-lightslategray { background: linear-gradient(135deg, var(--color-lightslategray-block), #5c677d); box-shadow: 0 0 4px var(--color-lightslategray-block), inset 0 0 3px rgba(255,255,255,0.2); border-radius: 3px; }
 
-        .menu-item .icon {
-            width: 1.3em; /* Slightly smaller icon */
-            height: 1.3em;
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            filter: invert(100%);
-        }
-
-        #menu-redeem-section {
-            margin-top: 15px; /* Reduced margin-top */
-            border-top: 1px solid rgba(255,255,255,0.1);
-            padding-top: 15px; /* Reduced padding-top */
-            display: none; /* Hidden by default */
-            flex-direction: column; /* Ensure it stacks correctly when visible */
-            gap: 10px; /* Gap between input and button */
-        }
-
-        #menu-redeem-section input {
-            width: 100%;
-            padding: 8px; /* Reduced padding */
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            background-color: #ecf0f1;
-            color: #333;
-            font-size: clamp(0.7em, 3vw, 1em); /* Smaller font */
-            text-align: center;
-            box-sizing: border-box; /* Include padding in width */
-        }
-
-        #menu-redeem-section button {
-            width: 100%;
-            padding: 10px 20px; /* Reduced padding */
-            font-size: clamp(0.8em, 3.5vw, 1.1em); /* Smaller font */
-            background-color: #9b59b6;
+        /* #restart-button {
+            padding: 12px 25px; 
+            font-size: 1.2em;
+            background-color: var(--neon-pink);
             color: white;
+            border: none;
+            border-radius: 8px; 
+            cursor: pointer;
+            text-shadow: 0 0 6px black;
+            box-shadow: var(--glow-medium-pink), 0 0 10px var(--neon-pink) inset;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+        }
+        #restart-button:hover {
+            transform: scale(1.08);
+            background-color: #ff33cc;
+            box-shadow: 0 0 8px #fff, 0 0 15px var(--neon-pink), 0 0 12px var(--neon-pink) inset;
+        }
+        #restart-button:active { transform: scale(1.02); } */
+        
+        .game-over-message {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.7);
+            background-color: rgba(0,0,0,0.85);
+            padding: 30px 40px; border-radius: 10px;
+            text-align: center; font-size: 2.2em; color: #ff4d4d; 
+            z-index: 1001; 
+            border: 2px solid var(--neon-pink);
+            box-shadow: var(--glow-strong-blue);
+            animation: gameOverAppear 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+        }
+        @keyframes gameOverAppear { to { transform: translate(-50%, -50%) scale(1); } }
+
+        .floating-text {
+            position: absolute; font-size: 1.8em; font-weight: bold;
+            pointer-events: none; z-index: 500; text-shadow: 0 0 5px black;
+            animation: floatUpFadeOut 1.8s ease-out forwards;
+        }
+        @keyframes floatUpFadeOut {
+            0% { transform: translateY(0) scale(0.8); opacity: 1; }
+            100% { transform: translateY(-70px) scale(1.2); opacity: 0; }
+        }
+        .floating-text.code-success { color: var(--neon-green); font-size: 2em !important; }
+        .floating-text.code-fail { color: var(--neon-red); font-size: 1.5em !important; }
+        
+        .combo-text { color: var(--neon-blue); text-shadow: var(--glow-strong-blue); animation: floatUpFadeOut 1.8s ease-out forwards, pulseAndShake 0.6s infinite alternate; }
+        @keyframes pulseAndShake { 
+            0% { transform: scale(1.1) translateY(0) translateX(0); } 25% { transform: translateX(-3px); }
+            50% { transform: scale(1.2) translateY(0) translateX(0); } 75% { transform: translateX(3px); }
+            100% { transform: scale(1.1) translateY(0) translateX(0); }
+        }
+        .ampalibaba-text { color: var(--neon-green); font-size: 2.5em !important; text-shadow: 0 0 5px #000, 0 0 10px var(--neon-green), 0 0 15px var(--neon-green); animation: floatUpFadeOut 2s ease-out forwards, scaleUpBig 0.5s ease-out forwards; }
+        @keyframes scaleUpBig { from { transform: scale(0.5); opacity: 0.5; } to { transform: scale(1); opacity: 1; } }
+        .boom-text { color: var(--neon-orange); font-size: 3em !important; text-shadow: 0 0 5px #000, 0 0 10px var(--neon-orange), 0 0 15px var(--neon-orange); animation: floatUpFadeOut 2.2s ease-out forwards, boomTextAnim 0.6s ease-out; }
+        @keyframes boomTextAnim { 0% { transform: scale(0.8) rotate(0deg); } 25% { transform: scale(1.2) rotate(-5deg); } 50% { transform: scale(1.1) rotate(5deg); } 75% { transform: scale(1.3) rotate(-2deg); } 100% { transform: scale(1.2) rotate(0deg); } }
+        .perfect-clear-text { color: Gold; font-size: 2.8em !important; text-shadow: 0 0 5px #000, 0 0 10px Gold, 0 0 15px Gold, 0 0 20px Gold; animation: floatUpFadeOut 2.5s ease-out forwards, sparkle 1s infinite; }
+        @keyframes sparkle { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.1); } }
+        .backtoback-text { color: var(--neon-pink); font-size: 2.2em !important; text-shadow: 0 0 5px #000, 0 0 10px var(--neon-pink), 0 0 15px var(--neon-pink); animation: floatUpFadeOut 2s ease-out forwards, blinkFast 0.3s infinite; }
+        @keyframes blinkFast { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .board-shake-subtle { animation: boardShakeSubtleAnim 0.3s ease-in-out; }
+        @keyframes boardShakeSubtleAnim { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+        .board-shake-strong { animation: boardShakeStrongAnim 0.4s ease-in-out; }
+        @keyframes boardShakeStrongAnim { 0%, 100% { transform: translate(0, 0); } 20% { transform: translate(-6px, -3px) rotate(-1deg); } 40% { transform: translate(6px, 3px) rotate(1deg); } 60% { transform: translate(-4px, -2px) rotate(0.5deg); } 80% { transform: translate(4px, 2px) rotate(-0.5deg); } }
+        
+        /* --- Menu Overlay Styles --- */
+        #menu-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(10, 10, 30, 0.85); /* Dark semi-transparent */
+            backdrop-filter: blur(5px); /* Blur effect */
+            -webkit-backdrop-filter: blur(5px); /* For Safari */
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000; /* On top of game */
+            padding: 20px;
+            box-sizing: border-box;
+            animation: fadeInMenu 0.3s ease-out;
+        }
+        @keyframes fadeInMenu { from { opacity: 0; } to { opacity: 1; } }
+
+        .menu-content {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .menu-title {
+            font-size: 3em;
+            font-weight: bold;
+            color: var(--neon-gold);
+            text-shadow: var(--glow-gold), 0 0 2px black;
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+        .menu-subtitle {
+            font-size: 1.2em;
+            color: var(--neon-blue);
+            text-shadow: 0 0 5px var(--neon-blue);
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 250px; /* Fixed width for buttons */
+            margin: 0 auto;
+        }
+
+        .menu-button {
+            padding: 12px 20px;
+            font-size: 1.2em;
+            font-weight: bold;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.2s ease-in-out;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            box-sizing: border-box; /* Include padding in width */
+            transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+            color: white;
+            text-shadow: 0 0 3px black;
         }
-        #menu-redeem-section button:hover {
-            background-color: #8e44ad;
-        }
+        .menu-button:hover { transform: scale(1.05); }
+        .menu-button-resume { background-color: var(--neon-green); box-shadow: var(--glow-green); }
+        .menu-button-resume:hover { background-color: #4cff33; } /* Brighter green */
+        .menu-button-redeem { background-color: var(--neon-blue); box-shadow: var(--glow-strong-blue); }
+        .menu-button-redeem:hover { background-color: #33ffff; } /* Brighter blue */
+        .menu-button-reset { background-color: var(--neon-red); box-shadow: var(--glow-red); }
+        .menu-button-reset:hover { background-color: #ff6666; } /* Brighter red */
+        .menu-button-back { background-color: #777; box-shadow: 0 0 5px #aaa; }
+        .menu-button-back:hover { background-color: #999; }
 
-        #redeem-message {
-            font-size: clamp(0.65em, 2.8vw, 0.9em); /* Smaller font */
-            margin-top: 5px;
-            color: #f1c40f;
-            text-align: center;
-        }
-
-        #version-info {
-            font-size: clamp(0.6em, 2.5vw, 0.8em); /* Even smaller font for version info */
-            color: #bdc3c7;
-            margin-top: 15px; /* Reduced margin-top */
-            text-align: center;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            padding-top: 10px; /* Reduced padding-top */
-        }
-        #version-info p {
-            margin-bottom: 4px; /* Reduced margin-bottom */
-        }
-        #version-info a {
-            font-size: clamp(0.6em, 2.5vw, 0.8em); /* Match parent font size */
-        }
-
-
-        /* Overlay for menu background */
-        #menu-overlay-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 101; /* Behind sidebar, above game */
+        /* --- Redeem Code Modal Styles --- */
+        #redeem-modal {
+            position: fixed; /* Fixed position to overlay everything */
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background-color: rgba(30, 30, 50, 0.95);
+            padding: 30px;
+            border-radius: 10px;
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 20px var(--neon-blue);
+            z-index: 1002; /* Above menu overlay */
             display: none; /* Hidden by default */
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 90%;
+            max-width: 350px;
+            animation: modalAppear 0.3s ease-out forwards;
         }
-        #menu-overlay-bg.visible {
-            display: block;
+        @keyframes modalAppear {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
         }
+        #redeem-modal h3 {
+            color: var(--neon-gold);
+            text-shadow: var(--glow-gold);
+            margin-top: 0;
+            font-size: 1.5em;
+        }
+        #redeem-code-input {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid var(--neon-blue);
+            background-color: #1a1a2e;
+            color: var(--text-color);
+            font-size: 1.1em;
+            width: calc(100% - 22px); /* Full width minus padding/border */
+            text-align: center;
+        }
+        .redeem-modal-buttons {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+        .redeem-modal-buttons button {
+            flex-grow: 1;
+            padding: 10px;
+            font-size: 1em;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        #redeem-submit-button { background-color: var(--neon-green); color: #1a1a2e; }
+        #redeem-submit-button:hover { background-color: #4cff33; }
+        #redeem-close-button { background-color: #777; color: white; }
+        #redeem-close-button:hover { background-color: #999; }
 
+
+        /* Responsiveness */
+        @media (max-width: 480px) {
+            body { padding: 5px; }
+            .game-wrapper { width: 100%; }
+            .game-container { padding: 10px; gap: 10px;}
+            #game-board { width: 306px; height: 306px; }
+            .grid-cell { width: 34px; height: 34px; }
+            .block-cell { width: 14px; height: 14px; }
+            .next-pieces-area { max-width: 310px; min-height: 70px; padding: 5px;}
+            .piece-container { width: 90px; height: 65px; }
+            .top-bar { max-width: 306px; }
+            .info-area { gap: 5px; }
+            .score-display, .highscore-display { font-size: 1.1em; padding: 4px 8px; }
+            /* #restart-button { font-size: 1em; padding: 10px 20px; } */
+            #menu-button { padding: 6px 10px; font-size: 0.8em; }
+            .floating-text { font-size: 1.5em; }
+            .ampalibaba-text { font-size: 2em !important; }
+            .boom-text { font-size: 2.5em !important; }
+            .perfect-clear-text { font-size: 2.2em !important; }
+            .backtoback-text { font-size: 1.8em !important; }
+
+            .menu-title { font-size: 2.2em; }
+            .menu-subtitle { font-size: 1em; }
+            .menu-buttons { width: 200px; }
+            .menu-button { font-size: 1em; padding: 10px 15px; }
+
+            #redeem-modal { padding: 20px; gap: 15px; }
+            #redeem-modal h3 { font-size: 1.3em; }
+            #redeem-code-input { font-size: 1em; }
+        }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <div id="header">
-            <div id="header-left">
-                <button id="menu-button"><span class="icon"></span></button>
-            </div>
-            <div id="score-container">
-                <h1 id="game-title">
-                    <span class="color-u">U</span><span class="color-v">V</span><span class="color-o1">O</span><span class="color-b">B</span><span class="color-l">L</span><span class="color-o2">O</span><span class="color-c">C</span><span class="color-k">K</span>
-                </h1>
-                <div id="crown-score-wrapper">
-                    <span id="crown-icon"></span>
-                    <div id="scoreDisplay">0</div>
+    <div class="game-wrapper">
+        <div class="game-container" id="game-main-container">
+            <div class="top-bar">
+                <button id="menu-button">MENU</button>
+                <div class="info-area">
+                    <div class="score-display">Skor: <span id="score">0</span></div>
+                    <div class="highscore-display">Tertinggi: <span id="highscore">0</span></div>
                 </div>
             </div>
-            <div id="header-right">
+            
+            <div id="game-board"></div>
+
+            <div class="next-pieces-area">
+                <div class="piece-container" id="piece-container-0"></div>
+                <div class="piece-container" id="piece-container-1"></div>
+                <div class="piece-container" id="piece-container-2"></div>
+            </div>
+
+            <div id="game-over-message" class="game-over-message" style="display: none;">
+                Game Over!
+                <button id="restart-game-over" style="margin-top:15px; padding: 10px 15px; font-size: 0.7em; background-color: var(--neon-blue); color: #1a1a2e; border:none; border-radius:5px; cursor:pointer;">Main Lagi</button>
+            </div>
+        </div>
+
+        <div id="menu-overlay">
+            <div class="menu-content">
+                <div>
+                    <div class="menu-title">UVOBLOCK</div>
+                    <div class="menu-subtitle">versi 1.1 by ADITdeveloper</div>
                 </div>
+                <div class="menu-buttons">
+                    <button class="menu-button menu-button-resume" id="resume-game-button">Kembali ke Game</button>
+                    <button class="menu-button menu-button-redeem" id="open-redeem-button">Redeem Code</button>
+                    <button class="menu-button menu-button-reset" id="reset-score-button">Reset Score</button>
+                    <button class="menu-button menu-button-back" id="back-to-main-menu-button">Kembali ke Menu</button>
+                </div>
+            </div>
         </div>
 
-        <div id="game-area">
-            <div id="game-grid"></div>
-            <div id="block-preview"></div>
-        </div>
-
-        <div id="game-overlay" class="hidden">
-            <div id="overlay-message"></div>
-            <div id="finalScoreDisplay"></div>
-            <button id="restartButton">Mulai Ulang</button>
+        <div id="redeem-modal">
+            <h3>Masukkan Kode Bonus</h3>
+            <input type="text" id="redeem-code-input" placeholder="XXXXX">
+            <div class="redeem-modal-buttons">
+                <button id="redeem-submit-button">Submit</button>
+                <button id="redeem-close-button">Tutup</button>
+            </div>
         </div>
     </div>
 
-    <div id="sidebar-menu">
-        <div id="sidebar-header">
-            <h2>Menu</h2>
-            <button id="close-sidebar-button"><span class="icon"></span></button>
-        </div>
+    <script>
+        // --- KONSTANTA DAN KONFIGURASI GAME ---
+        const GRID_SIZE = 9;
+        const CELL_SIZE_BOARD_CSS = 40;
+        const CELL_SIZE_PREVIEW = 18;
+        const REDEEM_CODES = {
+            "55555": 3000,
+            "12345": 1000,
+            "151515": 10000,
+            "54321": 2000
+        };
 
-        <div class="menu-item" id="resetScoreMenuItem">
-            <span class="icon" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="%23FFFFFF"><path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5t109 75.5q32-32 68.5-49t75.5-17h-117l-156 160h400v-400L794-670q-47-47-109-75.5T480-770q-134 0-227 93t-93 227q0 134 93 227t227 93Z"/></svg>');"></span>
-            Reset Skor
-        </div>
-        <div class="menu-item" id="redeemCodeMenuItem">
-            <span class="icon" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="%23FFFFFF"><path d="M220-160q-24 0-42-18t-18-42v-520q0-24 18-42t42-18h520q24 0 42 18t18 42v520q0 24-18 42t-42 18H220Zm0-80h520V240H220v520Zm0 0V240v520Zm40-270q-17 0-28.5-11.5T220-540q0-17 11.5-28.5T260-580q17 0 28.5 11.5T300-540q0 17-11.5 28.5T260-500Zm400 0q-17 0-28.5-11.5T620-540q0-17 11.5-28.5T660-580q17 0 28.5 11.5T700-540q0 17-11.5 28.5T660-500Zm-200 0q-17 0-28.5-11.5T420-540q0-17 11.5-28.5T460-580q17 0 28.5 11.5T500-540q0 17-11.5 28.5T460-500Zm-200 200q-17 0-28.5-11.5T220-340q0-17 11.5-28.5T260-380q17 0 28.5 11.5T300-340q0 17-11.5 28.5T260-300Zm400 0q-17 0-28.5-11.5T620-340q0-17 11.5-28.5T660-380q17 0 28.5 11.5T700-340q0 17-11.5 28.5T660-300Zm-200 0q-17 0-28.5-11.5T420-340q0-17 11.5-28.5T460-380q17 0 28.5 11.5T500-340q0 17-11.5 28.5T460-300ZM220-760v520-520Z"/></svg>');"></span>
-            Redeem Kode
-        </div>
-        <div id="menu-redeem-section">
-            <input type="text" id="redeemInput" placeholder="Masukkan kode redeem" maxlength="5">
-            <button id="redeemButton">Redeem</button>
-            <div id="redeem-message"></div>
-        </div>
-        <div class="menu-item" id="backToHomeMenuItem">
-            <span class="icon" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="%23FFFFFF"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240H440v240H160Zm320-350Z"/></svg>');"></span>
-            Kembali ke Halaman Utama
-        </div>
+        const BLOCK_DEFINITIONS = [ 
+            { name: 'Square1x1', cells: [[0,0]], color: 'pink', idColor: 'board-cell-pink' },
+            { name: 'Line1x4', cells: [[0,0], [0,1], [0,2], [0,3]], color: 'blue', idColor: 'board-cell-blue' },
+            { name: 'Line4x1', cells: [[0,0], [1,0], [2,0], [3,0]], color: 'blue', idColor: 'board-cell-blue' },
+            { name: 'LShape1', cells: [[0,0], [1,0], [1,1]], color: 'red', idColor: 'board-cell-red' },
+            { name: 'LShape2', cells: [[0,1], [1,1], [1,0]], color: 'red', idColor: 'board-cell-red' },
+            { name: 'TShape1', cells: [[0,1],[1,0],[1,1],[1,2]], color: 'green', idColor: 'board-cell-green' },
+            { name: 'ZShape1', cells: [[0,0],[0,1],[1,1],[1,2]], color: 'orange', idColor: 'board-cell-orange' },
+            { name: 'SShape1', cells: [[1,0],[1,1],[0,1],[0,2]], color: 'purple', idColor: 'board-cell-purple' },
+            { name: 'PlusShape', cells: [[0,1],[1,0],[1,1],[1,2],[2,1]], color: 'gold', idColor: 'board-cell-gold' },
+            { name: 'Square2x2', cells: [[0,0],[0,1],[1,0],[1,1]], color: 'gold', idColor: 'board-cell-gold' },
+            { name: 'Square3x3', cells: [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]], color: 'lightslategray', idColor: 'board-cell-lightslategray' }
+        ];
 
-        <div id="version-info">
-            <p>UVOBLOCK v 1.3</p>
-            <p>by ADITdeveloper</p>
-            <a href="https://wa.me/6285648211278" target="_blank" style="color: #25D366; text-decoration: none; display: block; margin-top: 10px;">Beli Paket</a>
-        </div>
-    </div>
-    <div id="menu-overlay-bg"></div>
+        // --- VARIABEL GAME STATE ---
+        let boardState = []; 
+        let currentScore = 0;
+        let highScore = 0;
+        let currentPieces = [null, null, null];
+        let draggedPiece = null;
+        let piecePlacedCount = 0;
+        let comboCount = 0;
+        let lastMajorEffect = null;
+        let scoreAnimationInterval;
+        let isMenuOpen = false;
+        let currentShadowCells = []; // To track shadow cells
 
-<script>
-    const gameGrid = document.getElementById('game-grid');
-    const scoreDisplay = document.getElementById('scoreDisplay');
-    const blockPreview = document.getElementById('block-preview');
-    const gameOverlay = document.getElementById('game-overlay');
-    const overlayMessage = document.getElementById('overlay-message');
-    const finalScoreDisplay = document.getElementById('finalScoreDisplay');
-    const restartButton = document.getElementById('restartButton');
+        // --- ELEMEN DOM ---
+        const gameMainContainer = document.getElementById('game-main-container');
+        const gameBoardElement = document.getElementById('game-board');
+        const scoreElement = document.getElementById('score');
+        const highScoreElement = document.getElementById('highscore');
+        const nextPieceContainers = [
+            document.getElementById('piece-container-0'),
+            document.getElementById('piece-container-1'),
+            document.getElementById('piece-container-2')
+        ];
+        // const restartButton = document.getElementById('restart-button'); // Removed
+        const gameOverMessageElement = document.getElementById('game-over-message');
+        const restartGameOverButton = document.getElementById('restart-game-over');
 
-    // Menu elements
-    const menuButton = document.getElementById('menu-button');
-    const sidebarMenu = document.getElementById('sidebar-menu');
-    const closeSidebarButton = document.getElementById('close-sidebar-button');
-    const menuOverlayBg = document.getElementById('menu-overlay-bg');
-    const resetScoreMenuItem = document.getElementById('resetScoreMenuItem');
-    const redeemCodeMenuItem = document.getElementById('redeemCodeMenuItem');
-    const menuRedeemSection = document.getElementById('menu-redeem-section');
-    const redeemInput = document.getElementById('redeemInput');
-    const redeemButton = document.getElementById('redeemButton');
-    const redeemMessage = document.getElementById('redeem-message');
-    const backToHomeMenuItem = document.getElementById('backToHomeMenuItem');
+        // Menu Elements
+        const menuButton = document.getElementById('menu-button');
+        const menuOverlay = document.getElementById('menu-overlay');
+        const resumeGameButton = document.getElementById('resume-game-button');
+        const openRedeemButton = document.getElementById('open-redeem-button');
+        const resetScoreButton = document.getElementById('reset-score-button');
+        const backToMainMenuButton = document.getElementById('back-to-main-menu-button');
 
-    const GRID_SIZE = 9;
-    const GRID_CELL_COLOR = '#1F4C86';
-    const OCCUPIED_COLOR_BASE = '#3498DB'; // Base color for blue blocks
-    const GOLD_COLOR_BASE = '#F1C40F'; // Base color for gold blocks
-
-    let grid = [];
-    let score = 0;
-    let combo = 0; // Current combo streak (not used for currentCombo in placement)
-    let currentCombo = 0; // For tracking combo within a single block placement
-    let multiplier = 1; // Score multiplier
-    let extraMoves = 0; // For extra moves power-up
-    let hintAvailable = false; // For hint power-up
-    let blockDestroyerAvailable = false; // For block destroyer item
-    let rareItemAvailable = false; // For rare item effect (placeholder)
-
-    // Block shapes (now includes 'type' for texture)
-    const BLOCK_SHAPES = [
-        // Type 'blue-block'
-        { id: '1x1-blue', shape: [[1]], type: 'blue-block' },
-        { id: '1x2-blue', shape: [[1],[1]], type: 'blue-block' },
-        { id: '2x1-blue', shape: [[1,1]], type: 'blue-block' },
-        { id: '1x3-blue', shape: [[1],[1],[1]], type: 'blue-block' },
-        { id: '3x1-blue', shape: [[1,1,1]], type: 'blue-block' },
-        { id: '2x2-blue', shape: [[1,1],[1,1]], type: 'blue-block' },
-        { id: 'L-small-blue', shape: [[1,0],[1,1]], type: 'blue-block' },
-        { id: 'L-small-rotated-blue', shape: [[1,1],[1,0]], type: 'blue-block' },
-        { id: 'T-small-blue', shape: [[1,1,1],[0,1,0]], type: 'blue-block' },
-        { id: 'cross-blue', shape: [[0,1,0],[1,1,1],[0,1,0]], type: 'blue-block' },
-        // Type 'gold' (example) - these might be rarer or have special properties
-        { id: '1x1-gold', shape: [[1]], type: 'gold' },
-        { id: '2x2-gold', shape: [[1,1],[1,1]], type: 'gold' },
-        { id: 'Z-gold', shape: [[1,1,0],[0,1,1]], type: 'gold' },
-    ];
-
-    // Redeem Codes
-    const REDEEM_CODES = {
-        "19482": { type: "score", value: 500 },
-        "82714": { type: "score", value: 300, bonus: "combo_booster" },
-        "56390": { type: "score", value: 1000 },
-        "30915": { type: "score", value: 200, bonus: "multiplier", value_multiplier: 2 },
-        "74826": { type: "score", value: 750, bonus: "rare_item" },
-        "15239": { type: "score", value: 450, bonus: "hint_free" },
-        "93407": { type: "score", value: 600, bonus: "double_combo" },
-        "62891": { type: "score", value: 800 },
-        "47520": { type: "score", value: 550, bonus: "extra_move" },
-        "31067": { type: "score", value: 900, bonus: "block_destroyer" },
-        // New Redeem Codes
-        "55555": { type: "score", value: 5000 },
-        "12345": { type: "score", value: 1000 },
-        "12121": { type: "score", value: 500 },
-        "98765": { type: "score", value: 2000 }
-    };
-
-    let currentBlocks = [];
-    let draggedBlock = null;
-    let draggedBlockIndex = -1;
-    let ghostBlockElements = [];
-    let blockTextures = {
-        'blue-block': 'https://i.imgur.com/your-blue-texture-image.png', // Replace with actual blue block texture
-        'gold': 'https://i.imgur.com/your-gold-texture-image.png' // Replace with actual gold block texture
-    };
-    let blockPieceTextures = {
-        'blue-block': 'https://i.imgur.com/your-blue-texture-image-small.png', // Replace with actual small blue block texture
-        'gold': 'https://i.imgur.com/your-gold-texture-image-small.png' // Replace with actual small gold block texture
-    };
+        // Redeem Modal Elements
+        const redeemModal = document.getElementById('redeem-modal');
+        const redeemCodeInput = document.getElementById('redeem-code-input');
+        const redeemSubmitButton = document.getElementById('redeem-submit-button');
+        const redeemCloseButton = document.getElementById('redeem-close-button');
 
 
-    function initializeGame() {
-        score = loadScore();
-        updateScoreDisplay();
-        createGrid();
-        fillBlockPreview();
-        hideOverlay();
-        // Ensure sidebar is closed when game initializes/restarts
-        sidebarMenu.classList.remove('open');
-        menuOverlayBg.classList.remove('visible');
-        menuRedeemSection.style.display = 'none'; // Hide redeem input
-    }
-
-    function createGrid() {
-        gameGrid.innerHTML = '';
-        gameGrid.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
-        grid = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
-
-        // Dynamically set cell size based on container width
-        // This will be overridden by setDynamicSizes, but good to have a default
-        const containerWidth = gameGrid.offsetWidth;
-        const cellSize = containerWidth / GRID_SIZE;
-        gameGrid.style.gridAutoRows = `${cellSize}px`;
-
-        for (let r = 0; r < GRID_SIZE; r++) {
-            for (let c = 0; c < GRID_SIZE; c++) {
-                const cell = document.createElement('div');
-                cell.classList.add('grid-cell');
-                cell.dataset.row = r;
-                cell.dataset.col = c;
-                gameGrid.appendChild(cell);
-            }
-        }
-        updateGridDisplay();
-    }
-
-    function updateGridDisplay() {
-        const cells = gameGrid.children;
-        for (let r = 0; r < GRID_SIZE; r++) {
-            for (let c = 0; c < GRID_SIZE; c++) {
-                const index = r * GRID_SIZE + c;
-                const cell = cells[index];
-                cell.classList.remove('occupied', 'texture-blue-block', 'texture-gold', 'destroying'); // Ensure destroying class is removed
-                cell.style.backgroundImage = ''; // Clear any inline styles from previous states
-
-                if (grid[r][c] === 1) {
-                    cell.classList.add('occupied', 'texture-blue-block');
-                    cell.style.backgroundColor = ''; // Let CSS class handle background-color
-                } else if (grid[r][c] === 2) { // Example for a different block type like gold
-                    cell.classList.add('occupied', 'texture-gold');
-                    cell.style.backgroundColor = '';
-                } else {
-                    cell.style.backgroundColor = GRID_CELL_COLOR; // Set default background for empty cells
-                }
-                // Ensure border remains, as this was a reported stability issue
-                cell.style.border = '1px solid rgba(0, 0, 0, 0.1)';
-            }
-        }
-    }
-
-
-    function getRandomBlock() {
-        const randomIndex = Math.floor(Math.random() * BLOCK_SHAPES.length);
-        return JSON.parse(JSON.stringify(BLOCK_SHAPES[randomIndex])); // Deep copy to prevent modification
-    }
-
-    function fillBlockPreview() {
-        // Filter out any null blocks (blocks that have been successfully placed)
-        currentBlocks = currentBlocks.filter(block => block !== null);
-        while (currentBlocks.length < 3) {
-            currentBlocks.push(getRandomBlock());
-        }
-        drawBlockPreview();
-    }
-
-    function drawBlockPreview() {
-    blockPreview.innerHTML = '';
-    currentBlocks.forEach((block, index) => {
-        const slot = document.createElement('div');
-        slot.classList.add('block-slot');
-        slot.dataset.index = index;
-
-        if (block) {
-            slot.addEventListener('mousedown', dragStart);
-            slot.addEventListener('touchstart', dragStart, { passive: false });
-
-            const blockContainer = document.createElement('div');
-            blockContainer.classList.add('draggable-block-container');
-            blockContainer.style.gridTemplateColumns = `repeat(${block.shape[0].length}, 1fr)`;
-
-            block.shape.forEach(row => {
-                row.forEach(cell => {
-                    const piece = document.createElement('div');
-                    if (cell === 1) {
-                        piece.classList.add('block-piece');
-                        piece.classList.add(`texture-${block.type}`);
-                        piece.style.backgroundImage = `url('${blockPieceTextures[block.type]}')`;
-                        piece.style.backgroundColor = block.type === 'gold' ? GOLD_COLOR_BASE : OCCUPIED_COLOR_BASE;
-                        blockContainer.appendChild(piece);
-                    }
-                });
-            });
-            slot.appendChild(blockContainer);
-        } else {
-            // ✅ Slot kosong
-            slot.classList.add('empty');
-        }
-        blockPreview.appendChild(slot);
-    });
-
-    checkGameOver(); // Always check game over after redrawing blocks
-    }
-
-    function canPlaceBlock(block, startRow, startCol) {
-        if (!block) return false;
-        const shape = block.shape;
-        for (let r = 0; r < shape.length; r++) {
-            for (let c = 0; c < shape[r].length; c++) {
-                if (shape[r][c] === 1) {
-                    const gridRow = startRow + r;
-                    const gridCol = startCol + c;
-                    // Check bounds and if target cell is already occupied
-                    if (gridRow < 0 || gridRow >= GRID_SIZE || gridCol < 0 || gridCol >= GRID_SIZE || grid[gridRow][gridCol] !== 0) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
-    }
-
-    function placeBlock(block, startRow, startCol) {
-    // ✅ Blok tidak valid kalau bukan dari currentBlocks atau sudah null
-    const blockIndex = currentBlocks.indexOf(block);
-    if (blockIndex === -1 || currentBlocks[blockIndex] === null) return false;
-
-    if (!canPlaceBlock(block, startRow, startCol)) {
-        return false;
-    }
-
-    const shape = block.shape;
-    for (let r = 0; r < shape.length; r++) {
-        for (let c = 0; c < shape[r].length; c++) {
-            if (shape[r][c] === 1) {
-                grid[startRow + r][startCol + c] = block.type === 'gold' ? 2 : 1;
-            }
-        }
-    }
-
-    addScore(shape.flat().filter(cell => cell === 1).length * multiplier);
-
-    // ✅ Tandai blok sudah dipakai satu kali
-    currentBlocks[blockIndex] = null;
-    return true; // Add score for placed pieces
-        return true;
-    }
-
-    function highlightCells(block, startRow, startCol, isValid) {
-        removeHighlights();
-        const cells = gameGrid.children;
-        const shape = block.shape;
-        ghostBlockElements = [];
-
-        for (let r = 0; r < shape.length; r++) {
-            for (let c = 0; c < shape[r].length; c++) {
-                if (shape[r][c] === 1) {
-                    const gridRow = startRow + r;
-                    const gridCol = startCol + c;
-                    const index = gridRow * GRID_SIZE + gridCol;
-
-                    if (gridRow >= 0 && gridRow < GRID_SIZE && gridCol >= 0 && gridCol < GRID_SIZE) {
-                        const cell = cells[index];
-                        if (isValid) {
-                            cell.classList.add('highlight');
-                        } else {
-                            cell.classList.add('invalid');
-                        }
-                        ghostBlockElements.push(cell); // Keep track of highlighted cells
-                    }
-                }
-            }
-        }
-    }
-
-    function removeHighlights() {
-        ghostBlockElements.forEach(cell => {
-            cell.classList.remove('highlight', 'invalid');
-        });
-        ghostBlockElements = [];
-    }
-
-    function clearLines() {
-        let linesCleared = 0;
-        let cellsCleared = 0;
-        const cellsToAnimate = new Set();
-
-        // Check rows
-        for (let r = 0; r < GRID_SIZE; r++) {
-            if (grid[r].every(cell => cell !== 0)) {
-                linesCleared++;
-                for (let c = 0; c < GRID_SIZE; c++) {
-                    if (!cellsToAnimate.has(`${r}-${c}`)) {
-                        cellsToAnimate.add(`${r}-${c}`);
-                        const index = r * GRID_SIZE + c;
-                        gameGrid.children[index].classList.add('destroying');
-                    }
-                }
-                // Don't clear immediately, wait for animation
-            }
-        }
-
-        // Check columns
-        for (let c = 0; c < GRID_SIZE; c++) {
-            let columnFull = true;
+        // --- FUNGSI INISIASI GAME ---
+        function initGame(isRestartFromMenu = false) {
+            boardState = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(0));
+            gameBoardElement.innerHTML = '';
             for (let r = 0; r < GRID_SIZE; r++) {
-                if (grid[r][c] === 0) {
-                    columnFull = false;
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('grid-cell');
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    gameBoardElement.appendChild(cell);
+                }
+            }
+            if (!isRestartFromMenu) { // Jangan reset skor jika hanya restart dari menu game over
+                 currentScore = 0;
+            }
+            animateScoreUpdate(currentScore);
+            loadHighScore();
+            gameOverMessageElement.style.display = 'none';
+            nextPieceContainers.forEach(container => container.innerHTML = '');
+            generateNewPiecesSet();
+            piecePlacedCount = 0;
+            comboCount = 0;
+            lastMajorEffect = null;
+            gameBoardElement.classList.remove('board-shake-subtle', 'board-shake-strong');
+            closeMenu(); // Pastikan menu tertutup saat game dimulai/direstart
+        }
+
+        // --- MENU FUNCTIONS ---
+        function openMenu() {
+            isMenuOpen = true;
+            menuOverlay.style.display = 'flex';
+            gameMainContainer.classList.add('menu-active');
+        }
+
+        function closeMenu() {
+            isMenuOpen = false;
+            menuOverlay.style.display = 'none';
+            gameMainContainer.classList.remove('menu-active');
+            // Jika ada modal redeem terbuka, tutup juga
+            redeemModal.style.display = 'none';
+        }
+
+        menuButton.addEventListener('click', openMenu);
+        resumeGameButton.addEventListener('click', closeMenu);
+
+        resetScoreButton.addEventListener('click', () => {
+            if (confirm("Apakah kamu yakin ingin menghapus skor tertinggi? Tindakan ini tidak bisa dibatalkan.")) {
+                highScore = 0;
+                saveHighScore();
+                highScoreElement.textContent = highScore;
+                // Beri feedback
+                const feedbackText = document.createElement('div');
+                feedbackText.textContent = "Skor Tertinggi Direset!";
+                feedbackText.style.color = "var(--neon-red)";
+                feedbackText.style.textAlign = "center";
+                feedbackText.style.marginTop = "10px";
+                feedbackText.style.fontSize = "0.9em";
+                resetScoreButton.parentElement.appendChild(feedbackText);
+                setTimeout(() => feedbackText.remove(), 2000);
+            }
+        });
+
+        backToMainMenuButton.addEventListener('click', () => {
+            // Jika ini bagian dari web yang lebih besar, arahkan ke URL menu utama
+            // window.location.href = "url_menu_utama.html"; 
+            // Untuk single page, history.back() adalah opsi sederhana
+            if (history.length > 1) {
+                history.back();
+            } else {
+                // Jika tidak ada history, mungkin reload atau tampilkan pesan
+                alert("Tidak ada halaman sebelumnya di histori.");
+            }
+        });
+        
+        // --- REDEEM CODE FUNCTIONS ---
+        openRedeemButton.addEventListener('click', () => {
+            redeemModal.style.display = 'flex';
+            redeemCodeInput.value = ''; // Kosongkan input
+            redeemCodeInput.focus();
+        });
+
+        redeemCloseButton.addEventListener('click', () => {
+            redeemModal.style.display = 'none';
+        });
+
+        redeemSubmitButton.addEventListener('click', () => {
+            const code = redeemCodeInput.value.trim().toUpperCase(); // Normalisasi kode
+            if (REDEEM_CODES.hasOwnProperty(code)) {
+                const scoreBonus = REDEEM_CODES[code];
+                currentScore += scoreBonus;
+                animateScoreUpdate(currentScore);
+                showFloatingText(`+${scoreBonus} Skor!`, Math.floor(GRID_SIZE / 2) - 2, Math.floor(GRID_SIZE / 2) - 1, 'code-success');
+                delete REDEEM_CODES[code]; // Opsional: buat kode hanya bisa dipakai sekali per sesi game
+                redeemModal.style.display = 'none';
+            } else {
+                showFloatingText("Kode Invalid!", Math.floor(GRID_SIZE / 2) - 2, Math.floor(GRID_SIZE / 2) - 1, 'code-fail');
+                redeemCodeInput.style.animation = "shakeBlock 0.3s";
+                setTimeout(() => redeemCodeInput.style.animation = "", 300);
+            }
+        });
+
+
+        // --- FUNGSI RENDER ---
+        function renderBoard() {
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const cellElement = gameBoardElement.children[r * GRID_SIZE + c];
+                    // Remove all previous block color classes and 'filled'
+                    cellElement.className = 'grid-cell'; // Reset to base class
+                    if (boardState[r][c] !== 0) {
+                        cellElement.classList.add('filled', boardState[r][c]); // Add the block color class
+                    }
+                }
+            }
+            clearShadow(); // Always clear shadows when board re-renders or state changes
+        }
+
+        function createBlockElement(blockDef, isPreview = false) {
+            const blockElement = document.createElement('div');
+            blockElement.classList.add('block');
+            if(isPreview) blockElement.classList.add('in-preview');
+            
+            let minR = 0, maxR = 0, minC = 0, maxC = 0;
+            blockDef.cells.forEach(([r, c]) => {
+                minR = Math.min(minR, r); maxR = Math.max(maxR, r);
+                minC = Math.min(minC, c); maxC = Math.max(maxC, c);
+            });
+            const rows = maxR - minR + 1;
+            const cols = maxC - minC + 1;
+
+            blockElement.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+            blockElement.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            
+            const actualBoardCellSize = gameBoardElement.querySelector('.grid-cell')?.offsetWidth || CELL_SIZE_BOARD_CSS;
+            const cellSizeForBlock = isPreview ? CELL_SIZE_PREVIEW : actualBoardCellSize;
+
+            blockElement.style.width = `${cols * cellSizeForBlock}px`;
+            blockElement.style.height = `${rows * cellSizeForBlock}px`;
+
+            blockDef.cells.forEach(([r, c]) => {
+                const cell = document.createElement('div');
+                cell.classList.add(`color-${blockDef.color}`); // Use the base color class
+                if (isPreview) cell.classList.add('block-cell'); // Smaller cells for preview
+                
+                cell.style.gridRowStart = r - minR + 1;
+                cell.style.gridColumnStart = c - minC + 1;
+                
+                cell.style.width = `${cellSizeForBlock}px`;
+                cell.style.height = `${cellSizeForBlock}px`;
+                blockElement.appendChild(cell);
+            });
+            blockElement.dataset.blockName = blockDef.name;
+            return blockElement;
+        }
+        
+        function generateNewPiecesSet() {
+            for (let i = 0; i < 3; i++) {
+                const randomDef = BLOCK_DEFINITIONS[Math.floor(Math.random() * BLOCK_DEFINITIONS.length)];
+                const blockDefCopy = JSON.parse(JSON.stringify(randomDef)); 
+                currentPieces[i] = { def: blockDefCopy, element: null, placed: false };
+                
+                const blockElement = createBlockElement(blockDefCopy, true);
+                currentPieces[i].element = blockElement;
+                
+                nextPieceContainers[i].innerHTML = ''; 
+                nextPieceContainers[i].appendChild(blockElement);
+                
+                const parentContainer = nextPieceContainers[i];
+                parentContainer.classList.remove('pieceAppearAnim');
+                void parentContainer.offsetWidth; 
+                parentContainer.style.animationDelay = `${i * 0.1}s`;
+                parentContainer.classList.add('pieceAppearAnim');
+                
+                blockElement.addEventListener('pointerdown', (e) => { if (!isMenuOpen) handlePreviewDragStart(e, i); });
+            }
+            piecePlacedCount = 0;
+        }
+
+        // --- FUNGSI DRAG & DROP ---
+        let dragOffsetX, dragOffsetY;
+
+        function handlePreviewDragStart(event, pieceIndex) {
+            if (isMenuOpen || currentPieces[pieceIndex].placed || draggedPiece) return; 
+            
+            const blockDef = currentPieces[pieceIndex].def;
+            const previewElement = currentPieces[pieceIndex].element;
+
+            const activeBlockElement = createBlockElement(blockDef, false);
+            document.body.appendChild(activeBlockElement); 
+            activeBlockElement.classList.add('dragging');
+            
+            const previewRect = previewElement.getBoundingClientRect();
+            dragOffsetX = event.clientX - previewRect.left;
+            dragOffsetY = event.clientY - previewRect.top;
+            
+            activeBlockElement.style.left = `${event.clientX - dragOffsetX}px`;
+            activeBlockElement.style.top = `${event.clientY - dragOffsetY}px`;
+
+            draggedPiece = {
+                blockDef: blockDef,
+                element: activeBlockElement,
+                originalParent: nextPieceContainers[pieceIndex],
+                originalElement: previewElement,
+                pieceIndex: pieceIndex
+            };
+            previewElement.style.opacity = '0.3';
+            document.addEventListener('pointermove', handleDrag);
+            document.addEventListener('pointerup', handleDrop);
+        }
+        
+        function handleDrag(event) {
+            if (!draggedPiece) return;
+            event.preventDefault();
+            draggedPiece.element.style.left = `${event.clientX - dragOffsetX}px`;
+            draggedPiece.element.style.top = `${event.clientY - dragOffsetY}px`;
+
+            // Update shadow
+            updateShadow(event.clientX, event.clientY, draggedPiece.blockDef);
+        }
+
+        function handleDrop(event) {
+            if (!draggedPiece) return;
+            
+            const draggedElement = draggedPiece.element;
+            const boardRect = gameBoardElement.getBoundingClientRect();
+            const boardCellActualSize = gameBoardElement.querySelector('.grid-cell').offsetWidth;
+
+            const dropX = event.clientX - boardRect.left;
+            const dropY = event.clientY - boardRect.top;
+
+            const targetCol = Math.floor(dropX / boardCellActualSize);
+            const targetRow = Math.floor(dropY / boardCellActualSize);
+            
+            if (isValidPlacement(draggedPiece.blockDef, targetRow, targetCol)) {
+                placeBlockOnBoard(draggedPiece.blockDef, targetRow, targetCol);
+                currentPieces[draggedPiece.pieceIndex].placed = true;
+                draggedPiece.originalParent.innerHTML = ''; 
+                piecePlacedCount++;
+                checkForClearsAndAnimate(targetRow, targetCol);
+            } else {
+                draggedElement.classList.add('invalid-drop-feedback');
+                draggedElement.addEventListener('animationend', () => {
+                    draggedElement.remove(); 
+                    draggedPiece.originalElement.style.opacity = '1'; 
+                    draggedPiece = null;
+                }, { once: true });
+            }
+            clearShadow();
+            document.removeEventListener('pointermove', handleDrag);
+            document.removeEventListener('pointerup', handleDrop);
+        }
+
+        function updateShadow(clientX, clientY, blockDef) {
+            clearShadow(); // Clear previous shadow
+
+            const boardRect = gameBoardElement.getBoundingClientRect();
+            const boardCellActualSize = gameBoardElement.querySelector('.grid-cell').offsetWidth;
+
+            const relativeX = clientX - boardRect.left;
+            const relativeY = clientY - boardRect.top;
+
+            const targetCol = Math.floor(relativeX / boardCellActualSize);
+            const targetRow = Math.floor(relativeY / boardCellActualSize);
+
+            // Calculate actual cells for shadow
+            const cellsForShadow = [];
+            let canPlaceShadow = true;
+            for (const [rOffset, cOffset] of blockDef.cells) {
+                const r = targetRow + rOffset;
+                const c = targetCol + cOffset;
+                if (r < 0 || r >= GRID_SIZE || c < 0 || c >= GRID_SIZE || boardState[r][c] !== 0) {
+                    canPlaceShadow = false;
                     break;
                 }
+                cellsForShadow.push({r, c});
             }
-            if (columnFull) {
-                linesCleared++;
-                for (let r = 0; r < GRID_SIZE; r++) {
-                     if (!cellsToAnimate.has(`${r}-${c}`)) {
-                        cellsToAnimate.add(`${r}-${c}`);
-                        const index = r * GRID_SIZE + c;
-                        gameGrid.children[index].classList.add('destroying');
+
+            if (canPlaceShadow) {
+                currentShadowCells = cellsForShadow;
+                currentShadowCells.forEach(({r, c}) => {
+                    const cellElement = gameBoardElement.children[r * GRID_SIZE + c];
+                    if (cellElement && boardState[r][c] === 0) { // Only add shadow if cell is empty
+                        cellElement.classList.add('shadow');
                     }
-                }
-                // Don't clear immediately, wait for animation
+                });
             }
         }
 
-        cellsCleared = cellsToAnimate.size; // Count how many unique cells are to be cleared
-
-        if (linesCleared > 0) {
-            currentCombo++;
-            addScore(cellsCleared * 10 * multiplier); // Score for cleared cells
-            if (currentCombo > 1) {
-                addScore(currentCombo * 50 * multiplier); // Combo bonus
-                displayFloatingText(`Combo x${currentCombo}!`, 'combo-text');
-            }
-
-            // Perform the actual grid clearing after animation is applied
-            setTimeout(() => {
-                // Clear rows
-                for (let r = 0; r < GRID_SIZE; r++) {
-                    if (grid[r].every(cell => cell !== 0)) { // Re-check if row is still full (can happen if grid changed during animation)
-                        grid[r].fill(0);
-                    }
+        function clearShadow() {
+            currentShadowCells.forEach(({r, c}) => {
+                const cellElement = gameBoardElement.children[r * GRID_SIZE + c];
+                if (cellElement) {
+                    cellElement.classList.remove('shadow');
                 }
-                // Clear columns
-                for (let c = 0; c < GRID_SIZE; c++) {
-                    let columnFullAfterRows = true;
-                    for (let r = 0; r < GRID_SIZE; r++) {
-                        if (grid[r][c] === 0) {
-                            columnFullAfterRows = false;
-                            break;
-                        }
-                    }
-                    if (columnFullAfterRows) {
-                        for (let r = 0; r < GRID_SIZE; r++) {
-                            grid[r][c] = 0;
-                        }
-                    }
-                }
-                updateGridDisplay(); // Update after animation
-                fillBlockPreview(); // Generate new blocks if needed
-            }, 400); // Match animation duration
-        } else {
-            currentCombo = 0; // Reset combo if no lines cleared
-            fillBlockPreview(); // Generate new blocks immediately if no lines cleared
-        }
-    }
-
-    function addScore(points) {
-        score += points;
-        updateScoreDisplay();
-        saveScore();
-    }
-
-    function updateScoreDisplay() {
-        scoreDisplay.textContent = score;
-    }
-
-    function displayFloatingText(text, className) {
-        const floatingText = document.createElement('div');
-        floatingText.textContent = text;
-        floatingText.classList.add('floating-text', className);
-        document.body.appendChild(floatingText);
-
-        const scoreRect = scoreDisplay.getBoundingClientRect();
-        floatingText.style.left = `${scoreRect.left + scoreRect.width / 2}px`;
-        floatingText.style.top = `${scoreRect.top + scoreRect.height / 2}px`;
-
-        // Trigger animation
-        floatingText.offsetHeight; // Trigger reflow
-        floatingText.classList.add('show');
-
-        floatingText.addEventListener('animationend', () => {
-            floatingText.remove();
-        });
-    }
-
-    function checkGameOver() {
-        let anyBlockCanBePlaced = false;
-        for (const block of currentBlocks) {
-            if (!block) continue; // Skip null slots (already used blocks)
-            for (let r = 0; r < GRID_SIZE; r++) {
-                for (let c = 0; c < GRID_SIZE; c++) {
-                    if (canPlaceBlock(block, r, c)) {
-                        anyBlockCanBePlaced = true;
-                        break;
-                    }
-                }
-                if (anyBlockCanBePlaced) break;
-            }
-            if (anyBlockCanBePlaced) break;
-        }
-
-        // Game over if no blocks can be placed AND there are still blocks in preview (not null)
-        if (!anyBlockCanBePlaced && currentBlocks.some(block => block !== null)) {
-            showGameOver();
-        } else if (currentBlocks.every(block => block === null)) {
-            // If all blocks are used, generate new ones immediately (this ensures continuous play)
-            fillBlockPreview();
-        }
-    }
-
-    function showGameOver() {
-        overlayMessage.textContent = 'GAME OVER!';
-        finalScoreDisplay.textContent = `Skor Akhir: ${score}`;
-        gameOverlay.classList.remove('hidden');
-    }
-
-    function hideOverlay() {
-        gameOverlay.classList.add('hidden');
-    }
-
-    restartButton.addEventListener('click', () => {
-        score = 0;
-        multiplier = 1;
-        extraMoves = 0;
-        hintAvailable = false;
-        blockDestroyerAvailable = false;
-        rareItemAvailable = false;
-        saveScore();
-        initializeGame();
-    });
-
-    // Drag and Drop Logic
-    function dragStart(e) {
-    if (e.button !== 0 && e.type !== 'touchstart') return;
-
-    const slot = e.currentTarget;
-    draggedBlockIndex = parseInt(slot.dataset.index);
-    draggedBlock = currentBlocks[draggedBlockIndex];
-
-    if (!draggedBlock) return; // ✅ Cegah drag jika blok sudah digunakan
-
-
-        if (!draggedBlock) return; // If slot is empty (null block), do nothing
-
-        slot.classList.add('dragging');
-
-        // Create a ghost element for dragging
-        const ghost = document.createElement('div');
-        ghost.classList.add('ghost');
-        const blockContainer = document.createElement('div');
-        blockContainer.classList.add('draggable-block-container');
-        blockContainer.style.gridTemplateColumns = `repeat(${draggedBlock.shape[0].length}, 1fr)`;
-
-        draggedBlock.shape.forEach(row => {
-            row.forEach(cell => {
-                const piece = document.createElement('div');
-                if (cell === 1) {
-                    piece.classList.add('block-piece');
-                    piece.classList.add(`texture-${draggedBlock.type}`);
-                    piece.style.backgroundImage = `url('${blockPieceTextures[draggedBlock.type]}')`;
-                    piece.style.backgroundColor = draggedBlock.type === 'gold' ? GOLD_COLOR_BASE : OCCUPIED_COLOR_BASE;
-                }
-                blockContainer.appendChild(piece);
             });
-        });
-        ghost.appendChild(blockContainer);
-        document.body.appendChild(ghost);
+            currentShadowCells = [];
+        }
+        
+        function postClearActions(linesClearedCount, baseRow, baseCol) {
+            let currentMajorEffect = null;
+            if (linesClearedCount > 0) {
+                gameBoardElement.classList.add('board-shake-subtle');
+                setTimeout(() => gameBoardElement.classList.remove('board-shake-subtle'), 300);
+
+                let effectText = ""; let effectClass = ""; let scoreBonus = 0;
+
+                if (linesClearedCount >= 5) { 
+                    effectText = "Boom!"; effectClass = 'boom-text'; scoreBonus += 300; currentMajorEffect = 'boom';
+                    gameBoardElement.classList.add('board-shake-strong');
+                    setTimeout(() => gameBoardElement.classList.remove('board-shake-strong'), 400);
+                } else if (linesClearedCount >= 3) { 
+                    effectText = "AmPalibaba!"; effectClass = 'ampalibaba-text'; scoreBonus += 200; currentMajorEffect = 'ampalibaba';
+                }
+
+                if (lastMajorEffect && currentMajorEffect && (lastMajorEffect === 'ampalibaba' || lastMajorEffect === 'boom') && (currentMajorEffect === 'ampalibaba' || currentMajorEffect === 'boom') ) {
+                    showFloatingText("Back-to-Back!", baseRow -1 < 0 ? 0 : baseRow -1, baseCol, 'backtoback-text');
+                    scoreBonus += 150; 
+                }
+                lastMajorEffect = currentMajorEffect || (linesClearedCount > 0 ? 'clear' : null); // Track any clear as potential start of back-to-back for major effects
 
 
-        function moveGhost(clientX, clientY) {
-            ghost.style.left = `${clientX - ghost.offsetWidth / 2}px`;
-            ghost.style.top = `${clientY - ghost.offsetHeight / 2}px`;
+                if (comboCount > 0 && linesClearedCount > 0) {
+                    showFloatingText(`Combo x${comboCount + 1}!`, baseRow, baseCol, 'combo-text');
+                    currentScore += (50 * linesClearedCount * (comboCount + 1));
+                } else if (linesClearedCount > 0) {
+                     currentScore += (50 * linesClearedCount); 
+                }
+                comboCount = linesClearedCount > 0 ? comboCount + 1 : 0;
+                
+                if (effectText) showFloatingText(effectText, baseRow, baseCol, effectClass);
+                currentScore += scoreBonus;
 
-            const targetCell = getTargetGridCell(clientX, clientY);
-            if (targetCell) {
-                const targetCellInfo = targetCell.dataset;
-                const blockRows = draggedBlock.shape.length;
-                const blockCols = draggedBlock.shape[0].length;
-                // Calculate startRow/startCol based on center of block over target cell
-                const startRow = parseInt(targetCellInfo.row) - Math.floor(blockRows / 2);
-                const startCol = parseInt(targetCellInfo.col) - Math.floor(blockCols / 2);
-                const isValid = canPlaceBlock(draggedBlock, startRow, startCol);
-                highlightCells(draggedBlock, startRow, startCol, isValid);
-            } else {
-                removeHighlights();
+                if (isBoardEmpty()) {
+                    showFloatingText("Perfect Clear!", Math.floor(GRID_SIZE/2)-1, Math.floor(GRID_SIZE/2)-1, 'perfect-clear-text');
+                    currentScore += 500;
+                    lastMajorEffect = 'perfect'; 
+                }
+            } else { 
+                comboCount = 0;
+                if (lastMajorEffect !== 'boom' && lastMajorEffect !== 'ampalibaba' && lastMajorEffect !== 'perfect') { // Don't reset if it was a major effect, allow back-to-back next turn
+                    lastMajorEffect = null;
+                }
+            }
+            animateScoreUpdate(currentScore); 
+            renderBoard(); 
+
+            if (draggedPiece && draggedPiece.element.parentNode) { 
+                draggedPiece.element.remove();
+            }
+            draggedPiece = null; 
+
+            if (piecePlacedCount === 3) {
+                setTimeout(generateNewPiecesSet, 200); 
+            }
+
+            if (checkGameOver()) {
+                showGameOver();
             }
         }
 
-        // Initial ghost position
-        const initialClientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-        const initialClientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-        moveGhost(initialClientX, initialClientY);
-
-        function drag(e) {
-            e.preventDefault(); // Prevent scrolling on touch
-            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-            moveGhost(clientX, clientY);
+        function isValidPlacement(blockDef, baseRow, baseCol) {
+            for (const [rOffset, cOffset] of blockDef.cells) {
+                const r = baseRow + rOffset;
+                const c = baseCol + cOffset;
+                if (r < 0 || r >= GRID_SIZE || c < 0 || c >= GRID_SIZE || boardState[r][c] !== 0) {
+                    return false; 
+                }
+            }
+            return true;
         }
 
-        function dragEnd(e) {
-            slot.classList.remove('dragging');
-            if (ghost.parentNode) {
-                ghost.remove();
+        function placeBlockOnBoard(blockDef, baseRow, baseCol) {
+            let cellsFilled = 0;
+            blockDef.cells.forEach(([rOffset, cOffset]) => {
+                const r = baseRow + rOffset;
+                const c = baseCol + cOffset;
+                if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
+                    // Use idColor for boardState to properly apply CSS classes
+                    boardState[r][c] = blockDef.idColor; 
+                    cellsFilled++;
+                    const cellElement = gameBoardElement.children[r * GRID_SIZE + c];
+                    cellElement.classList.add('placed-animation', blockDef.idColor); // Add idColor directly
+                    cellElement.addEventListener('animationend', () => cellElement.classList.remove('placed-animation'), { once: true });
+                }
+            });
+            currentScore += cellsFilled * 10; 
+        }
+
+        // --- FUNGSI LOGIKA GAME ---
+        function checkForClearsAndAnimate(placedRow, placedCol) {
+            let rowsToClear = []; let colsToClear = []; let clearedCellsCoords = [];
+            for (let r = 0; r < GRID_SIZE; r++) { if (boardState[r].every(cell => cell !== 0)) rowsToClear.push(r); }
+            for (let c = 0; c < GRID_SIZE; c++) { if (boardState.every(row => row[c] !== 0)) colsToClear.push(c); }
+            
+            let distinctLineEntities = new Set([...rowsToClear.map(r => `R${r}`), ...colsToClear.map(c => `C${c}`)]);
+            let linesClearedCount = distinctLineEntities.size;
+
+            let uniqueCellsToClear = new Set();
+            rowsToClear.forEach(r => { for (let c = 0; c < GRID_SIZE; c++) uniqueCellsToClear.add(`${r}-${c}`); });
+            colsToClear.forEach(c => { for (let r = 0; r < GRID_SIZE; r++) uniqueCellsToClear.add(`${r}-${c}`); });
+            
+            let animationPromises = [];
+
+            uniqueCellsToClear.forEach(coordStr => {
+                const [r, c] = coordStr.split('-').map(Number);
+                clearedCellsCoords.push({r, c});
+                const cellElement = gameBoardElement.children[r * GRID_SIZE + c];
+                cellElement.classList.add('clearing');
+                animationPromises.push(new Promise(resolve => cellElement.addEventListener('transitionend', resolve, { once: true }) ));
+            });
+
+            if (animationPromises.length > 0) {
+                Promise.all(animationPromises).then(() => {
+                    clearedCellsCoords.forEach(({r, c}) => boardState[r][c] = 0);
+                    postClearActions(linesClearedCount, placedRow, placedCol);
+                });
+            } else { 
+                postClearActions(0, placedRow, placedCol); 
             }
-            removeHighlights();
+        }
+        
+        function isBoardEmpty() { return boardState.every(row => row.every(cell => cell === 0)); }
 
-            const clientX = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
-            const clientY = e.type === 'touchend' ? e.changedTouches[0].clientY : e.clientY;
-
-            const targetCell = getTargetGridCell(clientX, clientY);
-            let blockPlacedSuccessfully = false;
-
-            if (targetCell) {
-                const targetCellInfo = targetCell.dataset;
-                const blockRows = draggedBlock.shape.length;
-                const blockCols = draggedBlock.shape[0].length;
-                const startRow = parseInt(targetCellInfo.row) - Math.floor(blockRows / 2);
-                const startCol = parseInt(targetCellInfo.col) - Math.floor(blockCols / 2);
-
-                if (canPlaceBlock(draggedBlock, startRow, startCol)) {
-                    if (placeBlock(draggedBlock, startRow, startCol)) {
-                        currentBlocks[draggedBlockIndex] = null; // Mark the block as used (THIS IS THE KEY LINE)
-                        blockPlacedSuccessfully = true;
-                        updateGridDisplay();
-                        clearLines(); // clearLines will eventually call fillBlockPreview/drawBlockPreview
+        function checkGameOver() {
+            // Check if any of the *unplaced* pieces can be placed on the board
+            for (let i = 0; i < currentPieces.length; i++) {
+                if (!currentPieces[i] || currentPieces[i].placed) {
+                    continue; // Skip if piece is null or already placed
+                }
+                const blockDef = currentPieces[i].def;
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    for (let c = 0; c < GRID_SIZE; c++) {
+                        if (isValidPlacement(blockDef, r, c)) {
+                            return false; // Found a valid placement for at least one unplaced piece, so not game over
+                        }
                     }
                 }
             }
-
-            if (!blockPlacedSuccessfully) {
-                currentCombo = 0; // Reset combo if block not placed
-                // The block remains in currentBlocks, just redraw to reset its position
-                drawBlockPreview();
-                checkGameOver();
-            }
-            // If block was placed, currentBlocks[draggedBlockIndex] is null, and clearLines() will trigger fillBlockPreview.
-            // If no lines cleared, fillBlockPreview is called directly.
-
-            removeDragListeners();
-            draggedBlock = null;
-            draggedBlockIndex = -1;
+            // If we reach here, no unplaced piece can be placed
+            return currentPieces.some(p => p && !p.placed); // True if there are unplaced pieces and none can be placed
         }
 
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', dragEnd);
-        document.addEventListener('touchmove', drag, { passive: false });
-        document.addEventListener('touchend', dragEnd);
-        document.addEventListener('touchcancel', dragEnd);
-    }
-
-    function getTargetGridCell(clientX, clientY) {
-        const elements = document.elementsFromPoint(clientX, clientY);
-        for (const el of elements) {
-            if (el.classList.contains('grid-cell')) {
-                return el;
+        function showGameOver() {
+            gameOverMessageElement.style.display = 'block';
+            if (currentScore > highScore) {
+                highScore = currentScore;
+                saveHighScore();
             }
-        }
-        return null;
-    }
-
-    function removeDragListeners() {
-        document.removeEventListener('mousemove', drag);
-        document.removeEventListener('mouseup', dragEnd);
-        document.removeEventListener('touchmove', drag);
-        document.removeEventListener('touchend', dragEnd);
-        document.removeEventListener('touchcancel', dragEnd);
-    }
-
-    // Local Storage functions
-    function saveScore() {
-        localStorage.setItem('uvoblockScore', score);
-    }
-
-    function loadScore() {
-        const savedScore = localStorage.getItem('uvoblockScore');
-        return savedScore ? parseInt(savedScore) : 0;
-    }
-
-    // Sidebar Menu functionality
-    menuButton.addEventListener('click', () => {
-        sidebarMenu.classList.add('open');
-        menuOverlayBg.classList.add('visible');
-    });
-
-    closeSidebarButton.addEventListener('click', () => {
-        sidebarMenu.classList.remove('open');
-        menuOverlayBg.classList.remove('visible');
-        menuRedeemSection.style.display = 'none'; // Hide redeem input when closing
-        redeemMessage.textContent = ''; // Clear message on close
-        redeemInput.value = ''; // Clear input on close
-    });
-
-    menuOverlayBg.addEventListener('click', () => {
-        sidebarMenu.classList.remove('open');
-        menuOverlayBg.classList.remove('visible');
-        menuRedeemSection.style.display = 'none'; // Hide redeem input when clicking outside
-        redeemMessage.textContent = ''; // Clear message on close
-        redeemInput.value = ''; // Clear input on close
-    });
-
-    // Reset Score functionality
-    resetScoreMenuItem.addEventListener('click', () => {
-        if (confirm('Apakah Anda yakin ingin mereset skor Anda? Ini tidak dapat dibatalkan.')) {
-            score = 0;
-            multiplier = 1;
-            extraMoves = 0;
-            hintAvailable = false;
-            blockDestroyerAvailable = false;
-            rareItemAvailable = false;
-            saveScore(); // Save the reset score
-            updateScoreDisplay(); // Update display
-            // Clear all redeemed codes on full reset
-            Object.keys(REDEEM_CODES).forEach(code => localStorage.removeItem(`redeemed_${code}`));
-            redeemMessage.textContent = 'Skor dan kode redeem berhasil direset!';
-            redeemMessage.style.color = '#2ecc71';
-            // Close sidebar after action
-            sidebarMenu.classList.remove('open');
-            menuOverlayBg.classList.remove('visible');
-            menuRedeemSection.style.display = 'none'; // Hide redeem input
-            redeemInput.value = ''; // Clear input
-            initializeGame(); // Re-initialize game to ensure UI matches reset state
-        }
-    });
-
-    // Toggle Redeem Code input section
-    redeemCodeMenuItem.addEventListener('click', () => {
-        menuRedeemSection.style.display = menuRedeemSection.style.display === 'none' ? 'flex' : 'none';
-        redeemMessage.textContent = ''; // Clear message when toggling
-        redeemInput.value = ''; // Clear input when toggling
-    });
-
-    // Redeem code functionality (within sidebar)
-    redeemButton.addEventListener('click', () => {
-        const code = redeemInput.value.trim();
-        if (code.length !== 5) { // Redeem codes are now 5 digits as per your provided list
-            redeemMessage.textContent = 'Kode redeem harus 5 angka!';
-            redeemMessage.style.color = '#e74c3c'; // Red for error
-            return;
+            highScoreElement.textContent = highScore;
         }
 
-        const reward = REDEEM_CODES[code];
-        if (reward) {
-            if (localStorage.getItem(`redeemed_${code}`)) {
-                redeemMessage.textContent = 'Kode ini sudah digunakan!';
-                redeemMessage.style.color = '#e74c3c'; // Red for error
-                return;
-            }
-
-            score += reward.value;
-            let message = `Redeem berhasil! Mendapat ${reward.value} skor!`;
-            // Apply bonuses
-            if (reward.bonus === "combo_booster") {
-                combo += 3; // Example: Add 3 to combo, actual effect depends on implementation
-                message += ' + Combo Booster!';
-            }
-            if (reward.bonus === "multiplier") {
-                multiplier *= reward.value_multiplier;
-                message += ` + ${reward.value_multiplier}x Multiplier!`;
-            }
-            if (reward.bonus === "rare_item") {
-                rareItemAvailable = true;
-                message += ' + 1 Item Rare!';
-            }
-            if (reward.bonus === "hint_free") {
-                hintAvailable = true;
-                message += ' + Hint Gratis!';
-            }
-            if (reward.bonus === "double_combo") {
-                message += ' + Double Combo!';
-            }
-            if (reward.bonus === "extra_move") {
-                extraMoves += 1;
-                message += ' + Extra Move!';
-            }
-            if (reward.bonus === "block_destroyer") {
-                blockDestroyerAvailable = true;
-                message += ' + Block Destroyer Item!';
-            }
-
-            updateScoreDisplay();
-            saveScore();
-            localStorage.setItem(`redeemed_${code}`, 'true'); // Mark code as used
-            redeemMessage.textContent = message;
-            redeemMessage.style.color = '#2ecc71'; // Green for success
-            redeemInput.value = ''; // Clear input
-        } else {
-            redeemMessage.textContent = 'Kode redeem tidak valid.';
-            redeemMessage.style.color = '#e74c3c'; // Red for error
-        }
-    });
-
-    // Back to Home functionality
-    backToHomeMenuItem.addEventListener('click', () => {
-        // You can replace this with your actual home page URL or a custom function
-        window.location.href = 'index.html'; // Example: navigate to index.html
-        // For local development, you might just want to reload or go back
-        // window.history.back();
-    });
-
-    // Dynamic sizing for grid cells and block previews
-    function setDynamicSizes() {
-        const gameContainer = document.getElementById('game-container');
-        let cellSize, blockSlotSize, blockPieceSize;
-
-        // Ensure header element exists before trying to get its offsetHeight
-        const headerElement = document.getElementById('header');
-        const headerHeight = headerElement ? headerElement.offsetHeight : 0;
-
-        if (window.matchMedia("(orientation: landscape) and (max-height: 500px)").matches) {
-            // Landscape mode, adapt to height primarily
-            const containerHeight = gameContainer.offsetHeight;
-            cellSize = (containerHeight - headerHeight - 15) / GRID_SIZE; // Total height minus header and block preview gap
-            blockSlotSize = (containerHeight - headerHeight - 15) / 3; // Approx 3 slots fitting vertically
-            blockPieceSize = blockSlotSize / 5; // A piece is typically 1/3 or 1/5 of a block slot
-        } else {
-            // Portrait mode, adapt to width primarily
-            const containerWidth = gameContainer.offsetWidth;
-            const availableHeight = gameContainer.offsetHeight - headerHeight - 15; // Total height minus header and block preview gap
-            cellSize = Math.min((containerWidth - 40) / GRID_SIZE, (availableHeight - 100) / GRID_SIZE); // 40 for padding, 100 for block preview area roughly
-            blockSlotSize = (containerWidth - 40 - 30) / 3; // 40 for container padding, 30 for gap
-            blockPieceSize = blockSlotSize / 5;
+        // --- FUNGSI SKOR & UI ---
+        function animateScoreUpdate(targetScore) {
+            clearInterval(scoreAnimationInterval);
+            let currentDisplayScore = parseInt(scoreElement.textContent);
+            if (isNaN(currentDisplayScore)) currentDisplayScore = 0;
+            const diff = targetScore - currentDisplayScore;
+            if (diff === 0) { scoreElement.textContent = targetScore; return; }
+            const duration = 300; const steps = 20;
+            const stepValue = diff / steps; let stepCount = 0;
+            scoreAnimationInterval = setInterval(() => {
+                currentDisplayScore += stepValue; stepCount++;
+                scoreElement.textContent = Math.round(currentDisplayScore);
+                if (stepCount >= steps) {
+                    clearInterval(scoreAnimationInterval);
+                    scoreElement.textContent = targetScore; 
+                }
+            }, duration / steps);
         }
 
-        // Ensure minimum sensible sizes
-        cellSize = Math.max(cellSize, 25);
-        blockSlotSize = Math.max(blockSlotSize, 50);
-        blockPieceSize = Math.max(blockPieceSize, 10);
+        function saveHighScore() { try { localStorage.setItem('uvoblock_v1.1_highscore', highScore); } catch (e) { console.error("Gagal simpan skor:", e); } }
+        function loadHighScore() { try { const saved = localStorage.getItem('uvoblock_v1.1_highscore'); highScore = saved ? parseInt(saved, 10) : 0; } catch (e) { console.error("Gagal muat skor:", e); highScore = 0; } highScoreElement.textContent = highScore; }
+        
+        function showFloatingText(text, boardRow, boardCol, ...extraClasses) {
+            const textElement = document.createElement('div');
+            textElement.classList.add('floating-text', ...extraClasses);
+            textElement.textContent = text;
+            const boardCellActualSize = gameBoardElement.querySelector('.grid-cell')?.offsetWidth || CELL_SIZE_BOARD_CSS;
+            // Calculate a position near the center of the board
+            let textLeft = (gameBoardElement.offsetWidth / 2) - (textElement.offsetWidth / 2);
+            let textTop = (gameBoardElement.offsetHeight / 2) - 30; // Slightly above center
 
-        document.documentElement.style.setProperty('--grid-cell-dynamic-size', `${cellSize}px`);
-        document.documentElement.style.setProperty('--block-slot-dynamic-size', `${blockSlotSize}px`);
-        document.documentElement.style.setProperty('--block-piece-dynamic-size', `${blockPieceSize}px`);
+            // If specific row/col are provided, adjust position
+            if (boardRow !== undefined && boardCol !== undefined) {
+                textLeft = boardCol * boardCellActualSize + (boardCellActualSize / 2) - (textElement.offsetWidth / 2);
+                textTop = boardRow * boardCellActualSize - 20; 
+                // Ensure it stays within board bounds if block is near edge
+                textLeft = Math.max(0, Math.min(textLeft, gameBoardElement.offsetWidth - 60)); // 60 for some margin
+            }
+            
+            textElement.style.left = `${textLeft}px`; 
+            textElement.style.top = `${textTop}px`; 
+            gameBoardElement.appendChild(textElement); 
+            textElement.addEventListener('animationend', () => { if (textElement.parentNode) textElement.remove(); }, { once: true });
+        }
 
-        gameGrid.style.gridTemplateColumns = `repeat(${GRID_SIZE}, ${cellSize}px)`;
-        gameGrid.style.gridAutoRows = `${cellSize}px`;
+        // --- EVENT LISTENERS ---
+        // restartButton.addEventListener('click', () => initGame(false)); // REMOVED
+        restartGameOverButton.addEventListener('click', () => initGame(false)); // Full reset from game over
+        
+        // --- MULAI GAME ---
+        initGame(false);
 
-        drawBlockPreview(); // Redraw blocks with new sizes
-        updateGridDisplay(); // Update grid cell background colors after resize
-    }
-
-    // Initial call and on resize
-    window.addEventListener('resize', setDynamicSizes);
-    document.addEventListener('DOMContentLoaded', () => {
-        initializeGame();
-        setDynamicSizes(); // Set sizes on initial load
-    });
-
-</script>
+    </script>
 </body>
 </html>
