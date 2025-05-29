@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T REXX - UVOGAMES</title>
+    <style>
+        /* General Styles */
+        body {
+            margin: 0;
+            overflow: hidden; /* Hide scrollbars */
+            font-family: 'Press Start 2P', cursive; /* A classic pixel font */
+            background-color: #f7f7f7;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            color: #333;
+        }
+
+        /* --- Header --- */
+        .header {
+            background-color: #222;
+            color: #eee;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            box-sizing: border-box;
+            z-index: 1000; /* Ensure header is on top */
+        }
+
+        .header-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .menu-button {
+            background: none;
+            border: none;
+            color: #eee;
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        /* --- Main Game Container --- */
+        .game-container {
+            flex-grow: 1; /* Take remaining vertical space */
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            background-color: #fff;
+            border-bottom: 2px solid #333;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end; /* Align game elements to the bottom */
+        }
+
+        /* --- Game Area (for better centering on wider screens, acts as the actual game canvas) --- */
+        .game-area {
+            position: relative;
+            width: 100%; /* Full width on mobile */
+            max-width: 600px; /* Max width for game elements */
+            height: 200px; /* Fixed height for the game area */
+            background-color: #fff;
+            overflow: hidden;
+        }
+
+        /* --- Ground Animation --- */
+        @keyframes ground-move {
+            0% { background-position: 0 0; }
+            100% { background-position: -600px 0; } /* Move ground texture */
+        }
+
+        .ground {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            background-color: #666; /* Simple ground color */
+            background-image: linear-gradient(to right, #ccc 1px, transparent 1px); /* Simple texture */
+            background-size: 20px 20px;
+            animation: ground-move 2s linear infinite;
+        }
+
+        /* --- Dino Styles --- */
+        .dino {
+            width: 40px;
+            height: 40px;
+            background-color: #4CAF50; /* Default Dino color */
+            position: absolute;
+            bottom: 20px; /* Above the ground */
+            left: 50px;
+            border-radius: 5px;
+            transition: bottom 0.2s ease-out; /* For jump animation */
+        }
+
+        .dino.jumping {
+            animation: jump 0.6s ease-out forwards;
+        }
+
+        @keyframes jump {
+            0% { bottom: 20px; }
+            50% { bottom: 100px; } /* Max jump height */
+            100% { bottom: 20px; }
+        }
+
+        /* --- Obstacle Styles --- */
+        .obstacle {
+            width: 20px;
+            height: 40px;
+            background-color: #FF5722; /* Default obstacle color */
+            position: absolute;
+            bottom: 20px; /* Above the ground */
+            right: -20px; /* Start off-screen */
+            animation: moveObstacle linear infinite;
+        }
+
+        /* Animation will be dynamically set by JS */
+        @keyframes moveObstacle {
+            from { right: -20px; }
+            to { right: 100%; }
+        }
+
+        /* --- Game Info (Score, Coins) --- */
+        .game-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 0.9em;
+            text-align: right;
+            padding: 5px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 5px;
+        }
+
+        /* --- Game Over Screen --- */
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            display: none; /* Hidden by default */
+            z-index: 999;
+        }
+
+        .game-over button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin-top: 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        /* --- Left Navigation Menu --- */
+        .nav-menu {
+            position: fixed;
+            top: 0;
+            left: -250px; /* Hidden off-screen initially */
+            width: 250px;
+            height: 100%;
+            background-color: #333;
+            color: white;
+            padding-top: 60px; /* Space for potential close button/header */
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+            transition: left 0.3s ease-in-out;
+            z-index: 2000; /* Above everything else */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nav-menu.open {
+            left: 0;
+        }
+
+        .nav-menu h3 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .nav-menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1; /* Take up available space */
+            overflow-y: auto; /* Allow scrolling for many items */
+        }
+
+        .nav-menu li {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid #444;
+            transition: background-color 0.2s;
+        }
+
+        .nav-menu li:hover {
+            background-color: #555;
+        }
+
+        .nav-menu .close-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.8em;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            cursor: pointer;
+        }
+
+        .nav-menu .menu-section-title {
+            padding: 10px 20px;
+            font-weight: bold;
+            background-color: #444;
+            margin-top: 15px;
+            margin-bottom: 5px;
+        }
+
+        .nav-menu .game-info-footer {
+            padding: 15px 20px;
+            font-size: 0.8em;
+            border-top: 1px solid #444;
+            text-align: center;
+        }
+
+        .nav-menu button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 15px 20px;
+            width: calc(100% - 40px); /* Adjust for padding */
+        }
+
+        /* --- Overlay for menu when open --- */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1999;
+            display: none; /* Hidden by default */
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        /* --- Skins and Modes Styles (example) --- */
+        .skin-item.selected {
+            background-color: #6a1b9a; /* Highlight selected skin */
+            font-weight: bold;
+        }
+        .mode-item.selected {
+            background-color: #00796b; /* Highlight selected mode */
+            font-weight: bold;
+        }
+
+        /* Font import for pixel font */
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <button class="menu-button" id="menuButton">☰</button>
+        <span class="header-title">T REXX - UVOGAMES</span>
+        <div></div> </header>
+
+    <div class="game-container" id="gameContainer">
+        <div class="game-area" id="gameArea">
+            <div class="ground" id="ground"></div>
+            <div class="dino" id="dino"></div>
+            <div class="game-info">
+                Score: <span id="score">0</span><br>
+                Coins: <span id="coins">0</span>
+            </div>
+            <div class="game-over" id="gameOver">
+                <h2>Game Over!</h2>
+                <p>Your Score: <span id="finalScore">0</span></p>
+                <p>Coins Earned: <span id="earnedCoins">0</span></p>
+                <button id="restartButton">Restart</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="nav-menu" id="navMenu">
+        <button class="close-button" id="closeMenuButton">&times;</button>
+        <h3>Game Menu</h3>
+        <ul>
+            <li class="menu-section-title">Game Info</li>
+            <li>Game Name: Dino Run</li>
+            <li>Version: 1</li>
+            <li>By: ADITdev</li>
+            <li class="menu-section-title">Skins (<span id="currentSkinName">Default</span>)</li>
+            <li class="skin-item" data-skin="default" style="background-color: #4CAF50;">Default Dino</li>
+            <li class="skin-item" data-skin="red" style="background-color: #F44336;">Red Dino</li>
+            <li class="skin-item" data-skin="blue" style="background-color: #2196F3;">Blue Dino</li>
+            <li class="skin-item" data-skin="yellow" style="background-color: #FFEB3B;">Yellow Dino</li>
+            <li class="skin-item" data-skin="purple" style="background-color: #9C27B0;">Purple Dino</li>
+            <li class="skin-item" data-skin="cyan" style="background-color: #00BCD4;">Cyan Dino</li>
+            <li class="skin-item" data-skin="orange" style="background-color: #FF9800;">Orange Dino</li>
+            <li class="skin-item" data-skin="pink" style="background-color: #E91E63;">Pink Dino</li>
+            <li class="skin-item" data-skin="lime" style="background-color: #CDDC39;">Lime Dino</li>
+            <li class="skin-item" data-skin="teal" style="background-color: #009688;">Teal Dino</li>
+
+
+            <li class="menu-section-title">Modes (<span id="currentModeName">Normal</span>)</li>
+            <li class="mode-item" data-mode="normal">Normal Mode</li>
+            <li class="mode-item" data-mode="fast">Fast Mode</li>
+            <li class="mode-item" data-mode="slow">Slow Mode</li>
+            <li class="mode-item" data-mode="obstacles">More Obstacles</li>
+            <li class="mode-item" data-mode="coins">Coin Rush</li>
+            <li class="mode-item" data-mode="night">Night Mode</li>
+            <li class="mode-item" data-mode="gravity">High Gravity</li>
+            <li class="mode-item" data-mode="small">Small Obstacles</li>
+            <li class="mode-item" data-mode="big">Big Obstacles</li>
+            <li class="mode-item" data-mode="endless">Endless Jump</li>
+        </ul>
+        <div class="game-info-footer">
+            <button id="backButton">Back to previous web</button>
+        </div>
+    </nav>
+
+    <div class="overlay" id="overlay"></div>
+
+    <script>
+        const dino = document.getElementById('dino');
+        const gameArea = document.getElementById('gameArea');
+        const gameOverScreen = document.getElementById('gameOver');
+        const restartButton = document.getElementById('restartButton');
+        const scoreDisplay = document.getElementById('score');
+        const coinsDisplay = document.getElementById('coins');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const earnedCoinsDisplay = document.getElementById('earnedCoins');
+        const menuButton = document.getElementById('menuButton');
+        const navMenu = document.getElementById('navMenu');
+        const closeMenuButton = document.getElementById('closeMenuButton');
+        const overlay = document.getElementById('overlay');
+        const backButton = document.getElementById('backButton');
+        const skinItems = document.querySelectorAll('.skin-item');
+        const modeItems = document.querySelectorAll('.mode-item');
+        const currentSkinNameDisplay = document.getElementById('currentSkinName');
+        const currentModeNameDisplay = document.getElementById('currentModeName');
+
+        let isJumping = false;
+        let gameOver = false;
+        let score = 0;
+        let coins = parseInt(localStorage.getItem('dinoCoins')) || 0; // Load coins from localStorage
+        let obstacleSpeed = 5; // Initial obstacle speed
+        let obstacleInterval = 2000; // Interval to create new obstacles
+        let obstacleGenerationTimer;
+        let gameLoopTimer;
+        let currentSkin = localStorage.getItem('dinoSkin') || 'default';
+        let currentMode = localStorage.getItem('dinoMode') || 'normal';
+
+        const skins = {
+            'default': { color: '#4CAF50' },
+            'red': { color: '#F44336' },
+            'blue': { color: '#2196F3' },
+            'yellow': { color: '#FFEB3B' },
+            'purple': { color: '#9C27B0' },
+            'cyan': { color: '#00BCD4' },
+            'orange': { color: '#FF9800' },
+            'pink': { color: '#E91E63' },
+            'lime': { color: '#CDDC39' },
+            'teal': { color: '#009688' },
+        };
+
+        const modes = {
+            'normal': { speedMultiplier: 1, intervalMultiplier: 1, name: 'Normal' },
+            'fast': { speedMultiplier: 1.5, intervalMultiplier: 0.7, name: 'Fast' },
+            'slow': { speedMultiplier: 0.7, intervalMultiplier: 1.3, name: 'Slow' },
+            'obstacles': { speedMultiplier: 1, intervalMultiplier: 0.5, name: 'More Obstacles' },
+            'coins': { speedMultiplier: 1, intervalMultiplier: 1, name: 'Coin Rush' }, // Special logic for coins
+            'night': { speedMultiplier: 1, intervalMultiplier: 1, name: 'Night' }, // Requires CSS changes
+            'gravity': { speedMultiplier: 1, intervalMultiplier: 1, name: 'High Gravity' }, // Affects jump physics
+            'small': { speedMultiplier: 1, intervalMultiplier: 1, name: 'Small Obstacles' }, // Affects obstacle size
+            'big': { speedMultiplier: 1, intervalMultiplier: 1, name: 'Big Obstacles' }, // Affects obstacle size
+            'endless': { speedMultiplier: 0.8, intervalMultiplier: 1.5, name: 'Endless Jump' }, // Auto-jump
+        };
+
+        // --- Game Functions ---
+
+        function applySkin(skinKey) {
+            dino.style.backgroundColor = skins[skinKey].color;
+            currentSkin = skinKey;
+            localStorage.setItem('dinoSkin', currentSkin);
+            currentSkinNameDisplay.textContent = skins[currentSkin].name || currentSkin.charAt(0).toUpperCase() + currentSkin.slice(1); // Update menu display
+            updateSkinSelectionUI();
+        }
+
+        function applyMode(modeKey) {
+            currentMode = modeKey;
+            localStorage.setItem('dinoMode', currentMode);
+            currentModeNameDisplay.textContent = modes[currentMode].name; // Update menu display
+            updateModeSelectionUI();
+            resetGame(); // Reset game to apply new mode settings
+        }
+
+        function jump() {
+            if (!isJumping && !gameOver) {
+                isJumping = true;
+                dino.classList.add('jumping');
+                setTimeout(() => {
+                    isJumping = false;
+                    dino.classList.remove('jumping');
+                }, 600); // Match jump animation duration
+            }
+        }
+
+        function createObstacle() {
+            if (gameOver) return;
+
+            const obstacle = document.createElement('div');
+            obstacle.classList.add('obstacle');
+            let obstacleHeight = 40;
+            let obstacleWidth = 20;
+
+            if (currentMode === 'small') {
+                obstacleHeight = 20;
+                obstacleWidth = 10;
+            } else if (currentMode === 'big') {
+                obstacleHeight = 60;
+                obstacleWidth = 30;
+            }
+
+            obstacle.style.height = `${obstacleHeight}px`;
+            obstacle.style.width = `${obstacleWidth}px`;
+
+            // Randomize position (cactus or flying obstacle)
+            const isFlyingObstacle = Math.random() < 0.3; // 30% chance of a flying obstacle
+            if (isFlyingObstacle) {
+                obstacle.style.bottom = `${Math.random() * 80 + 80}px`; // Random height between 80px and 160px
+                obstacle.style.height = `20px`; // Make flying obstacles smaller
+                obstacle.style.width = `30px`;
+                obstacle.style.backgroundColor = `#8B4513`; // Brown for flying obstacles
+            } else {
+                obstacle.style.bottom = `20px`;
+            }
+
+            gameArea.appendChild(obstacle);
+
+            let obstaclePosition = gameArea.offsetWidth;
+            const animationDuration = gameArea.offsetWidth / (obstacleSpeed * modes[currentMode].speedMultiplier) / 10; // Adjust for speed
+            obstacle.style.animationDuration = `${animationDuration}s`;
+            obstacle.style.animationPlayState = 'running'; // Ensure animation starts
+
+            // Remove obstacle after it leaves screen
+            obstacle.addEventListener('animationiteration', () => {
+                obstacle.remove();
+            });
+
+            // Fallback for non-animation-iteration browsers or if element goes off screen
+            let obsRemovalTimer = setTimeout(() => {
+                if (obstacle.parentNode) {
+                    obstacle.remove();
+                }
+            }, animationDuration * 1000 + 50); // Give it a little extra time
+        }
+
+        function generateCoins() {
+            if (gameOver) return;
+            if (Math.random() < 0.4 || currentMode === 'coins') { // Higher chance for coins, especially in Coin Rush mode
+                const coin = document.createElement('div');
+                coin.classList.add('coin');
+                coin.style.cssText = `
+                    position: absolute;
+                    width: 15px;
+                    height: 15px;
+                    background-color: gold;
+                    border-radius: 50%;
+                    bottom: ${Math.random() * 100 + 50}px; /* Random height */
+                    right: -15px;
+                    animation: moveCoin ${gameArea.offsetWidth / (obstacleSpeed * modes[currentMode].speedMultiplier) / 10}s linear forwards;
+                    box-shadow: 0 0 5px rgba(255,215,0,0.8);
+                `;
+                gameArea.appendChild(coin);
+
+                @keyframes moveCoin {
+                    from { right: -15px; }
+                    to { right: ${gameArea.offsetWidth + 10}px; }
+                }
+
+                // Remove coin after it leaves screen
+                setTimeout(() => {
+                    if (coin.parentNode) {
+                        coin.remove();
+                    }
+                }, (gameArea.offsetWidth / (obstacleSpeed * modes[currentMode].speedMultiplier) / 10) * 1000 + 50);
+            }
+        }
+
+
+        function checkCollision() {
+            if (gameOver) return;
+
+            const dinoRect = dino.getBoundingClientRect();
+            const obstacles = document.querySelectorAll('.obstacle');
+            const coins = document.querySelectorAll('.coin');
+
+            // Check obstacle collision
+            obstacles.forEach(obstacle => {
+                const obstacleRect = obstacle.getBoundingClientRect();
+
+                if (
+                    dinoRect.left < obstacleRect.right &&
+                    dinoRect.right > obstacleRect.left &&
+                    dinoRect.top < obstacleRect.bottom &&
+                    dinoRect.bottom > obstacleRect.top
+                ) {
+                    endGame();
+                }
+            });
+
+            // Check coin collection
+            coins.forEach(coin => {
+                const coinRect = coin.getBoundingClientRect();
+
+                if (
+                    dinoRect.left < coinRect.right &&
+                    dinoRect.right > coinRect.left &&
+                    dinoRect.top < coinRect.bottom &&
+                    dinoRect.bottom > coinRect.top
+                ) {
+                    coin.remove();
+                    addCoin();
+                }
+            });
+        }
+
+        function addCoin() {
+            coins++;
+            localStorage.setItem('dinoCoins', coins); // Save coins
+            coinsDisplay.textContent = coins;
+        }
+
+        function updateScore() {
+            if (!gameOver) {
+                score++;
+                scoreDisplay.textContent = score;
+            }
+        }
+
+        function startGame() {
+            gameOver = false;
+            score = 0;
+            scoreDisplay.textContent = score;
+            coinsDisplay.textContent = coins; // Update with current coins
+            gameOverScreen.style.display = 'none';
+            dino.style.bottom = '20px'; // Reset dino position
+            dino.classList.remove('jumping');
+
+            // Clear existing obstacles and coins
+            document.querySelectorAll('.obstacle').forEach(o => o.remove());
+            document.querySelectorAll('.coin').forEach(c => c.remove());
+
+            // Apply mode settings
+            const currentModeSettings = modes[currentMode];
+            obstacleSpeed = 5 * currentModeSettings.speedMultiplier;
+            const actualObstacleInterval = obstacleInterval * currentModeSettings.intervalMultiplier;
+
+            clearInterval(obstacleGenerationTimer);
+            clearInterval(gameLoopTimer);
+
+            obstacleGenerationTimer = setInterval(createObstacle, actualObstacleInterval);
+            setInterval(generateCoins, actualObstacleInterval * 0.7); // Generate coins slightly more often
+            gameLoopTimer = setInterval(() => {
+                updateScore();
+                checkCollision();
+                // Speed up game over time
+                if (score % 100 === 0 && score > 0 && obstacleSpeed < 15) {
+                    obstacleSpeed += 0.5;
+                }
+
+                // Special mode effects
+                if (currentMode === 'night') {
+                    document.body.style.backgroundColor = score % 200 < 100 ? '#f7f7f7' : '#333';
+                    gameArea.style.backgroundColor = score % 200 < 100 ? '#fff' : '#444';
+                    dino.style.backgroundColor = score % 200 < 100 ? skins[currentSkin].color : '#eee';
+                } else {
+                    document.body.style.backgroundColor = '#f7f7f7';
+                    gameArea.style.backgroundColor = '#fff';
+                    applySkin(currentSkin); // Ensure dino color reverts
+                }
+
+                if (currentMode === 'endless') {
+                    // Auto-jump more frequently
+                    if (!isJumping && Math.random() < 0.05) { // Small chance to jump each tick
+                        jump();
+                    }
+                }
+
+            }, 50); // Game update loop
+
+            // Initial obstacle
+            createObstacle();
+        }
+
+        function endGame() {
+            gameOver = true;
+            clearInterval(obstacleGenerationTimer);
+            clearInterval(gameLoopTimer);
+            gameOverScreen.style.display = 'block';
+            finalScoreDisplay.textContent = score;
+            earnedCoinsDisplay.textContent = Math.floor(score / 100); // Example: 1 coin per 100 score
+            coins += Math.floor(score / 100);
+            localStorage.setItem('dinoCoins', coins);
+            coinsDisplay.textContent = coins; // Update coin display immediately
+        }
+
+        function resetGame() {
+            endGame(); // Stop current game
+            startGame(); // Start a new game
+        }
+
+        // --- Event Listeners ---
+
+        // Mobile tap to jump
+        gameArea.addEventListener('touchstart', jump);
+        // Desktop spacebar to jump
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Space' && !gameOver) {
+                jump();
+            }
+        });
+
+        restartButton.addEventListener('click', startGame);
+
+        menuButton.addEventListener('click', () => {
+            navMenu.classList.add('open');
+            overlay.classList.add('active');
+        });
+
+        closeMenuButton.addEventListener('click', () => {
+            navMenu.classList.remove('open');
+            overlay.classList.remove('active');
+        });
+
+        overlay.addEventListener('click', () => {
+            navMenu.classList.remove('open');
+            overlay.classList.remove('active');
+        });
+
+        backButton.addEventListener('click', () => {
+            history.back(); // Go back to the previous page in browser history
+        });
+
+        // Skin selection
+        skinItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const skin = item.dataset.skin;
+                applySkin(skin);
+                navMenu.classList.remove('open');
+                overlay.classList.remove('active');
+            });
+        });
+
+        // Mode selection
+        modeItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const mode = item.dataset.mode;
+                applyMode(mode);
+                navMenu.classList.remove('open');
+                overlay.classList.remove('active');
+            });
+        });
+
+        function updateSkinSelectionUI() {
+            skinItems.forEach(item => {
+                item.classList.remove('selected');
+                if (item.dataset.skin === currentSkin) {
+                    item.classList.add('selected');
+                }
+            });
+        }
+
+        function updateModeSelectionUI() {
+            modeItems.forEach(item => {
+                item.classList.remove('selected');
+                if (item.dataset.mode === currentMode) {
+                    item.classList.add('selected');
+                }
+            });
+        }
+
+        // Initialize game and UI on load
+        window.onload = () => {
+            applySkin(currentSkin); // Apply saved skin
+            applyMode(currentMode); // Apply saved mode
+            startGame(); // Start the game when the page loads
+            updateSkinSelectionUI(); // Set initial selected skin
+            updateModeSelectionUI(); // Set initial selected mode
+        };
+    </script>
+</body>
+</html>
