@@ -11,16 +11,25 @@
             margin: 0;
             overflow: hidden;
             font-family: 'Press Start 2P', cursive;
-            background-color: #f7f7f7;
+            background: linear-gradient(45deg, #FFD700, #FF69B4, #8A2BE2, #00BFFF); /* Initial gradient */
+            background-size: 400% 400%; /* For animation */
+            animation: background-gradient 15s ease infinite; /* Smooth animation */
             display: flex;
             flex-direction: column;
             height: 100vh;
             color: #333;
-            user-select: none; /* Prevent text selection on mobile */
+            user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
-            touch-action: manipulation; /* Optimize for touch input */
+            touch-action: manipulation;
+        }
+
+        /* Background Gradient Animation */
+        @keyframes background-gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         /* --- Header --- */
@@ -41,8 +50,8 @@
             font-weight: bold;
             letter-spacing: 2px;
             text-align: center;
-            flex-grow: 1; /* Center the title */
-            margin-right: 40px; /* Offset for menu button */
+            flex-grow: 1;
+            margin-right: 40px;
         }
 
         .menu-button {
@@ -52,21 +61,18 @@
             font-size: 1.5em;
             cursor: pointer;
             padding: 0;
-            z-index: 1001; /* Ensure button is clickable */
+            z-index: 1001;
         }
 
-        /* --- Game Container --- */
-        .game-container {
+        /* --- Main Game Container --- */
+        .main-game-wrapper {
             flex-grow: 1;
-            position: relative;
-            width: 100%;
-            overflow: hidden;
-            background-color: #fff;
-            border-bottom: 2px solid #333;
-            box-sizing: border-box;
             display: flex;
+            flex-direction: column; /* Arrange game area and jump button vertically */
             justify-content: center;
-            align-items: flex-end;
+            align-items: center;
+            padding: 10px; /* Some padding around the game */
+            box-sizing: border-box;
         }
 
         /* --- Game Area (Canvas) --- */
@@ -75,9 +81,11 @@
             width: 100%;
             max-width: 600px; /* Game width on larger screens */
             height: 200px; /* Fixed game height */
-            background-color: #e0f7fa; /* Light blue sky */
+            background-color: #e0f7fa;
             overflow: hidden;
-            border-bottom: 2px solid #4CAF50; /* Ground line */
+            border-bottom: 2px solid #4CAF50;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            margin-bottom: 10px; /* Space below game area for jump button */
         }
 
         /* Ground Animation */
@@ -85,7 +93,7 @@
             position: absolute;
             bottom: 0;
             left: 0;
-            width: 200%; /* Double width for seamless scrolling */
+            width: 200%;
             height: 20px;
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="20" height="20" fill="%238BC34A"/><rect x="0" y="10" width="20" height="10" fill="%23689F38"/></svg>');
             background-size: 20px 20px;
@@ -95,7 +103,7 @@
 
         @keyframes ground-move {
             from { transform: translateX(0); }
-            to { transform: translateX(-50%); } /* Move half the width */
+            to { transform: translateX(-50%); }
         }
 
         /* --- Dino Styles --- */
@@ -103,11 +111,11 @@
             width: 50px;
             height: 50px;
             position: absolute;
-            bottom: 20px; /* Above the ground */
+            bottom: 20px;
             left: 50px;
             background-size: contain;
             background-repeat: no-repeat;
-            image-rendering: pixelated; /* Keep pixels sharp */
+            image-rendering: pixelated;
         }
 
         /* Dino Running Animation */
@@ -122,39 +130,37 @@
 
         /* Dino Jumping Image */
         .dino.jumping {
-            background-image: var(--dino-jump) !important; /* Override running image */
+            background-image: var(--dino-jump) !important;
             animation: jump 0.6s cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
         }
 
         @keyframes jump {
             0% { bottom: 20px; }
-            50% { bottom: 120px; } /* Max jump height */
+            50% { bottom: 120px; }
             100% { bottom: 20px; }
         }
 
         /* --- Obstacle Styles --- */
         .obstacle {
             width: 30px;
-            height: 60px; /* Default cactus height */
+            height: 60px;
             position: absolute;
             bottom: 20px;
             right: -30px;
             background-size: contain;
             background-repeat: no-repeat;
             image-rendering: pixelated;
-            animation: moveObstacle linear forwards; /* Controlled by JS */
+            animation: moveObstacle linear forwards;
         }
 
-        /* Default Cactus Image (simple SVG) */
         .obstacle.cactus {
              background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200"><rect x="35" y="0" width="30" height="200" fill="%234CAF50"/><rect x="0" y="80" width="50" height="25" fill="%234CAF50"/><rect x="50" y="30" width="50" height="25" fill="%234CAF50"/></svg>');
         }
-        /* Flying Obstacle (simple SVG) */
         .obstacle.bird {
             width: 40px;
             height: 30px;
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="0,50 20,20 80,20 100,50 80,80 20,80" fill="%23607D8B"/></svg>');
-            animation: bird-flap 0.3s steps(1) infinite; /* Basic flapping animation */
+            animation: bird-flap 0.3s steps(1) infinite;
         }
         @keyframes bird-flap {
             0% { transform: translateY(0px); }
@@ -169,9 +175,9 @@
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="gold"/><text x="50" y="65" font-family="Arial" font-size="60" fill="%23DAA520" text-anchor="middle">$</text></svg>');
             background-size: contain;
             position: absolute;
-            bottom: 50px; /* Initial position above ground */
+            bottom: 50px;
             right: -20px;
-            animation: moveCoin linear forwards; /* Controlled by JS */
+            animation: moveCoin linear forwards;
             image-rendering: pixelated;
         }
 
@@ -188,17 +194,25 @@
             z-index: 10;
         }
 
-        /* --- Jump Button for Mobile --- */
-        .jump-button {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 100%; /* Make the whole game area a jump button */
-            background: transparent; /* No visible background */
+        /* --- Jump Button Below Game --- */
+        .jump-button-below {
+            background-color: #4CAF50;
+            color: white;
             border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.2em;
             cursor: pointer;
-            z-index: 5; /* Below game info, above obstacles */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: background-color 0.2s, transform 0.1s;
+            width: 90%;
+            max-width: 300px;
+        }
+
+        .jump-button-below:active {
+            background-color: #45a049;
+            transform: translateY(2px);
         }
 
         /* --- Game Over Screen --- */
@@ -251,8 +265,8 @@
         .nav-menu {
             position: fixed;
             top: 0;
-            left: -300px; /* Hidden off-screen */
-            width: 280px; /* Slightly wider for content */
+            left: -300px;
+            width: 280px;
             height: 100%;
             background-color: #333;
             color: white;
@@ -314,7 +328,7 @@
             background-color: #444;
             margin-top: 15px;
             margin-bottom: 5px;
-            color: #90CAF9; /* Light blue for section titles */
+            color: #90CAF9;
         }
 
         .nav-menu .game-info-footer {
@@ -339,6 +353,34 @@
             background-color: #0056b3;
         }
 
+        /* Redeem Code Section */
+        .redeem-section {
+            padding: 15px 20px;
+            border-top: 1px solid #444;
+            margin-top: 15px;
+        }
+        .redeem-section input {
+            width: calc(100% - 22px); /* Adjust for padding and border */
+            padding: 8px 10px;
+            margin-bottom: 10px;
+            border: 1px solid #555;
+            background-color: #222;
+            color: white;
+            border-radius: 4px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.8em;
+            box-sizing: border-box;
+        }
+        .redeem-section button {
+            width: 100%;
+            margin: 0;
+            padding: 10px 15px;
+            background-color: #FF5722;
+        }
+        .redeem-section button:hover {
+            background-color: #E64A19;
+        }
+
         /* Skin/Mode specific styles for menu items */
         .skin-item img, .mode-item img {
             width: 24px;
@@ -359,10 +401,10 @@
             font-weight: bold;
         }
         .skin-item.selected .price {
-            color: white; /* Price color changes on selection */
+            color: white;
         }
 
-        .skin-item.locked {
+        .skin-item.locked, .mode-item.locked {
             opacity: 0.6;
             cursor: not-allowed;
         }
@@ -388,7 +430,7 @@
 
         /* --- Specific Mode Visuals --- */
         .game-area.night-mode {
-            background-color: #263238; /* Darker sky */
+            background-color: #263238;
         }
         .game-area.night-mode .ground {
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="20" height="20" fill="%23455A64"/><rect x="0" y="10" width="20" height="10" fill="%23263238"/></svg>');
@@ -407,9 +449,10 @@
     <header class="header">
         <button class="menu-button" id="menuButton">☰</button>
         <span class="header-title">T REXX - UVOGAMES</span>
-        <div style="width: 30px;"></div> </header>
+        <div style="width: 30px;"></div>
+    </header>
 
-    <div class="game-container" id="gameContainer">
+    <div class="main-game-wrapper">
         <div class="game-area" id="gameArea">
             <div class="ground" id="ground"></div>
             <div class="dino" id="dino"></div>
@@ -417,7 +460,6 @@
                 Score: <span id="score">0</span><br>
                 Coins: <span id="coins">0</span>
             </div>
-            <button class="jump-button" id="jumpButton"></button>
             <div class="game-over" id="gameOver">
                 <h2>GAME OVER!</h2>
                 <p>Your Score: <span id="finalScore">0</span></p>
@@ -425,6 +467,8 @@
                 <button id="restartButton">Restart</button>
             </div>
         </div>
+
+        <button class="jump-button-below" id="jumpButtonBelow">JUMP</button>
     </div>
 
     <nav class="nav-menu" id="navMenu">
@@ -500,6 +544,13 @@
                 <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23E64A19'/><text x='50' y='60' font-family='Press Start 2P' font-size='30' fill='white' text-anchor='middle'>B</text></svg>" alt="Berserk Mode"> Berserk Mode <span class="price">300</span>
             </li>
         </ul>
+
+        <div class="redeem-section">
+            <h3 class="menu-section-title">Redeem Code</h3>
+            <input type="text" id="redeemCodeInput" placeholder="Enter code">
+            <button id="redeemButton">Redeem</button>
+        </div>
+
         <div class="game-info-footer">
             <button id="backButton">Back to previous web</button>
         </div>
@@ -517,7 +568,7 @@
         const coinsDisplay = document.getElementById('coins');
         const finalScoreDisplay = document.getElementById('finalScore');
         const earnedCoinsDisplay = document.getElementById('earnedCoins');
-        const jumpButton = document.getElementById('jumpButton'); // The invisible jump area
+        const jumpButtonBelow = document.getElementById('jumpButtonBelow'); // The new jump button
 
         const menuButton = document.getElementById('menuButton');
         const navMenu = document.getElementById('navMenu');
@@ -530,24 +581,37 @@
         const currentSkinNameDisplay = document.getElementById('currentSkinName');
         const currentModeNameDisplay = document.getElementById('currentModeName');
 
+        const redeemCodeInput = document.getElementById('redeemCodeInput');
+        const redeemButton = document.getElementById('redeemButton');
+
         // --- Game State Variables ---
         let isJumping = false;
         let gameOver = false;
         let score = 0;
-        let coins = parseInt(localStorage.getItem('dinoCoins')) || 0; // Load coins from localStorage
-        let gameSpeed = 5; // Initial obstacle speed
-        let obstacleGenerationInterval = 1500; // Time in ms to create new obstacles
+        let coins = parseInt(localStorage.getItem('dinoCoins')) || 0;
+        let gameSpeed = 5;
+        let obstacleGenerationInterval = 1500;
         let obstacleTimer;
         let gameLoopTimer;
-        let jumpAnimationDuration = 600; // Must match CSS animation duration
+        const jumpAnimationDuration = 600; // Must match CSS animation duration
 
         // --- Persistent State from localStorage ---
         let currentSkinId = localStorage.getItem('dinoSkinId') || 'default';
         let currentModeId = localStorage.getItem('dinoModeId') || 'normal';
         let unlockedSkins = JSON.parse(localStorage.getItem('unlockedSkins')) || ['default'];
         let unlockedModes = JSON.parse(localStorage.getItem('unlockedModes')) || ['normal'];
+        let redeemedCodes = JSON.parse(localStorage.getItem('redeemedCodes')) || []; // Track redeemed codes
 
-        // --- Game Data: Skins and Modes ---
+        // --- Redeem Codes ---
+        const redeemCodes = {
+            '55555': 1000,
+            '12345': 500,
+            '11111': 500
+        };
+
+        // --- Game Data: Skins and Modes (Same as previous, omitted for brevity but included in full code) ---
+        // (The skin and mode data objects are quite large, so I'm omitting them here to keep the explanation concise.
+        // They are exactly as they were in the previous version, defining images and properties for each.)
         const skins = {
             'default': {
                 name: 'Default Dino', price: 0,
@@ -630,12 +694,11 @@
             const skin = skins[skinId];
             if (!skin) return;
 
-            // Set CSS variables for dino images
             document.documentElement.style.setProperty('--dino-run-1', skin.run1);
             document.documentElement.style.setProperty('--dino-run-2', skin.run2);
             document.documentElement.style.setProperty('--dino-jump', skin.jump);
 
-            dino.classList.add('running'); // Ensure running animation starts
+            dino.classList.add('running');
             currentSkinId = skinId;
             localStorage.setItem('dinoSkinId', currentSkinId);
             currentSkinNameDisplay.textContent = skin.name;
@@ -651,27 +714,26 @@
             currentModeNameDisplay.textContent = mode.name;
             updateModeSelectionUI();
 
-            // Apply mode-specific visual changes
             if (mode.nightMode) {
                 gameArea.classList.add('night-mode');
             } else {
                 gameArea.classList.remove('night-mode');
             }
-            resetGame(); // Restart game with new mode settings
+            resetGame();
         }
 
         function jump() {
             if (!isJumping && !gameOver) {
                 isJumping = true;
-                dino.classList.remove('running'); // Stop running animation during jump
+                dino.classList.remove('running');
                 dino.classList.add('jumping');
                 setTimeout(() => {
                     isJumping = false;
                     dino.classList.remove('jumping');
                     if (!gameOver) {
-                        dino.classList.add('running'); // Resume running after jump
+                        dino.classList.add('running');
                     }
-                }, jumpAnimationDuration * modes[currentModeId].jumpHeightMultiplier); // Adjust jump duration based on mode
+                }, jumpAnimationDuration * modes[currentModeId].jumpHeightMultiplier);
             }
         }
 
@@ -679,14 +741,14 @@
             if (gameOver) return;
 
             const obstacle = document.createElement('div');
-            const isBird = Math.random() < 0.2; // 20% chance for a bird
+            const isBird = Math.random() < 0.2;
 
             obstacle.classList.add('obstacle');
             obstacle.classList.add(isBird ? 'bird' : 'cactus');
 
             let obstacleWidth = isBird ? 40 : 30 * modes[currentModeId].obstacleSize;
             let obstacleHeight = isBird ? 30 : 60 * modes[currentModeId].obstacleSize;
-            let obstacleBottom = isBird ? Math.random() * 80 + 80 : 20; // Birds higher, cactus on ground
+            let obstacleBottom = isBird ? Math.random() * 80 + 80 : 20;
 
             obstacle.style.width = `${obstacleWidth}px`;
             obstacle.style.height = `${obstacleHeight}px`;
@@ -696,30 +758,29 @@
 
             const animationDuration = gameArea.offsetWidth / (gameSpeed * modes[currentModeId].speedMultiplier) / 10;
             obstacle.style.animationDuration = `${animationDuration}s`;
-            obstacle.style.animationName = 'moveObstacle'; // Apply animation
+            obstacle.style.animationName = 'moveObstacle';
             obstacle.style.animationPlayState = 'running';
 
-            // Remove obstacle when it goes off screen
             const obstacleAnimationEnd = () => {
                 if (obstacle.parentNode) {
                     obstacle.remove();
                 }
             };
             obstacle.addEventListener('animationend', obstacleAnimationEnd);
-            obstacle.addEventListener('webkitAnimationEnd', obstacleAnimationEnd); // For older browsers
+            obstacle.addEventListener('webkitAnimationEnd', obstacleAnimationEnd);
         }
 
         function createCoin() {
             if (gameOver) return;
-            if (Math.random() < 0.3 * modes[currentModeId].coinRateMultiplier) { // Chance to create coin
+            if (Math.random() < 0.3 * modes[currentModeId].coinRateMultiplier) {
                 const coin = document.createElement('div');
                 coin.classList.add('coin');
-                coin.style.bottom = `${Math.random() * 80 + 50}px`; // Random height for coin
+                coin.style.bottom = `${Math.random() * 80 + 50}px`;
                 gameArea.appendChild(coin);
 
                 const animationDuration = gameArea.offsetWidth / (gameSpeed * modes[currentModeId].speedMultiplier) / 10;
                 coin.style.animationDuration = `${animationDuration}s`;
-                coin.style.animationName = 'moveCoin'; // Apply animation
+                coin.style.animationName = 'moveCoin';
                 coin.style.animationPlayState = 'running';
 
                 const coinAnimationEnd = () => {
@@ -736,9 +797,8 @@
             if (gameOver) return;
 
             const dinoRect = dino.getBoundingClientRect();
-            const gameAreaRect = gameArea.getBoundingClientRect(); // Get game area position for relative calculations
+            const gameAreaRect = gameArea.getBoundingClientRect();
 
-            // Adjust dinoRect to be relative to gameArea
             const dinoRelativeRect = {
                 left: dinoRect.left - gameAreaRect.left,
                 right: dinoRect.right - gameAreaRect.left,
@@ -760,7 +820,6 @@
                     height: obstacleRect.height
                 };
 
-                // Simple AABB collision detection
                 if (
                     dinoRelativeRect.right > obstacleRelativeRect.left &&
                     dinoRelativeRect.left < obstacleRelativeRect.right &&
@@ -788,7 +847,7 @@
                     dinoRelativeRect.top < coinRelativeRect.bottom
                 ) {
                     coin.remove();
-                    addCoin(1); // Add one coin
+                    addCoin(1);
                 }
             });
         }
@@ -797,8 +856,8 @@
             coins += amount;
             localStorage.setItem('dinoCoins', coins);
             coinsDisplay.textContent = coins;
-            updateSkinSelectionUI(); // Update UI if prices change
-            updateModeSelectionUI(); // Update UI if prices change
+            updateSkinSelectionUI();
+            updateModeSelectionUI();
         }
 
         function updateScore() {
@@ -806,7 +865,6 @@
                 score++;
                 scoreDisplay.textContent = score;
 
-                // Increase speed over time
                 if (score % 200 === 0 && score > 0 && gameSpeed < 20) {
                     gameSpeed += 0.5;
                 }
@@ -819,66 +877,66 @@
             scoreDisplay.textContent = score;
             coinsDisplay.textContent = coins;
             gameOverScreen.style.display = 'none';
-            dino.style.bottom = '20px'; // Reset dino position
-            dino.classList.add('running'); // Ensure running animation is active
+            dino.style.bottom = '20px';
+            dino.classList.add('running');
 
-            // Clear existing elements
             document.querySelectorAll('.obstacle').forEach(o => o.remove());
             document.querySelectorAll('.coin').forEach(c => c.remove());
 
-            // Apply mode settings
             const currentModeSettings = modes[currentModeId];
             gameSpeed = 5 * currentModeSettings.speedMultiplier;
             obstacleGenerationInterval = 1500 * currentModeSettings.obstacleFrequency;
-            // The jump animation duration in CSS needs to be adjusted manually if you want varying jump heights.
-            // For simplicity, we'll just adjust the actual time the dino is in the 'jumping' state.
 
             clearInterval(obstacleTimer);
             clearInterval(gameLoopTimer);
 
             obstacleTimer = setInterval(createObstacle, obstacleGenerationInterval);
-            setInterval(createCoin, obstacleGenerationInterval * 0.8); // Coins slightly more frequent
+            setInterval(createCoin, obstacleGenerationInterval * 0.8);
 
             gameLoopTimer = setInterval(() => {
                 updateScore();
                 checkCollision();
-            }, 50); // Game update loop: Check every 50ms
+            }, 50);
 
-            createObstacle(); // Initial obstacle
+            createObstacle();
         }
 
         function endGame() {
             gameOver = true;
             clearInterval(obstacleTimer);
             clearInterval(gameLoopTimer);
-            dino.classList.remove('running'); // Stop running animation
-            dino.classList.remove('jumping'); // Remove jump class
+            dino.classList.remove('running');
+            dino.classList.remove('jumping');
 
             gameOverScreen.style.display = 'block';
             finalScoreDisplay.textContent = score;
-            const newCoins = Math.floor(score / 50); // Earn 1 coin per 50 score
+            const newCoins = Math.floor(score / 50);
             earnedCoinsDisplay.textContent = newCoins;
-            addCoin(newCoins); // Add earned coins to total
+            addCoin(newCoins);
         }
 
         function resetGame() {
-            endGame(); // Stop current game (clears timers etc.)
-            startGame(); // Start a fresh game
+            endGame();
+            startGame();
         }
 
         // --- UI & Event Handlers ---
 
-        // Jump mechanism (mobile touch / desktop spacebar)
-        jumpButton.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // Prevent default mobile scrolling/zooming
-            jump();
-        });
+        // Jump mechanism (PC Spacebar and the new button for both mobile/PC)
         document.addEventListener('keydown', (event) => {
             if (event.code === 'Space' && !gameOver) {
-                event.preventDefault(); // Prevent page scrolling
+                event.preventDefault();
                 jump();
             }
         });
+        jumpButtonBelow.addEventListener('click', jump); // Use 'click' for desktop/mobile tap
+
+        // Original game area tap to jump for mobile (can be removed if jumpButtonBelow is preferred)
+        gameArea.addEventListener('touchstart', (e) => {
+             e.preventDefault(); // Prevent scrolling
+             jump();
+        });
+
 
         restartButton.addEventListener('click', startGame);
 
@@ -898,7 +956,7 @@
         });
 
         backButton.addEventListener('click', () => {
-            history.back(); // Go back to the previous page in browser history
+            history.back();
         });
 
         // Skin selection logic
@@ -914,7 +972,7 @@
                     overlay.classList.remove('active');
                 } else if (coins >= price) {
                     if (confirm(`Buy "${skin.name}" for ${price} coins?`)) {
-                        addCoin(-price); // Deduct coins
+                        addCoin(-price);
                         unlockedSkins.push(skinId);
                         localStorage.setItem('unlockedSkins', JSON.stringify(unlockedSkins));
                         applySkin(skinId);
@@ -940,7 +998,7 @@
                     overlay.classList.remove('active');
                 } else if (coins >= price) {
                     if (confirm(`Unlock "${mode.name}" for ${price} coins?`)) {
-                        addCoin(-price); // Deduct coins
+                        addCoin(-price);
                         unlockedModes.push(modeId);
                         localStorage.setItem('unlockedModes', JSON.stringify(unlockedModes));
                         applyMode(modeId);
@@ -953,6 +1011,25 @@
             });
         });
 
+        // Redeem Code Logic
+        redeemButton.addEventListener('click', () => {
+            const code = redeemCodeInput.value.trim();
+            if (redeemCodes[code]) {
+                if (redeemedCodes.includes(code)) {
+                    alert('This code has already been redeemed!');
+                } else {
+                    const amount = redeemCodes[code];
+                    addCoin(amount);
+                    redeemedCodes.push(code);
+                    localStorage.setItem('redeemedCodes', JSON.stringify(redeemedCodes));
+                    alert(`Code redeemed successfully! You received ${amount} coins.`);
+                    redeemCodeInput.value = ''; // Clear input
+                }
+            } else {
+                alert('Invalid redeem code!');
+            }
+        });
+
         // Update UI to show selected skin/mode and locked status
         function updateSkinSelectionUI() {
             skinItems.forEach(item => {
@@ -960,16 +1037,16 @@
                 const skin = skins[skinId];
                 const priceSpan = item.querySelector('.price');
 
-                item.classList.remove('selected', 'locked'); // Remove previous states
+                item.classList.remove('selected', 'locked');
 
                 if (currentSkinId === skinId) {
                     item.classList.add('selected');
                 }
                 if (!unlockedSkins.includes(skinId)) {
                     item.classList.add('locked');
-                    if (priceSpan) priceSpan.textContent = price; // Show price if locked
+                    if (priceSpan) priceSpan.textContent = skin.price;
                 } else {
-                    if (priceSpan) priceSpan.textContent = 'Owned'; // Or remove price if owned
+                    if (priceSpan) priceSpan.textContent = 'Owned';
                 }
             });
         }
@@ -987,7 +1064,7 @@
                 }
                 if (!unlockedModes.includes(modeId)) {
                     item.classList.add('locked');
-                    if (priceSpan) priceSpan.textContent = price;
+                    if (priceSpan) priceSpan.textContent = mode.price;
                 } else {
                     if (priceSpan) priceSpan.textContent = 'Owned';
                 }
@@ -996,10 +1073,10 @@
 
         // --- Initialization ---
         window.onload = () => {
-            applySkin(currentSkinId); // Apply saved skin
-            applyMode(currentModeId); // Apply saved mode
-            startGame(); // Start the game
-            updateSkinSelectionUI(); // Ensure UI reflects initial state
+            applySkin(currentSkinId);
+            applyMode(currentModeId);
+            startGame();
+            updateSkinSelectionUI();
             updateModeSelectionUI();
         };
     </script>
