@@ -11,13 +11,11 @@
             margin: 0;
             overflow: hidden;
             font-family: 'Press Start 2P', cursive;
-            background: linear-gradient(45deg, #FFD700, #FF69B4, #8A2BE2, #00BFFF); /* Initial gradient */
-            background-size: 400% 400%; /* For animation */
-            animation: background-gradient 15s ease infinite; /* Smooth animation */
+            background: #1a1a2e; /* Dark background for neon effect */
             display: flex;
             flex-direction: column;
             height: 100vh;
-            color: #333;
+            color: #eee; /* Lighter text for dark background */
             user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -25,17 +23,10 @@
             touch-action: manipulation;
         }
 
-        /* Background Gradient Animation */
-        @keyframes background-gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
         /* --- Header --- */
         .header {
-            background-color: #222;
-            color: #eee;
+            background-color: #0f0f1a; /* Even darker header */
+            color: #00ffff; /* Neon blue */
             padding: 10px 15px;
             display: flex;
             justify-content: space-between;
@@ -43,6 +34,7 @@
             width: 100%;
             box-sizing: border-box;
             z-index: 1000;
+            border-bottom: 2px solid #00ffff; /* Neon border */
         }
 
         .header-title {
@@ -52,16 +44,18 @@
             text-align: center;
             flex-grow: 1;
             margin-right: 40px;
+            text-shadow: 0 0 8px #00ffff; /* Neon glow */
         }
 
         .menu-button {
             background: none;
             border: none;
-            color: #eee;
+            color: #00ffff;
             font-size: 1.5em;
             cursor: pointer;
             padding: 0;
             z-index: 1001;
+            text-shadow: 0 0 5px #00ffff;
         }
 
         /* --- Main Game Container --- */
@@ -81,10 +75,10 @@
             width: 100%;
             max-width: 600px; /* Game width on larger screens */
             height: 200px; /* Fixed game height */
-            background-color: #e0f7fa;
+            background-color: #0a0a1a; /* Darker game area */
             overflow: hidden;
-            border-bottom: 2px solid #4CAF50;
-            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            border-bottom: 2px solid #00ff00; /* Neon green ground line */
+            box-shadow: 0 0 15px rgba(0,255,255,0.5), 0 0 30px rgba(0,255,255,0.2); /* Neon box shadow */
             margin-bottom: 10px; /* Space below game area for jump button */
         }
 
@@ -95,7 +89,7 @@
             left: 0;
             width: 200%;
             height: 20px;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="20" height="20" fill="%238BC34A"/><rect x="0" y="10" width="20" height="10" fill="%23689F38"/></svg>');
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="20" height="20" fill="%2300ff00"/><rect x="0" y="10" width="20" height="10" fill="%2300cc00"/></svg>'); /* Neon green ground */
             background-size: 20px 20px;
             background-repeat: repeat-x;
             animation: ground-move linear infinite;
@@ -136,14 +130,14 @@
 
         @keyframes jump {
             0% { bottom: 20px; }
-            50% { bottom: 120px; }
+            50% { bottom: var(--jump-height); } /* Dynamic jump height */
             100% { bottom: 20px; }
         }
 
         /* --- Obstacle Styles --- */
         .obstacle {
-            width: 30px;
-            height: 60px;
+            width: var(--obstacle-width, 30px); /* Dynamic obstacle size */
+            height: var(--obstacle-height, 60px); /* Dynamic obstacle size */
             position: absolute;
             bottom: 20px;
             right: -30px;
@@ -153,14 +147,19 @@
             animation: moveObstacle linear forwards;
         }
 
+        @keyframes moveObstacle {
+            from { right: -30px; }
+            to { right: 100%; }
+        }
+
         .obstacle.cactus {
-             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200"><rect x="35" y="0" width="30" height="200" fill="%234CAF50"/><rect x="0" y="80" width="50" height="25" fill="%234CAF50"/><rect x="50" y="30" width="50" height="25" fill="%234CAF50"/></svg>');
+             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200"><rect x="35" y="0" width="30" height="200" fill="%23ff00ff"/><rect x="0" y="80" width="50" height="25" fill="%23cc00cc"/><rect x="50" y="30" width="50" height="25" fill="%23cc00cc"/></svg>'); /* Neon purple cactus */
         }
         .obstacle.bird {
-            width: 40px;
-            height: 30px;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="0,50 20,20 80,20 100,50 80,80 20,80" fill="%23607D8B"/></svg>');
-            animation: bird-flap 0.3s steps(1) infinite;
+            width: var(--obstacle-width, 40px);
+            height: var(--obstacle-height, 30px);
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="0,50 20,20 80,20 100,50 80,80 20,80" fill="%23ffff00"/></svg>'); /* Neon yellow bird */
+            animation: moveObstacle linear forwards, bird-flap 0.3s steps(1) infinite;
         }
         @keyframes bird-flap {
             0% { transform: translateY(0px); }
@@ -172,13 +171,18 @@
         .coin {
             width: 20px;
             height: 20px;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="gold"/><text x="50" y="65" font-family="Arial" font-size="60" fill="%23DAA520" text-anchor="middle">$</text></svg>');
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%2300ffff"/><text x="50" y="65" font-family="Arial" font-size="60" fill="%2300cccc" text-anchor="middle">$</text></svg>'); /* Neon blue coin */
             background-size: contain;
             position: absolute;
             bottom: 50px;
             right: -20px;
             animation: moveCoin linear forwards;
             image-rendering: pixelated;
+        }
+
+        @keyframes moveCoin {
+            from { right: -20px; }
+            to { right: 100%; }
         }
 
         /* --- Game Info (Score, Coins) --- */
@@ -189,30 +193,33 @@
             font-size: 0.9em;
             text-align: right;
             padding: 5px;
-            background-color: rgba(255, 255, 255, 0.7);
+            background-color: rgba(0, 0, 0, 0.7);
             border-radius: 5px;
             z-index: 10;
+            color: #00ff00; /* Neon green text */
+            box-shadow: 0 0 8px rgba(0,255,0,0.5);
         }
 
         /* --- Jump Button Below Game --- */
         .jump-button-below {
-            background-color: #4CAF50;
-            color: white;
+            background-color: #00ffff; /* Neon blue button */
+            color: #1a1a2e; /* Dark text */
             border: none;
             padding: 15px 30px;
             border-radius: 8px;
             font-family: 'Press Start 2P', cursive;
             font-size: 1.2em;
             cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 0 15px rgba(0,255,255,0.7);
+            transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
             width: 90%;
             max-width: 300px;
         }
 
         .jump-button-below:active {
-            background-color: #45a049;
+            background-color: #00cccc;
             transform: translateY(2px);
+            box-shadow: 0 0 5px rgba(0,255,255,0.5);
         }
 
         /* --- Game Over Screen --- */
@@ -221,44 +228,49 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.85);
+            background-color: rgba(0, 0, 0, 0.95); /* Very dark overlay */
             color: white;
             padding: 25px;
             text-align: center;
             border-radius: 10px;
             display: none;
             z-index: 999;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            box-shadow: 0 0 20px rgba(255,0,255,0.7), 0 0 40px rgba(255,0,255,0.4); /* Neon game over glow */
             width: 80%;
             max-width: 300px;
             box-sizing: border-box;
+            border: 2px solid #ff00ff;
         }
 
         .game-over h2 {
             margin-top: 0;
             font-size: 1.5em;
-            color: #FFEB3B;
+            color: #ff00ff; /* Neon magenta */
+            text-shadow: 0 0 10px #ff00ff;
         }
 
         .game-over p {
             margin: 10px 0;
             font-size: 0.8em;
+            color: #eee;
         }
 
         .game-over button {
-            background-color: #4CAF50;
-            color: white;
+            background-color: #00ffff; /* Neon blue */
+            color: #1a1a2e;
             border: none;
             padding: 10px 20px;
             margin-top: 15px;
             border-radius: 5px;
             cursor: pointer;
             font-size: 1em;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 10px rgba(0,255,255,0.5);
         }
 
         .game-over button:hover {
-            background-color: #45a049;
+            background-color: #00cccc;
+            box-shadow: 0 0 15px rgba(0,255,255,0.7);
         }
 
         /* --- Left Navigation Menu --- */
@@ -268,7 +280,7 @@
             left: -300px;
             width: 280px;
             height: 100%;
-            background-color: #333;
+            background-color: #0a0a1a; /* Dark menu background */
             color: white;
             padding-top: 60px;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.7);
@@ -277,6 +289,7 @@
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
+            border-right: 2px solid #ff00ff; /* Neon border */
         }
 
         .nav-menu.open {
@@ -286,7 +299,8 @@
         .nav-menu h3 {
             text-align: center;
             margin-bottom: 20px;
-            color: #FFEB3B;
+            color: #ff00ff; /* Neon magenta */
+            text-shadow: 0 0 8px #ff00ff;
         }
 
         .nav-menu ul {
@@ -300,7 +314,7 @@
         .nav-menu li {
             padding: 12px 20px;
             cursor: pointer;
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid #222; /* Darker border */
             transition: background-color 0.2s;
             font-size: 0.9em;
             display: flex;
@@ -308,55 +322,61 @@
         }
 
         .nav-menu li:hover {
-            background-color: #555;
+            background-color: #222;
+            color: #00ffff;
         }
 
         .nav-menu .close-button {
             background: none;
             border: none;
-            color: white;
+            color: #ff00ff;
             font-size: 1.8em;
             position: absolute;
             top: 10px;
             right: 15px;
             cursor: pointer;
+            text-shadow: 0 0 5px #ff00ff;
         }
 
         .nav-menu .menu-section-title {
             padding: 10px 20px;
             font-weight: bold;
-            background-color: #444;
+            background-color: #111; /* Even darker section title */
             margin-top: 15px;
             margin-bottom: 5px;
-            color: #90CAF9;
+            color: #00ff00; /* Neon green */
+            border-top: 1px solid #333;
+            border-bottom: 1px solid #333;
         }
 
         .nav-menu .game-info-footer {
             padding: 15px 20px;
             font-size: 0.8em;
-            border-top: 1px solid #444;
+            border-top: 1px solid #222;
             text-align: center;
         }
 
         .nav-menu button {
-            background-color: #007bff;
-            color: white;
+            background-color: #00ffff;
+            color: #1a1a2e;
             border: none;
             padding: 10px 15px;
             border-radius: 5px;
             cursor: pointer;
             margin: 15px 20px;
             width: calc(100% - 40px);
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 8px rgba(0,255,255,0.5);
         }
         .nav-menu button:hover {
-            background-color: #0056b3;
+            background-color: #00cccc;
+            box-shadow: 0 0 12px rgba(0,255,255,0.7);
         }
 
         /* Redeem Code Section */
         .redeem-section {
             padding: 15px 20px;
-            border-top: 1px solid #444;
+            border-top: 1px solid #222;
             margin-top: 15px;
         }
         .redeem-section input {
@@ -364,21 +384,29 @@
             padding: 8px 10px;
             margin-bottom: 10px;
             border: 1px solid #555;
-            background-color: #222;
-            color: white;
+            background-color: #050510; /* Very dark input */
+            color: #00ff00; /* Neon green input text */
             border-radius: 4px;
             font-family: 'Press Start 2P', cursive;
             font-size: 0.8em;
             box-sizing: border-box;
+            box-shadow: inset 0 0 5px rgba(0,255,0,0.3);
+        }
+        .redeem-section input:focus {
+            outline: none;
+            border-color: #00ffff;
+            box-shadow: inset 0 0 8px rgba(0,255,255,0.5);
         }
         .redeem-section button {
             width: 100%;
             margin: 0;
             padding: 10px 15px;
-            background-color: #FF5722;
+            background-color: #ff00ff; /* Neon magenta for redeem button */
+            box-shadow: 0 0 10px rgba(255,0,255,0.5);
         }
         .redeem-section button:hover {
-            background-color: #E64A19;
+            background-color: #cc00cc;
+            box-shadow: 0 0 15px rgba(255,0,255,0.7);
         }
 
         /* Skin/Mode specific styles for menu items */
@@ -392,16 +420,19 @@
         .skin-item .price {
             margin-left: auto;
             font-weight: bold;
-            color: gold;
+            color: #00ffff; /* Neon blue for prices */
+            text-shadow: 0 0 5px #00ffff;
         }
 
         .skin-item.selected, .mode-item.selected {
-            background-color: #007bff;
-            color: white;
+            background-color: #00ffff; /* Selected item highlight */
+            color: #1a1a2e; /* Dark text for selected item */
             font-weight: bold;
+            box-shadow: inset 0 0 10px rgba(0,255,255,0.7);
         }
         .skin-item.selected .price {
-            color: white;
+            color: #1a1a2e;
+            text-shadow: none;
         }
 
         .skin-item.locked, .mode-item.locked {
@@ -409,7 +440,8 @@
             cursor: not-allowed;
         }
         .skin-item.locked .price {
-            color: #ccc;
+            color: #666;
+            text-shadow: none;
         }
 
         /* Overlay for menu */
@@ -419,7 +451,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.7); /* Darker overlay */
             z-index: 1999;
             display: none;
         }
@@ -429,18 +461,19 @@
         }
 
         /* --- Specific Mode Visuals --- */
-        .game-area.night-mode {
-            background-color: #263238;
+        /* Night mode is now default with the neon theme */
+        .game-area.night-mode { /* Keep for potential future mode variations */
+            background-color: #0a0a1a;
         }
         .game-area.night-mode .ground {
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="20" height="20" fill="%23455A64"/><rect x="0" y="10" width="20" height="10" fill="%23263238"/></svg>');
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="20" height="20" fill="%2300ff00"/><rect x="0" y="10" width="20" height="10" fill="%2300cc00"/></svg>');
         }
         .game-area.night-mode .game-info {
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #00ff00;
         }
         .game-area.night-mode .obstacle.cactus {
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200"><rect x="35" y="0" width="30" height="200" fill="%23388E3C"/><rect x="0" y="80" width="50" height="25" fill="%23388E3C"/><rect x="50" y="30" width="50" height="25" fill="%23388E3C"/></svg>');
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200"><rect x="35" y="0" width="30" height="200" fill="%23ff00ff"/><rect x="0" y="80" width="50" height="25" fill="%23cc00cc"/><rect x="50" y="30" width="50" height="25" fill="%23cc00cc"/></svg>');
         }
     </style>
 </head>
@@ -477,30 +510,30 @@
         <ul>
             <li class="menu-section-title">Game Info</li>
             <li>Game Name: Dino Run</li>
-            <li>Version: 1</li>
+            <li>Version: 1.1</li>
             <li>By: ADITdev</li>
 
             <li class="menu-section-title">Skins (<span id="currentSkinName">Default</span>)</li>
             <li class="skin-item" data-skin-id="default">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='0' width='60' height='100' fill='%234CAF50'/><circle cx='50' cy='20' r='10' fill='%23388E3C'/></svg>" alt="Default Dino"> Default Dino
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='0' width='60' height='100' fill='%2300ffff'/><circle cx='50' cy='20' r='10' fill='%2300cccc'/></svg>" alt="Default Dino"> Default Dino
             </li>
             <li class="skin-item" data-skin-id="red" data-price="50">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='0' width='60' height='100' fill='%23F44336'/><circle cx='50' cy='20' r='10' fill='%23D32F2F'/></svg>" alt="Red Dino"> Red Dino <span class="price">50</span>
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='0' width='60' height='100' fill='%23ff00ff'/><circle cx='50' cy='20' r='10' fill='%23cc00cc'/></svg>" alt="Red Dino"> Red Dino <span class="price">50</span>
             </li>
             <li class="skin-item" data-skin-id="blue" data-price="75">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='0' width='60' height='100' fill='%232196F3'/><circle cx='50' cy='20' r='10' fill='%231976D2'/></svg>" alt="Blue Dino"> Blue Dino <span class="price">75</span>
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='0' width='60' height='100' fill='%230000ff'/><circle cx='50' cy='20' r='10' fill='%230000cc'/></svg>" alt="Blue Dino"> Blue Dino <span class="price">75</span>
             </li>
             <li class="skin-item" data-skin-id="yellow" data-price="100">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='0' width='60' height='100' fill='%23FFEB3B'/><circle cx='50' cy='20' r='10' fill='%23FBC02D'/></svg>" alt="Yellow Dino"> Yellow Dino <span class="price">100</span>
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='0' width='60' height='100' fill='%23ffff00'/><circle cx='50' cy='20' r='10' fill='%23cccc00'/></svg>" alt="Yellow Dino"> Yellow Dino <span class="price">100</span>
             </li>
             <li class="skin-item" data-skin-id="purple" data-price="120">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='0' width='60' height='100' fill='%239C27B0'/><circle cx='50' cy='20' r='10' fill='%237B1FA2'/></svg>" alt="Purple Dino"> Purple Dino <span class="price">120</span>
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='0' width='60' height='100' fill='%238a2be2'/><circle cx='50' cy='20' r='10' fill='%236a22b7'/></svg>" alt="Purple Dino"> Purple Dino <span class="price">120</span>
             </li>
             <li class="skin-item" data-skin-id="black" data-price="150">
                 <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='0' width='60' height='100' fill='%23212121'/><circle cx='50' cy='20' r='10' fill='%23000000'/></svg>" alt="Black Dino"> Black Dino <span class="price">150</span>
             </li>
             <li class="skin-item" data-skin-id="pink" data-price="170">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='0' width='60' height='100' fill='%23E91E63'/><circle cx='50' cy='20' r='10' fill='%23C2185B'/></svg>" alt="Pink Dino"> Pink Dino <span class="price">170</span>
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='0' width='60' height='100' fill='%23e91e63'/><circle cx='50' cy='20' r='10' fill='%23c2185b'/></svg>" alt="Pink Dino"> Pink Dino <span class="price">170</span>
             </li>
             <li class="skin-item" data-skin-id="white" data-price="200">
                 <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='0' width='60' height='100' fill='%23FAFAFA'/><circle cx='50' cy='20' r='10' fill='%23E0E0E0'/></svg>" alt="White Dino"> White Dino <span class="price">200</span>
@@ -509,24 +542,24 @@
                 <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='0' width='60' height='100' fill='%23FFD700'/><circle cx='50' cy='20' r='10' fill='%23DAA520'/></svg>" alt="Gold Dino"> Gold Dino <span class="price">300</span>
             </li>
             <li class="skin-item" data-skin-id="rainbow" data-price="500">
-                 <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='rainbowGrad' x1='0%' y1='0%' x2='100%' y2='0%'><stop offset='0%' style='stop-color:red'/><stop offset='16%' style='stop-color:orange'/><stop offset='33%' style='stop-color:yellow'/><stop offset='50%' style='stop-color:green'/><stop offset='66%' style='stop-color:blue'/><stop offset='83%' style='stop-color:indigo'/><stop offset='100%' style='stop-color:violet'/></linearGradient></defs><rect x='20' y='0' width='60' height='100' fill='url(%23rainbowGrad)'/><circle cx='50' cy='20' r='10' fill='blue'/></svg>" alt="Rainbow Dino"> Rainbow Dino <span class="price">500</span>
+                 <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='rainbowGrad' x1='0%' y1='0%' x2='100%' y2='0%'><stop offset='0%' style='stop-color:red'/><stop offset='16%' style='stop-color:orange'/><stop offset='33%' style='stop-color:yellow'/><stop offset='50%' style='stop-color:lime'/><stop offset='66%' style='stop-color:blue'/><stop offset='83%' style='stop-color:indigo'/><stop offset='100%' style='stop-color:violet'/></linearGradient></defs><rect x='20' y='0' width='60' height='100' fill='url(%23rainbowGrad)'/><circle cx='50' cy='20' r='10' fill='blue'/></svg>" alt="Rainbow Dino"> Rainbow Dino <span class="price">500</span>
             </li>
 
             <li class="menu-section-title">Modes (<span id="currentModeName">Normal</span>)</li>
             <li class="mode-item" data-mode-id="normal">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%238BC34A'/><text x='50' y='60' font-family='Press Start 2P' font-size='30' fill='white' text-anchor='middle'>N</text></svg>" alt="Normal Mode"> Normal Mode
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%2300ff00'/><text x='50' y='60' font-family='Press Start 2P' font-size='30' fill='white' text-anchor='middle'>N</text></svg>" alt="Normal Mode"> Normal Mode
             </li>
             <li class="mode-item" data-mode-id="fast" data-price="75">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23FFC107'/><text x='50' y='60' font-family='Press Start 2P' font-size='30' fill='white' text-anchor='middle'>F</text></svg>" alt="Fast Mode"> Fast Mode <span class="price">75</span>
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23ffff00'/><text x='50' y='60' font-family='Press Start 2P' font-size='30' fill='white' text-anchor='middle'>F</text></svg>" alt="Fast Mode"> Fast Mode <span class="price">75</span>
             </li>
             <li class="mode-item" data-mode-id="slow" data-price="50">
                 <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%239E9E9E'/><text x='50' y='60' font-family='Press Start 2P' font-size='30' fill='white' text-anchor='middle'>S</text></svg>" alt="Slow Mode"> Slow Mode <span class="price">50</span>
             </li>
             <li class="mode-item" data-mode-id="obstacles" data-price="100">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23FF5722'/><text x='50' y='60' font-family='Press Start 2P' font-size='30' fill='white' text-anchor='middle'>O</text></svg>" alt="More Obstacles"> More Obstacles <span class="price">100</span>
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23ff00ff'/><text x='50' y='60' font-family='Press Start 2P' font-size='30' fill='white' text-anchor='middle'>O</text></svg>" alt="More Obstacles"> More Obstacles <span class="price">100</span>
             </li>
             <li class="mode-item" data-mode-id="coins" data-price="120">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='gold'/><text x='50' y='60' font-family='Press Start 2P' font-size='30' fill='white' text-anchor='middle'>C</text></svg>" alt="Coin Rush"> Coin Rush <span class="price">120</span>
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%2300ffff'/><text x='50' y='60' font-family='Press Start 2P' font-size='30' fill='white' text-anchor='middle'>C</text></svg>" alt="Coin Rush"> Coin Rush <span class="price">120</span>
             </li>
             <li class="mode-item" data-mode-id="night" data-price="150">
                 <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%233F51B5'/><text x='50' y='60' font-family='Press Start 2P' font-size='30' fill='white' text-anchor='middle'>N</text></svg>" alt="Night Mode"> Night Mode <span class="price">150</span>
@@ -568,7 +601,7 @@
         const coinsDisplay = document.getElementById('coins');
         const finalScoreDisplay = document.getElementById('finalScore');
         const earnedCoinsDisplay = document.getElementById('earnedCoins');
-        const jumpButtonBelow = document.getElementById('jumpButtonBelow'); // The new jump button
+        const jumpButtonBelow = document.getElementById('jumpButtonBelow');
 
         const menuButton = document.getElementById('menuButton');
         const navMenu = document.getElementById('navMenu');
@@ -589,41 +622,42 @@
         let gameOver = false;
         let score = 0;
         let coins = parseInt(localStorage.getItem('dinoCoins')) || 0;
-        let gameSpeed = 5;
-        let obstacleGenerationInterval = 1500;
+        let gameSpeed = 5; // Base speed
+        let obstacleGenerationInterval = 1500; // Base interval
         let obstacleTimer;
         let gameLoopTimer;
-        const jumpAnimationDuration = 600; // Must match CSS animation duration
+        const jumpAnimationBaseDuration = 600; // Base duration for jump animation
+        const initialDinoBottom = 20; // Dino's initial position above ground
 
         // --- Persistent State from localStorage ---
         let currentSkinId = localStorage.getItem('dinoSkinId') || 'default';
         let currentModeId = localStorage.getItem('dinoModeId') || 'normal';
         let unlockedSkins = JSON.parse(localStorage.getItem('unlockedSkins')) || ['default'];
         let unlockedModes = JSON.parse(localStorage.getItem('unlockedModes')) || ['normal'];
-        let redeemedCodes = JSON.parse(localStorage.getItem('redeemedCodes')) || []; // Track redeemed codes
+        let redeemedCodes = JSON.parse(localStorage.getItem('redeemedCodes')) || [];
 
         // --- Redeem Codes ---
         const redeemCodes = {
             '55555': 1000,
             '12345': 500,
-            '11111': 500
+            '11111': 500,
+            'NEONREX': 250, // New code for testing
+            'UVOGAMES': 300 // Another new code
         };
 
-        // --- Game Data: Skins and Modes (Same as previous, omitted for brevity but included in full code) ---
-        // (The skin and mode data objects are quite large, so I'm omitting them here to keep the explanation concise.
-        // They are exactly as they were in the previous version, defining images and properties for each.)
+        // --- Game Data: Skins and Modes (Updated to reflect neon theme) ---
         const skins = {
             'default': {
                 name: 'Default Dino', price: 0,
-                run1: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%234CAF50"/><path d="M20,100 L25,90 L30,100 L35,90 L40,100" fill="none" stroke="%23388E3C" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%23388E3C"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
-                run2: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%234CAF50"/><path d="M20,90 L25,100 L30,90 L35,100 L40,90" fill="none" stroke="%23388E3C" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%23388E3C"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
-                jump: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="0" width="60" height="100" fill="%234CAF50"/><circle cx="70" cy="10" r="8" fill="%23388E3C"/><circle cx="70" cy="10" r="3" fill="white"/></svg>')`
+                run1: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%2300ffff"/><path d="M20,100 L25,90 L30,100 L35,90 L40,100" fill="none" stroke="%2300cccc" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%2300cccc"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
+                run2: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%2300ffff"/><path d="M20,90 L25,100 L30,90 L35,100 L40,90" fill="none" stroke="%2300cccc" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%2300cccc"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
+                jump: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="0" width="60" height="100" fill="%2300ffff"/><circle cx="70" cy="10" r="8" fill="%2300cccc"/><circle cx="70" cy="10" r="3" fill="white"/></svg>')`
             },
             'red': {
                 name: 'Red Dino', price: 50,
-                run1: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%23F44336"/><path d="M20,100 L25,90 L30,100 L35,90 L40,100" fill="none" stroke="%23D32F2F" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%23D32F2F"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
-                run2: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%23F44336"/><path d="M20,90 L25,100 L30,90 L35,100 L40,90" fill="none" stroke="%23D32F2F" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%23D32F2F"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
-                jump: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="0" width="60" height="100" fill="%23F44336"/><circle cx="70" cy="10" r="8" fill="%23D32F2F"/><circle cx="70" cy="10" r="3" fill="white"/></svg>')`
+                run1: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%23ff00ff"/><path d="M20,100 L25,90 L30,100 L35,90 L40,100" fill="none" stroke="%23cc00cc" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%23cc00cc"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
+                run2: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%23ff00ff"/><path d="M20,90 L25,100 L30,90 L35,100 L40,90" fill="none" stroke="%23cc00cc" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%23cc00cc"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
+                jump: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="0" width="60" height="100" fill="%23ff00ff"/><circle cx="70" cy="10" r="8" fill="%23cc00cc"/><circle cx="70" cy="10" r="3" fill="white"/></svg>')`
             },
             'blue': {
                 name: 'Blue Dino', price: 75,
@@ -633,15 +667,15 @@
             },
             'yellow': {
                 name: 'Yellow Dino', price: 100,
-                run1: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%23FFEB3B"/><path d="M20,100 L25,90 L30,100 L35,90 L40,100" fill="none" stroke="%23FBC02D" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%23FBC02D"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
-                run2: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%23FFEB3B"/><path d="M20,90 L25,100 L30,90 L35,100 L40,90" fill="none" stroke="%23FBC02D" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%23FBC02D"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
-                jump: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="0" width="60" height="100" fill="%23FFEB3B"/><circle cx="70" cy="10" r="8" fill="%23FBC02D"/><circle cx="70" cy="10" r="3" fill="white"/></svg>')`
+                run1: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%23ffff00"/><path d="M20,100 L25,90 L30,100 L35,90 L40,100" fill="none" stroke="%23cccc00" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%23cccc00"/><circle cx="70" cy="30" r="3" fill="black"/></svg>')`,
+                run2: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%23ffff00"/><path d="M20,90 L25,100 L30,90 L35,100 L40,90" fill="none" stroke="%23cccc00" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%23cccc00"/><circle cx="70" cy="30" r="3" fill="black"/></svg>')`,
+                jump: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="0" width="60" height="100" fill="%23ffff00"/><circle cx="70" cy="10" r="8" fill="%23cccc00"/><circle cx="70" cy="10" r="3" fill="black"/></svg>')`
             },
             'purple': {
                 name: 'Purple Dino', price: 120,
-                run1: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%239C27B0"/><path d="M20,100 L25,90 L30,100 L35,90 L40,100" fill="none" stroke="%237B1FA2" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%237B1FA2"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
-                run2: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%239C27B0"/><path d="M20,90 L25,100 L30,90 L35,100 L40,90" fill="none" stroke="%237B1FA2" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%237B1FA2"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
-                jump: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="0" width="60" height="100" fill="%239C27B0"/><circle cx="70" cy="10" r="8" fill="%237B1FA2"/><circle cx="70" cy="10" r="3" fill="white"/></svg>')`
+                run1: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%238a2be2"/><path d="M20,100 L25,90 L30,100 L35,90 L40,100" fill="none" stroke="%236a22b7" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%236a22b7"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
+                run2: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%238a2be2"/><path d="M20,90 L25,100 L30,90 L35,100 L40,90" fill="none" stroke="%236a22b7" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%236a22b7"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
+                jump: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="0" width="60" height="100" fill="%238a2be2"/><circle cx="70" cy="10" r="8" fill="%236a22b7"/><circle cx="70" cy="10" r="3" fill="white"/></svg>')`
             },
             'black': {
                 name: 'Black Dino', price: 150,
@@ -651,9 +685,9 @@
             },
             'pink': {
                 name: 'Pink Dino', price: 170,
-                run1: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%23E91E63"/><path d="M20,100 L25,90 L30,100 L35,90 L40,100" fill="none" stroke="%23C2185B" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%23C2185B"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
-                run2: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%23E91E63"/><path d="M20,90 L25,100 L30,90 L35,100 L40,90" fill="none" stroke="%23C2185B" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%23C2185B"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
-                jump: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="0" width="60" height="100" fill="%23E91E63"/><circle cx="70" cy="10" r="8" fill="%23C2185B"/><circle cx="70" cy="10" r="3" fill="white"/></svg>')`
+                run1: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%23e91e63"/><path d="M20,100 L25,90 L30,100 L35,90 L40,100" fill="none" stroke="%23c2185b" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%23c2185b"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
+                run2: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="80" fill="%23e91e63"/><path d="M20,90 L25,100 L30,90 L35,100 L40,90" fill="none" stroke="%23c2185b" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="%23c2185b"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
+                jump: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="0" width="60" height="100" fill="%23e91e63"/><circle cx="70" cy="10" r="8" fill="%23c2185b"/><circle cx="70" cy="10" r="3" fill="white"/></svg>')`
             },
             'white': {
                 name: 'White Dino', price: 200,
@@ -669,23 +703,23 @@
             },
             'rainbow': {
                 name: 'Rainbow Dino', price: 500,
-                run1: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="rainbowRun1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:red"/><stop offset="16%" style="stop-color:orange"/><stop offset="33%" style="stop-color:yellow"/><stop offset="50%" style="stop-color:green"/><stop offset="66%" style="stop-color:blue"/><stop offset="83%" style="stop-color:indigo"/><stop offset="100%" style="stop-color:violet"/></linearGradient></defs><rect x="20" y="20" width="60" height="80" fill="url(%23rainbowRun1)"/><path d="M20,100 L25,90 L30,100 L35,90 L40,100" fill="none" stroke="black" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="black"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
-                run2: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="rainbowRun2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:red"/><stop offset="16%" style="stop-color:orange"/><stop offset="33%" style="stop-color:yellow"/><stop offset="50%" style="stop-color:green"/><stop offset="66%" style="stop-color:blue"/><stop offset="83%" style="stop-color:indigo"/><stop offset="100%" style="stop-color:violet"/></linearGradient></defs><rect x="20" y="20" width="60" height="80" fill="url(%23rainbowRun2)"/><path d="M20,90 L25,100 L30,90 L35,100 L40,90" fill="none" stroke="black" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="black"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
-                jump: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="rainbowJump" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:red"/><stop offset="16%" style="stop-color:orange"/><stop offset="33%" style="stop-color:yellow"/><stop offset="50%" style="stop-color:green"/><stop offset="66%" style="stop-color:blue"/><stop offset="83%" style="stop-color:indigo"/><stop offset="100%" style="stop-color:violet"/></linearGradient></defs><rect x="20" y="0" width="60" height="100" fill="url(%23rainbowJump)"/><circle cx="70" cy="10" r="8" fill="black"/><circle cx="70" cy="10" r="3" fill="white"/></svg>')`
+                run1: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="rainbowRun1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:red"/><stop offset="16%" style="stop-color:orange"/><stop offset="33%" style="stop-color:yellow"/><stop offset="50%" style="stop-color:lime"/><stop offset="66%" style="stop-color:blue"/><stop offset="83%" style="stop-color:indigo"/><stop offset="100%" style="stop-color:violet"/></linearGradient></defs><rect x="20" y="20" width="60" height="80" fill="url(%23rainbowRun1)"/><path d="M20,100 L25,90 L30,100 L35,90 L40,100" fill="none" stroke="black" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="black"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
+                run2: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="rainbowRun2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:red"/><stop offset="16%" style="stop-color:orange"/><stop offset="33%" style="stop-color:yellow"/><stop offset="50%" style="stop-color:lime"/><stop offset="66%" style="stop-color:blue"/><stop offset="83%" style="stop-color:indigo"/><stop offset="100%" style="stop-color:violet"/></linearGradient></defs><rect x="20" y="20" width="60" height="80" fill="url(%23rainbowRun2)"/><path d="M20,90 L25,100 L30,90 L35,100 L40,90" fill="none" stroke="black" stroke-width="5"/><circle cx="70" cy="30" r="8" fill="black"/><circle cx="70" cy="30" r="3" fill="white"/></svg>')`,
+                jump: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="rainbowJump" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:red"/><stop offset="16%" style="stop-color:orange"/><stop offset="33%" style="stop-color:yellow"/><stop offset="50%" style="stop-color:lime"/><stop offset="66%" style="stop-color:blue"/><stop offset="83%" style="stop-color:indigo"/><stop offset="100%" style="stop-color:violet"/></linearGradient></defs><rect x="20" y="0" width="60" height="100" fill="url(%23rainbowJump)"/><circle cx="70" cy="10" r="8" fill="black"/><circle cx="70" cy="10" r="3" fill="white"/></svg>')`
             }
         };
 
         const modes = {
-            'normal': { name: 'Normal Mode', price: 0, speedMultiplier: 1, obstacleFrequency: 1, jumpHeightMultiplier: 1, coinRateMultiplier: 1, obstacleSize: 1, nightMode: false },
-            'fast': { name: 'Fast Mode', price: 75, speedMultiplier: 1.5, obstacleFrequency: 0.7, jumpHeightMultiplier: 1, coinRateMultiplier: 1, obstacleSize: 1, nightMode: false },
-            'slow': { name: 'Slow Mode', price: 50, speedMultiplier: 0.7, obstacleFrequency: 1.3, jumpHeightMultiplier: 1, coinRateMultiplier: 1, obstacleSize: 1, nightMode: false },
-            'obstacles': { name: 'More Obstacles', price: 100, speedMultiplier: 1, obstacleFrequency: 0.5, jumpHeightMultiplier: 1, coinRateMultiplier: 1, obstacleSize: 1, nightMode: false },
-            'coins': { name: 'Coin Rush', price: 120, speedMultiplier: 0.8, obstacleFrequency: 1.2, jumpHeightMultiplier: 1, coinRateMultiplier: 3, obstacleSize: 1, nightMode: false },
-            'night': { name: 'Night Mode', price: 150, speedMultiplier: 1, obstacleFrequency: 1, jumpHeightMultiplier: 1, coinRateMultiplier: 1, obstacleSize: 1, nightMode: true },
-            'low-gravity': { name: 'Low Gravity', price: 170, speedMultiplier: 1, obstacleFrequency: 1, jumpHeightMultiplier: 1.5, coinRateMultiplier: 1, obstacleSize: 1, nightMode: false },
-            'tiny-obstacles': { name: 'Tiny Obstacles', price: 200, speedMultiplier: 1.2, obstacleFrequency: 0.8, jumpHeightMultiplier: 1, coinRateMultiplier: 1, obstacleSize: 0.6, nightMode: false },
-            'giant-obstacles': { name: 'Giant Obstacles', price: 250, speedMultiplier: 0.9, obstacleFrequency: 1, jumpHeightMultiplier: 1, coinRateMultiplier: 1, obstacleSize: 1.5, nightMode: false },
-            'berserk': { name: 'Berserk Mode', price: 300, speedMultiplier: 2.0, obstacleFrequency: 0.4, jumpHeightMultiplier: 0.8, coinRateMultiplier: 1, obstacleSize: 1.2, nightMode: false }
+            'normal': { name: 'Normal Mode', price: 0, speedMultiplier: 1, obstacleFrequency: 1, jumpHeightMultiplier: 1, coinRateMultiplier: 1, obstacleSize: 1, nightMode: true, difficultyModifier: 0 },
+            'fast': { name: 'Fast Mode', price: 75, speedMultiplier: 1.5, obstacleFrequency: 0.7, jumpHeightMultiplier: 1, coinRateMultiplier: 1, obstacleSize: 1, nightMode: true, difficultyModifier: 50 },
+            'slow': { name: 'Slow Mode', price: 50, speedMultiplier: 0.7, obstacleFrequency: 1.3, jumpHeightMultiplier: 1, coinRateMultiplier: 1, obstacleSize: 1, nightMode: true, difficultyModifier: -30 },
+            'obstacles': { name: 'More Obstacles', price: 100, speedMultiplier: 1, obstacleFrequency: 0.5, jumpHeightMultiplier: 1, coinRateMultiplier: 1, obstacleSize: 1, nightMode: true, difficultyModifier: 70 },
+            'coins': { name: 'Coin Rush', price: 120, speedMultiplier: 0.8, obstacleFrequency: 1.2, jumpHeightMultiplier: 1, coinRateMultiplier: 3, obstacleSize: 1, nightMode: true, difficultyModifier: -10 },
+            'night': { name: 'Night Mode', price: 150, speedMultiplier: 1, obstacleFrequency: 1, jumpHeightMultiplier: 1, coinRateMultiplier: 1, obstacleSize: 1, nightMode: true, difficultyModifier: 0 }, // Already dark theme
+            'low-gravity': { name: 'Low Gravity', price: 170, speedMultiplier: 1, obstacleFrequency: 1, jumpHeightMultiplier: 1.5, coinRateMultiplier: 1, obstacleSize: 1, nightMode: true, difficultyModifier: -20 },
+            'tiny-obstacles': { name: 'Tiny Obstacles', price: 200, speedMultiplier: 1.2, obstacleFrequency: 0.8, jumpHeightMultiplier: 1, coinRateMultiplier: 1, obstacleSize: 0.6, nightMode: true, difficultyModifier: 80 },
+            'giant-obstacles': { name: 'Giant Obstacles', price: 250, speedMultiplier: 0.9, obstacleFrequency: 1, jumpHeightMultiplier: 1, coinRateMultiplier: 1, obstacleSize: 1.5, nightMode: true, difficultyModifier: 90 },
+            'berserk': { name: 'Berserk Mode', price: 300, speedMultiplier: 2.0, obstacleFrequency: 0.4, jumpHeightMultiplier: 0.8, coinRateMultiplier: 1, obstacleSize: 1.2, nightMode: true, difficultyModifier: 150 }
         };
 
         // --- Game Functions ---
@@ -714,12 +748,16 @@
             currentModeNameDisplay.textContent = mode.name;
             updateModeSelectionUI();
 
+            // Set dynamic jump height for CSS animation
+            document.documentElement.style.setProperty('--jump-height', `${initialDinoBottom + 100 * mode.jumpHeightMultiplier}px`);
+
+            // Night mode is essentially always on due to the base theme, but keep the class for potential visual variations
             if (mode.nightMode) {
                 gameArea.classList.add('night-mode');
             } else {
                 gameArea.classList.remove('night-mode');
             }
-            resetGame();
+            resetGame(); // Reset game to apply new mode settings
         }
 
         function jump() {
@@ -733,33 +771,57 @@
                     if (!gameOver) {
                         dino.classList.add('running');
                     }
-                }, jumpAnimationDuration * modes[currentModeId].jumpHeightMultiplier);
+                }, jumpAnimationBaseDuration * modes[currentModeId].jumpHeightMultiplier);
             }
+        }
+
+        function calculateObstacleDifficulty() {
+            const currentMode = modes[currentModeId];
+            // Base difficulty factor for obstacles
+            let difficultyFactor = 1;
+
+            // Increase difficulty based on score, making it harder as score grows
+            // The formula (score / 1000) makes it scale reasonably
+            // Adding currentMode.difficultyModifier provides mode-specific baseline difficulty
+            difficultyFactor += (score / 5000) + (currentMode.difficultyModifier / 200);
+
+            // Cap the difficulty to prevent absurd speeds/frequencies
+            difficultyFactor = Math.min(difficultyFactor, 2.5); // Max 2.5 times harder
+
+            return difficultyFactor;
         }
 
         function createObstacle() {
             if (gameOver) return;
 
             const obstacle = document.createElement('div');
-            const isBird = Math.random() < 0.2;
+            const isBird = Math.random() < 0.2; // 20% chance for a bird
+            const currentModeSettings = modes[currentModeId];
+            const difficultyFactor = calculateObstacleDifficulty();
 
             obstacle.classList.add('obstacle');
             obstacle.classList.add(isBird ? 'bird' : 'cactus');
 
-            let obstacleWidth = isBird ? 40 : 30 * modes[currentModeId].obstacleSize;
-            let obstacleHeight = isBird ? 30 : 60 * modes[currentModeId].obstacleSize;
-            let obstacleBottom = isBird ? Math.random() * 80 + 80 : 20;
+            let obstacleWidth = (isBird ? 40 : 30) * currentModeSettings.obstacleSize;
+            let obstacleHeight = (isBird ? 30 : 60) * currentModeSettings.obstacleSize;
+            let obstacleBottom = isBird ? Math.random() * (gameArea.offsetHeight * 0.4) + (gameArea.offsetHeight * 0.3) : initialDinoBottom; // Birds can fly higher
 
-            obstacle.style.width = `${obstacleWidth}px`;
-            obstacle.style.height = `${obstacleHeight}px`;
+            // Apply dynamic obstacle sizes via CSS variables
+            obstacle.style.setProperty('--obstacle-width', `${obstacleWidth}px`);
+            obstacle.style.setProperty('--obstacle-height', `${obstacleHeight}px`);
             obstacle.style.bottom = `${obstacleBottom}px`;
+
 
             gameArea.appendChild(obstacle);
 
-            const animationDuration = gameArea.offsetWidth / (gameSpeed * modes[currentModeId].speedMultiplier) / 10;
+            // Calculate animation duration based on current game speed and difficulty
+            // Faster speed means shorter animation duration
+            const effectiveGameSpeed = (gameSpeed * currentModeSettings.speedMultiplier) * difficultyFactor;
+            const animationDuration = gameArea.offsetWidth / effectiveGameSpeed / 50; // Adjusted divisor for better scaling
             obstacle.style.animationDuration = `${animationDuration}s`;
-            obstacle.style.animationName = 'moveObstacle';
+            obstacle.style.animationName = isBird ? 'moveObstacle, bird-flap' : 'moveObstacle';
             obstacle.style.animationPlayState = 'running';
+            obstacle.style.animationTimingFunction = 'linear'; // Ensure linear movement
 
             const obstacleAnimationEnd = () => {
                 if (obstacle.parentNode) {
@@ -767,29 +829,50 @@
                 }
             };
             obstacle.addEventListener('animationend', obstacleAnimationEnd);
-            obstacle.addEventListener('webkitAnimationEnd', obstacleAnimationEnd);
+            obstacle.addEventListener('webkitAnimationEnd', obstacleAnimationEnd); // For Safari/older browsers
         }
 
         function createCoin() {
             if (gameOver) return;
-            if (Math.random() < 0.3 * modes[currentModeId].coinRateMultiplier) {
-                const coin = document.createElement('div');
-                coin.classList.add('coin');
-                coin.style.bottom = `${Math.random() * 80 + 50}px`;
-                gameArea.appendChild(coin);
+            const currentModeSettings = modes[currentModeId];
 
-                const animationDuration = gameArea.offsetWidth / (gameSpeed * modes[currentModeId].speedMultiplier) / 10;
-                coin.style.animationDuration = `${animationDuration}s`;
-                coin.style.animationName = 'moveCoin';
-                coin.style.animationPlayState = 'running';
+            // Only create a coin if score is a multiple of 10
+            if (score > 0 && score % 10 === 0 && (score % (10 * currentModeSettings.coinRateMultiplier) === 0)) {
+                // Ensure coin isn't generated right on top of an obstacle
+                const obstacles = document.querySelectorAll('.obstacle');
+                let collisionWithObstacle = false;
+                const coinSpawnRightEdge = gameArea.offsetWidth + 20; // Where the coin starts
 
-                const coinAnimationEnd = () => {
-                    if (coin.parentNode) {
-                        coin.remove();
+                for (let i = 0; i < obstacles.length; i++) {
+                    const obstacleRightEdge = parseFloat(getComputedStyle(obstacles[i]).right);
+                    // If an obstacle is currently close to the coin spawn point
+                    if (obstacleRightEdge < coinSpawnRightEdge + 50 && obstacleRightEdge > coinSpawnRightEdge - 50) {
+                        collisionWithObstacle = true;
+                        break;
                     }
-                };
-                coin.addEventListener('animationend', coinAnimationEnd);
-                coin.addEventListener('webkitAnimationEnd', coinAnimationEnd);
+                }
+
+                if (!collisionWithObstacle) {
+                    const coin = document.createElement('div');
+                    coin.classList.add('coin');
+                    coin.style.bottom = `${Math.random() * 80 + 50}px`; // Random height for coins
+                    gameArea.appendChild(coin);
+
+                    const effectiveGameSpeed = (gameSpeed * currentModeSettings.speedMultiplier) * calculateObstacleDifficulty();
+                    const animationDuration = gameArea.offsetWidth / effectiveGameSpeed / 50;
+                    coin.style.animationDuration = `${animationDuration}s`;
+                    coin.style.animationName = 'moveCoin';
+                    coin.style.animationPlayState = 'running';
+                    coin.style.animationTimingFunction = 'linear';
+
+                    const coinAnimationEnd = () => {
+                        if (coin.parentNode) {
+                            coin.remove();
+                        }
+                    };
+                    coin.addEventListener('animationend', coinAnimationEnd);
+                    coin.addEventListener('webkitAnimationEnd', coinAnimationEnd);
+                }
             }
         }
 
@@ -820,6 +903,7 @@
                     height: obstacleRect.height
                 };
 
+                // Simple AABB collision detection
                 if (
                     dinoRelativeRect.right > obstacleRelativeRect.left &&
                     dinoRelativeRect.left < obstacleRelativeRect.right &&
@@ -840,6 +924,7 @@
                     bottom: coinRect.bottom - gameAreaRect.top
                 };
 
+                // Check for coin collection
                 if (
                     dinoRelativeRect.right > coinRelativeRect.left &&
                     dinoRelativeRect.left < coinRelativeRect.right &&
@@ -865,8 +950,28 @@
                 score++;
                 scoreDisplay.textContent = score;
 
-                if (score % 200 === 0 && score > 0 && gameSpeed < 20) {
-                    gameSpeed += 0.5;
+                // Dynamic speed increase (original logic, slightly modified)
+                const currentModeSettings = modes[currentModeId];
+                const difficultyFactor = calculateObstacleDifficulty();
+
+                // Increase base game speed slightly as score increases, up to a limit
+                if (score % 100 === 0 && score > 0) {
+                    gameSpeed = Math.min(gameSpeed + 0.5, 20); // Cap max base speed
+                }
+
+                // Adjust obstacle generation interval based on score and mode settings
+                // The interval gets shorter (more frequent obstacles) as difficulty increases
+                const minObstacleInterval = 500; // Never go below this
+                const calculatedInterval = (1500 * currentModeSettings.obstacleFrequency) / difficultyFactor;
+                obstacleGenerationInterval = Math.max(calculatedInterval, minObstacleInterval);
+
+                // Clear and reset obstacle timer to apply new interval
+                clearInterval(obstacleTimer);
+                obstacleTimer = setInterval(createObstacle, obstacleGenerationInterval);
+
+                // Coin generation every 10 points
+                if (score > 0 && score % 10 === 0) {
+                    createCoin();
                 }
             }
         }
@@ -877,28 +982,28 @@
             scoreDisplay.textContent = score;
             coinsDisplay.textContent = coins;
             gameOverScreen.style.display = 'none';
-            dino.style.bottom = '20px';
+            dino.style.bottom = `${initialDinoBottom}px`;
             dino.classList.add('running');
 
             document.querySelectorAll('.obstacle').forEach(o => o.remove());
             document.querySelectorAll('.coin').forEach(c => c.remove());
 
             const currentModeSettings = modes[currentModeId];
-            gameSpeed = 5 * currentModeSettings.speedMultiplier;
-            obstacleGenerationInterval = 1500 * currentModeSettings.obstacleFrequency;
+            gameSpeed = 5 * currentModeSettings.speedMultiplier; // Reset to initial speed for current mode
+            obstacleGenerationInterval = 1500 * currentModeSettings.obstacleFrequency; // Reset to initial interval
 
             clearInterval(obstacleTimer);
             clearInterval(gameLoopTimer);
 
             obstacleTimer = setInterval(createObstacle, obstacleGenerationInterval);
-            setInterval(createCoin, obstacleGenerationInterval * 0.8);
+            // Coins will be generated dynamically via updateScore for every 10 points
 
             gameLoopTimer = setInterval(() => {
                 updateScore();
                 checkCollision();
             }, 50);
 
-            createObstacle();
+            createObstacle(); // Create first obstacle immediately
         }
 
         function endGame() {
@@ -910,30 +1015,28 @@
 
             gameOverScreen.style.display = 'block';
             finalScoreDisplay.textContent = score;
-            const newCoins = Math.floor(score / 50);
+            const newCoins = Math.floor(score / 50); // Coins earned per game
             earnedCoinsDisplay.textContent = newCoins;
             addCoin(newCoins);
         }
 
         function resetGame() {
-            endGame();
-            startGame();
+            endGame(); // Stop current game loop and clear obstacles/coins
+            startGame(); // Start a fresh game
         }
 
         // --- UI & Event Handlers ---
 
-        // Jump mechanism (PC Spacebar and the new button for both mobile/PC)
         document.addEventListener('keydown', (event) => {
             if (event.code === 'Space' && !gameOver) {
                 event.preventDefault();
                 jump();
             }
         });
-        jumpButtonBelow.addEventListener('click', jump); // Use 'click' for desktop/mobile tap
+        jumpButtonBelow.addEventListener('click', jump);
 
-        // Original game area tap to jump for mobile (can be removed if jumpButtonBelow is preferred)
         gameArea.addEventListener('touchstart', (e) => {
-             e.preventDefault(); // Prevent scrolling
+             e.preventDefault();
              jump();
         });
 
@@ -959,7 +1062,6 @@
             history.back();
         });
 
-        // Skin selection logic
         skinItems.forEach(item => {
             item.addEventListener('click', () => {
                 const skinId = item.dataset.skinId;
@@ -985,7 +1087,6 @@
             });
         });
 
-        // Mode selection logic
         modeItems.forEach(item => {
             item.addEventListener('click', () => {
                 const modeId = item.dataset.modeId;
@@ -1011,9 +1112,8 @@
             });
         });
 
-        // Redeem Code Logic
         redeemButton.addEventListener('click', () => {
-            const code = redeemCodeInput.value.trim();
+            const code = redeemCodeInput.value.trim().toUpperCase(); // Convert to uppercase for case-insensitivity
             if (redeemCodes[code]) {
                 if (redeemedCodes.includes(code)) {
                     alert('This code has already been redeemed!');
@@ -1030,7 +1130,6 @@
             }
         });
 
-        // Update UI to show selected skin/mode and locked status
         function updateSkinSelectionUI() {
             skinItems.forEach(item => {
                 const skinId = item.dataset.skinId;
