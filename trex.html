@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>T REXX - UVOGAMES</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="manifest" href="manifest.webmanifest">
     <style>
         /* Base Styles */
         body {
@@ -174,7 +179,7 @@
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%2300ffff"/><text x="50" y="65" font-family="Arial" font-size="60" fill="%2300cccc" text-anchor="middle">$</text></svg>'); /* Neon blue coin */
             background-size: contain;
             position: absolute;
-            bottom: 50px;
+            /* bottom: 50px; <-- REMOVED this, now controlled by JS based on top calculation */
             right: -20px;
             animation: moveCoin linear forwards;
             image-rendering: pixelated;
@@ -222,7 +227,7 @@
             box-shadow: 0 0 5px rgba(0,255,255,0.5);
         }
 
-        /* --- Game Over Screen --- */
+        /* --- Game Over Screen (now unused for unlimited mode, but kept for potential future use) --- */
         .game-over {
             position: absolute;
             top: 50%;
@@ -233,7 +238,7 @@
             padding: 25px;
             text-align: center;
             border-radius: 10px;
-            display: none;
+            display: none; /* Hidden by default for unlimited game */
             z-index: 999;
             box-shadow: 0 0 20px rgba(255,0,255,0.7), 0 0 40px rgba(255,0,255,0.4); /* Neon game over glow */
             width: 80%;
@@ -493,7 +498,7 @@
                 Score: <span id="score">0</span><br>
                 Coins: <span id="coins">0</span>
             </div>
-            <div class="game-over" id="gameOver">
+            <div class="game-over" id="gameOver" style="display: none;">
                 <h2>GAME OVER!</h2>
                 <p>Your Score: <span id="finalScore">0</span></p>
                 <p>Coins Earned: <span id="earnedCoins">0</span></p>
@@ -510,8 +515,7 @@
         <ul>
             <li class="menu-section-title">Game Info</li>
             <li>Game Name: Dino Run</li>
-            <li>Version: 1.1</li>
-            <li>By: ADITdev</li>
+            <li>Version: 1.2</li> <li>By: ADITdev</li>
 
             <li class="menu-section-title">Skins (<span id="currentSkinName">Default</span>)</li>
             <li class="skin-item" data-skin-id="default">
@@ -521,7 +525,7 @@
                 <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='0' width='60' height='100' fill='%23ff00ff'/><circle cx='50' cy='20' r='10' fill='%23cc00cc'/></svg>" alt="Red Dino"> Red Dino <span class="price">50</span>
             </li>
             <li class="skin-item" data-skin-id="blue" data-price="75">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='0' width='60' height='100' fill='%230000ff'/><circle cx='50' cy='20' r='10' fill='%230000cc'/></svg>" alt="Blue Dino"> Blue Dino <span class="price">75</span>
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='0' width='60' height='100' fill='%232196F3'/><circle cx='50' cy='20' r='10' fill='%231976D2'/></svg>" alt="Blue Dino"> Blue Dino <span class="price">75</span>
             </li>
             <li class="skin-item" data-skin-id="yellow" data-price="100">
                 <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='0' width='60' height='100' fill='%23ffff00'/><circle cx='50' cy='20' r='10' fill='%23cccc00'/></svg>" alt="Yellow Dino"> Yellow Dino <span class="price">100</span>
@@ -595,12 +599,12 @@
         // --- DOM Elements ---
         const dino = document.getElementById('dino');
         const gameArea = document.getElementById('gameArea');
-        const gameOverScreen = document.getElementById('gameOver');
-        const restartButton = document.getElementById('restartButton');
+        const gameOverScreen = document.getElementById('gameOver'); // Kept, but hidden for unlimited mode
+        const restartButton = document.getElementById('restartButton'); // Kept, but hidden for unlimited mode
         const scoreDisplay = document.getElementById('score');
         const coinsDisplay = document.getElementById('coins');
-        const finalScoreDisplay = document.getElementById('finalScore');
-        const earnedCoinsDisplay = document.getElementById('earnedCoins');
+        const finalScoreDisplay = document.getElementById('finalScore'); // Kept, but hidden for unlimited mode
+        const earnedCoinsDisplay = document.getElementById('earnedCoins'); // Kept, but hidden for unlimited mode
         const jumpButtonBelow = document.getElementById('jumpButtonBelow');
 
         const menuButton = document.getElementById('menuButton');
@@ -619,7 +623,6 @@
 
         // --- Game State Variables ---
         let isJumping = false;
-        let gameOver = false;
         let score = 0;
         let coins = parseInt(localStorage.getItem('dinoCoins')) || 0;
         let gameSpeed = 5; // Base speed
@@ -641,8 +644,9 @@
             '55555': 1000,
             '12345': 500,
             '11111': 500,
-            'NEONREX': 250, // New code for testing
-            'UVOGAMES': 300 // Another new code
+            'NEONREX': 250,
+            'UVOGAMES': 300,
+            'FREEMODE': 1 // Unlock a mode for free (example for future)
         };
 
         // --- Game Data: Skins and Modes (Updated to reflect neon theme) ---
@@ -751,48 +755,77 @@
             // Set dynamic jump height for CSS animation
             document.documentElement.style.setProperty('--jump-height', `${initialDinoBottom + 100 * mode.jumpHeightMultiplier}px`);
 
-            // Night mode is essentially always on due to the base theme, but keep the class for potential visual variations
             if (mode.nightMode) {
                 gameArea.classList.add('night-mode');
             } else {
                 gameArea.classList.remove('night-mode');
             }
-            resetGame(); // Reset game to apply new mode settings
+            // For unlimited mode, we don't necessarily 'reset' the game completely here,
+            // but rather ensure current game parameters reflect the new mode.
+            // A full reset (clearing obstacles/coins) might be desired if switching modes mid-game.
+            // For now, let's just ensure game speed and obstacle generation parameters are updated.
+            updateGameParametersFromMode();
         }
 
+        function updateGameParametersFromMode() {
+            const currentModeSettings = modes[currentModeId];
+            gameSpeed = 5 * currentModeSettings.speedMultiplier; // Base speed for the current mode
+            obstacleGenerationInterval = 1500 * currentModeSettings.obstacleFrequency; // Base interval for the current mode
+
+            // Re-adjust interval and speed based on current score to maintain difficulty scaling
+            const difficultyFactor = calculateObstacleDifficulty();
+            const minObstacleInterval = 500;
+            const calculatedInterval = (1500 * currentModeSettings.obstacleFrequency) / difficultyFactor;
+            obstacleGenerationInterval = Math.max(calculatedInterval, minObstacleInterval);
+
+            // Re-initialize obstacle timer with potentially new interval
+            clearInterval(obstacleTimer);
+            obstacleTimer = setInterval(createObstacle, obstacleGenerationInterval);
+
+            // Update ground animation speed
+            document.querySelector('.ground').style.animationDuration = `${gameArea.offsetWidth / (gameSpeed * difficultyFactor) / 50}s`;
+        }
+
+
         function jump() {
-            if (!isJumping && !gameOver) {
+            if (!isJumping) { // No longer check for gameOver as it's unlimited
                 isJumping = true;
                 dino.classList.remove('running');
                 dino.classList.add('jumping');
                 setTimeout(() => {
                     isJumping = false;
                     dino.classList.remove('jumping');
-                    if (!gameOver) {
-                        dino.classList.add('running');
-                    }
+                    // In unlimited mode, dino is always running when not jumping
+                    dino.classList.add('running');
                 }, jumpAnimationBaseDuration * modes[currentModeId].jumpHeightMultiplier);
             }
         }
 
         function calculateObstacleDifficulty() {
             const currentMode = modes[currentModeId];
-            // Base difficulty factor for obstacles
             let difficultyFactor = 1;
 
-            // Increase difficulty based on score, making it harder as score grows
-            // The formula (score / 1000) makes it scale reasonably
-            // Adding currentMode.difficultyModifier provides mode-specific baseline difficulty
-            difficultyFactor += (score / 5000) + (currentMode.difficultyModifier / 200);
+            // Difficulty scales up to score 500, then it caps out.
+            // From 1 to 500, it's "easy" scale.
+            // After 500, the scaling slows down significantly or caps.
+            if (score <= 500) {
+                difficultyFactor += (score / 250); // Scales faster up to 500
+            } else {
+                difficultyFactor += (500 / 250) + ((score - 500) / 5000); // Slower scaling after 500
+            }
 
-            // Cap the difficulty to prevent absurd speeds/frequencies
-            difficultyFactor = Math.min(difficultyFactor, 2.5); // Max 2.5 times harder
+
+            // Adding currentMode.difficultyModifier provides mode-specific baseline difficulty
+            difficultyFactor += (currentMode.difficultyModifier / 200);
+
+            // Cap the difficulty to prevent absurd speeds/frequencies (e.g., max 3x initial speed/frequency)
+            difficultyFactor = Math.min(difficultyFactor, 3.0); // Adjust this cap as needed
 
             return difficultyFactor;
         }
 
         function createObstacle() {
-            if (gameOver) return;
+            // No gameOver check needed as game is unlimited
 
             const obstacle = document.createElement('div');
             const isBird = Math.random() < 0.2; // 20% chance for a bird
@@ -806,22 +839,20 @@
             let obstacleHeight = (isBird ? 30 : 60) * currentModeSettings.obstacleSize;
             let obstacleBottom = isBird ? Math.random() * (gameArea.offsetHeight * 0.4) + (gameArea.offsetHeight * 0.3) : initialDinoBottom; // Birds can fly higher
 
-            // Apply dynamic obstacle sizes via CSS variables
             obstacle.style.setProperty('--obstacle-width', `${obstacleWidth}px`);
             obstacle.style.setProperty('--obstacle-height', `${obstacleHeight}px`);
             obstacle.style.bottom = `${obstacleBottom}px`;
 
-
             gameArea.appendChild(obstacle);
 
-            // Calculate animation duration based on current game speed and difficulty
-            // Faster speed means shorter animation duration
             const effectiveGameSpeed = (gameSpeed * currentModeSettings.speedMultiplier) * difficultyFactor;
-            const animationDuration = gameArea.offsetWidth / effectiveGameSpeed / 50; // Adjusted divisor for better scaling
+            // The 50 here is a scaling factor to convert game speed to animation duration.
+            // Larger divisor means slower animation, smaller means faster.
+            const animationDuration = gameArea.offsetWidth / effectiveGameSpeed / 50;
             obstacle.style.animationDuration = `${animationDuration}s`;
             obstacle.style.animationName = isBird ? 'moveObstacle, bird-flap' : 'moveObstacle';
             obstacle.style.animationPlayState = 'running';
-            obstacle.style.animationTimingFunction = 'linear'; // Ensure linear movement
+            obstacle.style.animationTimingFunction = 'linear';
 
             const obstacleAnimationEnd = () => {
                 if (obstacle.parentNode) {
@@ -829,33 +860,43 @@
                 }
             };
             obstacle.addEventListener('animationend', obstacleAnimationEnd);
-            obstacle.addEventListener('webkitAnimationEnd', obstacleAnimationEnd); // For Safari/older browsers
+            obstacle.addEventListener('webkitAnimationEnd', obstacleAnimationEnd);
         }
 
         function createCoin() {
-            if (gameOver) return;
+            // No gameOver check needed as game is unlimited
             const currentModeSettings = modes[currentModeId];
 
-            // Only create a coin if score is a multiple of 10
-            if (score > 0 && score % 10 === 0 && (score % (10 * currentModeSettings.coinRateMultiplier) === 0)) {
+            // Only create a coin if score is a multiple of 20
+            if (score > 0 && score % 20 === 0 && (score % (20 * currentModeSettings.coinRateMultiplier) === 0)) {
                 // Ensure coin isn't generated right on top of an obstacle
                 const obstacles = document.querySelectorAll('.obstacle');
-                let collisionWithObstacle = false;
-                const coinSpawnRightEdge = gameArea.offsetWidth + 20; // Where the coin starts
+                let collisionWithExistingObstacle = false;
+                const coinSpawnRightEdgeThreshold = 80; // Distance from right edge to check for obstacles
 
                 for (let i = 0; i < obstacles.length; i++) {
-                    const obstacleRightEdge = parseFloat(getComputedStyle(obstacles[i]).right);
-                    // If an obstacle is currently close to the coin spawn point
-                    if (obstacleRightEdge < coinSpawnRightEdge + 50 && obstacleRightEdge > coinSpawnRightEdge - 50) {
-                        collisionWithObstacle = true;
+                    // Get current obstacle position relative to gameArea's right edge
+                    const obstacleRightStyle = getComputedStyle(obstacles[i]).right;
+                    const obstacleRightValue = parseFloat(obstacleRightStyle);
+                    const obstacleWidthValue = parseFloat(getComputedStyle(obstacles[i]).width);
+
+                    // Check if an obstacle is currently in the coin's potential spawn path
+                    if (obstacleRightValue < (gameArea.offsetWidth + obstacleWidthValue + coinSpawnRightEdgeThreshold) &&
+                        obstacleRightValue > (gameArea.offsetWidth - coinSpawnRightEdgeThreshold)) {
+                        collisionWithExistingObstacle = true;
                         break;
                     }
                 }
 
-                if (!collisionWithObstacle) {
+                if (!collisionWithExistingObstacle) {
                     const coin = document.createElement('div');
                     coin.classList.add('coin');
-                    coin.style.bottom = `${Math.random() * 80 + 50}px`; // Random height for coins
+
+                    // Position coin above the ground line (relative to gameArea height)
+                    // GameArea height is 200px. Ground is 20px. So playable height is 180px.
+                    // Let's say coins can appear between 50px and 120px from the bottom.
+                    const coinHeightFromBottom = Math.random() * (120 - 50) + 50;
+                    coin.style.bottom = `${coinHeightFromBottom}px`;
                     gameArea.appendChild(coin);
 
                     const effectiveGameSpeed = (gameSpeed * currentModeSettings.speedMultiplier) * calculateObstacleDifficulty();
@@ -877,7 +918,7 @@
         }
 
         function checkCollision() {
-            if (gameOver) return;
+            // No gameOver check needed as game is unlimited
 
             const dinoRect = dino.getBoundingClientRect();
             const gameAreaRect = gameArea.getBoundingClientRect();
@@ -905,12 +946,13 @@
 
                 // Simple AABB collision detection
                 if (
-                    dinoRelativeRect.right > obstacleRelativeRect.left &&
-                    dinoRelativeRect.left < obstacleRelativeRect.right &&
-                    dinoRelativeRect.bottom > obstacleRelativeRect.top &&
-                    dinoRelativeRect.top < obstacleRelativeRect.bottom
+                    dinoRelativeRect.right > obstacleRelativeRect.left + 5 && // Added a small tolerance
+                    dinoRelativeRect.left < obstacleRelativeRect.right - 5 && // Added a small tolerance
+                    dinoRelativeRect.bottom > obstacleRelativeRect.top + 5 && // Added a small tolerance
+                    dinoRelativeRect.top < obstacleRelativeRect.bottom - 5   // Added a small tolerance
                 ) {
-                    endGame();
+                    // In unlimited mode, collision means game restart, not "game over" screen
+                    restartGame();
                 }
             });
 
@@ -945,58 +987,23 @@
             updateModeSelectionUI();
         }
 
-        function updateScore() {
-            if (!gameOver) {
-                score++;
-                scoreDisplay.textContent = score;
-
-                // Dynamic speed increase (original logic, slightly modified)
-                const currentModeSettings = modes[currentModeId];
-                const difficultyFactor = calculateObstacleDifficulty();
-
-                // Increase base game speed slightly as score increases, up to a limit
-                if (score % 100 === 0 && score > 0) {
-                    gameSpeed = Math.min(gameSpeed + 0.5, 20); // Cap max base speed
-                }
-
-                // Adjust obstacle generation interval based on score and mode settings
-                // The interval gets shorter (more frequent obstacles) as difficulty increases
-                const minObstacleInterval = 500; // Never go below this
-                const calculatedInterval = (1500 * currentModeSettings.obstacleFrequency) / difficultyFactor;
-                obstacleGenerationInterval = Math.max(calculatedInterval, minObstacleInterval);
-
-                // Clear and reset obstacle timer to apply new interval
-                clearInterval(obstacleTimer);
-                obstacleTimer = setInterval(createObstacle, obstacleGenerationInterval);
-
-                // Coin generation every 10 points
-                if (score > 0 && score % 10 === 0) {
-                    createCoin();
-                }
-            }
-        }
-
         function startGame() {
-            gameOver = false;
+            // No gameOver = false; needed as game is always running
             score = 0;
             scoreDisplay.textContent = score;
             coinsDisplay.textContent = coins;
-            gameOverScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none'; // Ensure it's hidden
             dino.style.bottom = `${initialDinoBottom}px`;
-            dino.classList.add('running');
+            dino.classList.add('running'); // Ensure dino is running
 
             document.querySelectorAll('.obstacle').forEach(o => o.remove());
             document.querySelectorAll('.coin').forEach(c => c.remove());
 
-            const currentModeSettings = modes[currentModeId];
-            gameSpeed = 5 * currentModeSettings.speedMultiplier; // Reset to initial speed for current mode
-            obstacleGenerationInterval = 1500 * currentModeSettings.obstacleFrequency; // Reset to initial interval
-
             clearInterval(obstacleTimer);
             clearInterval(gameLoopTimer);
 
-            obstacleTimer = setInterval(createObstacle, obstacleGenerationInterval);
-            // Coins will be generated dynamically via updateScore for every 10 points
+            // Initialize game parameters based on current mode
+            updateGameParametersFromMode();
 
             gameLoopTimer = setInterval(() => {
                 updateScore();
@@ -1006,29 +1013,74 @@
             createObstacle(); // Create first obstacle immediately
         }
 
-        function endGame() {
-            gameOver = true;
-            clearInterval(obstacleTimer);
-            clearInterval(gameLoopTimer);
-            dino.classList.remove('running');
+        function restartGame() {
+            // This function now replaces endGame() for unlimited mode
+            // It clears the screen and restarts the game loop for a fresh run
+            score = 0; // Reset score on collision
+            scoreDisplay.textContent = score; // Update score display
+
+            // Clear all existing obstacles and coins
+            document.querySelectorAll('.obstacle').forEach(o => o.remove());
+            document.querySelectorAll('.coin').forEach(c => c.remove());
+
+            // Reset dino position and state
+            dino.style.bottom = `${initialDinoBottom}px`;
+            isJumping = false;
             dino.classList.remove('jumping');
+            dino.classList.add('running'); // Ensure dino is running
 
-            gameOverScreen.style.display = 'block';
-            finalScoreDisplay.textContent = score;
-            const newCoins = Math.floor(score / 50); // Coins earned per game
-            earnedCoinsDisplay.textContent = newCoins;
-            addCoin(newCoins);
+            // Re-initiate timers with current mode settings
+            updateGameParametersFromMode();
+
+            // Restart game loop
+            clearInterval(gameLoopTimer);
+            gameLoopTimer = setInterval(() => {
+                updateScore();
+                checkCollision();
+            }, 50);
+
+            createObstacle(); // Spawn first obstacle for the new run
         }
 
-        function resetGame() {
-            endGame(); // Stop current game loop and clear obstacles/coins
-            startGame(); // Start a fresh game
+
+        function updateScore() {
+            score++;
+            scoreDisplay.textContent = score;
+
+            const currentModeSettings = modes[currentModeId];
+            const difficultyFactor = calculateObstacleDifficulty();
+
+            // Increase base game speed slightly as score increases, up to a limit
+            // This also affects ground animation speed
+            if (score % 100 === 0 && score > 0) {
+                gameSpeed = Math.min(gameSpeed + 0.5, 20); // Cap max base speed
+                document.querySelector('.ground').style.animationDuration = `${gameArea.offsetWidth / (gameSpeed * difficultyFactor) / 50}s`;
+            }
+
+            // Adjust obstacle generation interval based on score and mode settings
+            const minObstacleInterval = 500;
+            const calculatedInterval = (1500 * currentModeSettings.obstacleFrequency) / difficultyFactor;
+            const newObstacleInterval = Math.max(calculatedInterval, minObstacleInterval);
+
+            // Only update setInterval if the interval has significantly changed to avoid flickering
+            if (Math.abs(obstacleGenerationInterval - newObstacleInterval) > 10) {
+                obstacleGenerationInterval = newObstacleInterval;
+                clearInterval(obstacleTimer);
+                obstacleTimer = setInterval(createObstacle, obstacleGenerationInterval);
+            }
+
+
+            // Coin generation every 20 points
+            if (score > 0 && score % 20 === 0) {
+                createCoin();
+            }
         }
+
 
         // --- UI & Event Handlers ---
 
         document.addEventListener('keydown', (event) => {
-            if (event.code === 'Space' && !gameOver) {
+            if (event.code === 'Space') { // No longer check for gameOver
                 event.preventDefault();
                 jump();
             }
@@ -1040,7 +1092,7 @@
              jump();
         });
 
-
+        // restartButton is hidden, so this listener is effectively inactive
         restartButton.addEventListener('click', startGame);
 
         menuButton.addEventListener('click', () => {
@@ -1173,8 +1225,8 @@
         // --- Initialization ---
         window.onload = () => {
             applySkin(currentSkinId);
-            applyMode(currentModeId);
-            startGame();
+            applyMode(currentModeId); // This will call updateGameParametersFromMode internally
+            startGame(); // Starts the game loop
             updateSkinSelectionUI();
             updateModeSelectionUI();
         };
