@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UVOSHOP Login</title>
+  <style>
+    body {
+      background-color: #202938;
+      color: white;
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    input, button {
+      width: 100%;
+      margin: 10px 0;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+    }
+    button {
+      background-color: orange;
+      color: white;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>Login / Register UVOSHOP</h2>
+
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Password">
+  
+  <button onclick="register()">Daftar</button>
+  <button onclick="login()">Login</button>
+  <button onclick="logout()">Logout</button>
+
+  <p id="status"></p>
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDniDZ_uRAn5UYVAEZTUhP-X37Y8g2EPxw",
+      authDomain: "uvoworld.firebaseapp.com",
+      projectId: "uvoworld",
+      storageBucket: "uvoworld.firebasestorage.app",
+      messagingSenderId: "522881047434",
+      appId: "1:522881047434:web:8dceaa5d4fe53f8373c673",
+      measurementId: "G-0MD2YBZNTR"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    window.register = () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          document.getElementById("status").innerText = "Berhasil daftar!";
+        })
+        .catch((error) => {
+          document.getElementById("status").innerText = error.message;
+        });
+    };
+
+    window.login = () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          document.getElementById("status").innerText = "Login berhasil!";
+        })
+        .catch((error) => {
+          document.getElementById("status").innerText = error.message;
+        });
+    };
+
+    window.logout = () => {
+      signOut(auth)
+        .then(() => {
+          document.getElementById("status").innerText = "Logout berhasil!";
+        });
+    };
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById("status").innerText = "Login sebagai: " + user.email;
+      }
+    });
+  </script>
+</body>
+</html>
