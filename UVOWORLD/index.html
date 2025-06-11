@@ -1,118 +1,52 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>UVOWORLD</title>
   <style>
-    /* CSS Gabungan */
-    body, html { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#202938; color:#fff; font-family:sans-serif; }
-    #login, #game { position:absolute; top:0; left:0; right:0; bottom:0; display:flex; align-items:center; justify-content:center; flex-direction:column; }
-    input, button, canvas { margin:5px; border:none; border-radius:6px; }
-    input { padding:10px; width:80%; max-width:300px; }
-    button { padding:10px 20px; background:orange; color:#fff; font-weight:bold; cursor:pointer; }
-    #controls { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); }
-    #controls button { font-size:18px; margin:4px; }
-    #chat { position:absolute; right:10px; bottom:10px; width:200px; max-height:300px; overflow:auto; background:rgba(0,0,0,0.5); padding:10px; border-radius:6px; }
-    #chat input { width:calc(100% - 20px); }
+    body {
+      font-family: Arial, sans-serif;
+      background: #202938;
+      color: white;
+      text-align: center;
+      padding: 50px;
+    }
+    h1 {
+      font-size: 3em;
+      color: #00ffcc;
+    }
+    p {
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
-  <div id="login">
-    <h1>UVOWORLD</h1>
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Password">
-    <button onclick="register()">Daftar</button>
-    <button onclick="login()">Masuk</button>
-    <p id="status"></p>
-  </div>
-
-  <div id="game" style="display:none;">
-    <canvas id="canvas" width="512" height="512"></canvas>
-    <div id="controls">
-      <button onclick="move('left')">◀</button>
-      <button onclick="move('up')">▲</button>
-      <button onclick="move('down')">▼</button>
-      <button onclick="move('right')">▶</button>
-      <button onclick="place()">Pasang</button>
-      <button onclick="destroy()">Hancur</button>
-    </div>
-    <div id="chat">
-      <div id="messages"></div>
-      <input id="msgInput" type="text" placeholder="Ketik chat..." onkeydown="if(event.key==='Enter') sendChat()">
-    </div>
-  </div>
+  <h1>Selamat Datang di UVOWORLD!</h1>
+  <p>Game overworld terbaik 🔧</p>
+  <p> 🚀</p>
 
   <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-    import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js"></script>
 
-    // Config UVOWORLD
-    const firebaseConfig = { /* masukkan config kamu di sini */ };
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    // Elemen
-    const loginDiv = document.getElementById('login');
-    const gameDiv = document.getElementById('game');
-    const statusP = document.getElementById('status');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const size = 16, cols = canvas.width/size, rows = canvas.height/size;
-    let map = [], player={x:0,y:0};
-
-    // Register & Login
-    window.register = ()=>{
-      let e=document.getElementById('email').value, p=document.getElementById('password').value;
-      createUserWithEmailAndPassword(auth,e,p).catch(e=>statusP.innerText=e.message);
+  <script>
+    // Konfigurasi Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDniDZ_uRAn5UYVAEZTUhP-X37Y8g2EPxw",
+      authDomain: "uvoworld.firebaseapp.com",
+      projectId: "uvoworld",
+      storageBucket: "uvoworld.firebasestorage.app",
+      messagingSenderId: "522881047434",
+      appId: "1:522881047434:web:8dceaa5d4fe53f8373c673",
+      measurementId: "G-0MD2YBZNTR"
     };
-    window.login = ()=>{
-      let e=document.getElementById('email').value, p=document.getElementById('password').value;
-      signInWithEmailAndPassword(auth,e,p).catch(e=>statusP.innerText=e.message);
-    };
-    onAuthStateChanged(auth,user=>{
-      if(user){ loginDiv.style.display='none'; gameDiv.style.display='block'; initWorld(); initChat(); draw(); }
-      else{ loginDiv.style.display='flex'; gameDiv.style.display='none'; }
-    });
 
-    // World sync
-    const mapRef = doc(db,'worlds','uvoworld');
-    function initWorld(){
-      onSnapshot(mapRef, snap=>{
-        if(snap.exists()) map=snap.data().tiles;
-        else { map=Array(rows).fill().map(()=>Array(cols).fill(0)); setDoc(mapRef,{tiles:map}); }
-        draw();
-      });
-    }
-    function draw(){ ctx.clearRect(0,0,512,512);
-      for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
-        if(map[y][x]){ ctx.fillStyle='#8B4513'; ctx.fillRect(x*size,y*size,size,size); }
-        ctx.strokeStyle='#444'; ctx.strokeRect(x*size,y*size,size,size);
-      }
-      ctx.fillStyle='lime'; ctx.fillRect(player.x*size,player.y*size,size,size);
-    }
-    window.move = d=>{ if(d==='left'&&player.x)player.x--; if(d==='right'&&player.x<cols-1)player.x++; if(d==='up'&&player.y)player.y--; if(d==='down'&&player.y<rows-1)player.y++; draw(); };
-    window.place = ()=>{ map[player.y][player.x]=1; setDoc(mapRef,{tiles:map}); };
-    window.destroy = ()=>{ map[player.y][player.x]=0; setDoc(mapRef,{tiles:map}); };
+    // Inisialisasi Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const analytics = firebase.analytics(app);
 
-    // Chat in-game
-    const msgCol = collection(db,'chats');
-    function initChat(){
-      const q = query(msgCol, orderBy('ts'));
-      onSnapshot(q,snap=>{
-        const msgs = document.getElementById('messages'); msgs.innerHTML='';
-        snap.forEach(doc=>{ let d=doc.data(); msgs.innerHTML+=`<div>[${d.user}]: ${d.text}</div>`; });
-        msgs.scrollTop = msgs.scrollHeight;
-      });
-    }
-    window.sendChat = ()=>{ const t=document.getElementById('msgInput').value;
-      if(!t) return;
-      addDoc(msgCol,{ user: auth.currentUser.email, text:t, ts:Date.now() });
-      document.getElementById('msgInput').value='';
-    };
+    console.log("Firebase sudah siap!");
   </script>
 </body>
 </html>
