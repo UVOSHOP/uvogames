@@ -1,52 +1,140 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>UVOWORLD</title>
+  <title>UVOWORLD - Game Online</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #202938;
+      margin: 0;
+      font-family: sans-serif;
+      background: #101820;
       color: white;
-      text-align: center;
-      padding: 50px;
+      overflow: hidden;
     }
-    h1 {
-      font-size: 3em;
-      color: #00ffcc;
+    #gameCanvas {
+      display: block;
+      margin: auto;
+      background: #202938;
+      border: 2px solid #444;
     }
-    p {
-      margin-top: 10px;
+    #chatBox {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background: rgba(0,0,0,0.6);
+      padding: 5px;
+      display: flex;
+    }
+    #chatInput {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      background: #1B1F2B;
+      color: white;
+    }
+    #sendBtn {
+      background: #FF9100;
+      border: none;
+      padding: 8px 12px;
+      color: white;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <h1>Selamat Datang di UVOWORLD!</h1>
-  <p>Game overworld terbaik 🔧</p>
-  <p> 🚀</p>
+<canvas id="gameCanvas" width="800" height="600"></canvas>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js"></script>
+<div id="chatBox">
+  <input type="text" id="chatInput" placeholder="Ketik pesan..." />
+  <button id="sendBtn">Kirim</button>
+</div>
 
-  <script>
-    // Konfigurasi Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyDniDZ_uRAn5UYVAEZTUhP-X37Y8g2EPxw",
-      authDomain: "uvoworld.firebaseapp.com",
-      projectId: "uvoworld",
-      storageBucket: "uvoworld.firebasestorage.app",
-      messagingSenderId: "522881047434",
-      appId: "1:522881047434:web:8dceaa5d4fe53f8373c673",
-      measurementId: "G-0MD2YBZNTR"
-    };
+<script type="module">
+  // Firebase import
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // Inisialisasi Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const analytics = firebase.analytics(app);
+  const firebaseConfig = {
+    apiKey: "AIzaSyDniDZ_uRAn5UYVAEZTUhP-X37Y8g2EPxw",
+    authDomain: "uvoworld.firebaseapp.com",
+    projectId: "uvoworld",
+    storageBucket: "uvoworld.firebasestorage.app",
+    messagingSenderId: "522881047434",
+    appId: "1:522881047434:web:8dceaa5d4fe53f8373c673",
+    measurementId: "G-0MD2YBZNTR"
+  };
 
-    console.log("Firebase sudah siap!");
-  </script>
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Game setup
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+
+  const tileSize = 40;
+  const worldW = 20;
+  const worldH = 15;
+  const world = Array.from({ length: worldH }, () => Array(worldW).fill(0)); // 0 = kosong, 1 = tanah
+
+  // Gambar tile
+  function drawWorld() {
+    for (let y = 0; y < worldH; y++) {
+      for (let x = 0; x < worldW; x++) {
+        if (world[y][x] === 1) {
+          ctx.fillStyle = "#654321"; // tanah
+        } else {
+          ctx.fillStyle = "#88ccee"; // udara
+        }
+        ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+      }
+    }
+  }
+
+  canvas.addEventListener("click", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) / tileSize);
+    const y = Math.floor((e.clientY - rect.top) / tileSize);
+    world[y][x] = 1; // tanam blok
+    drawWorld();
+  });
+
+  canvas.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) / tileSize);
+    const y = Math.floor((e.clientY - rect.top) / tileSize);
+    world[y][x] = 0; // hapus blok
+    drawWorld();
+  });
+
+  // Chat system
+  const chatInput = document.getElementById("chatInput");
+  const sendBtn = document.getElementById("sendBtn");
+
+  sendBtn.onclick = async () => {
+    const text = chatInput.value.trim();
+    if (text) {
+      await addDoc(collection(db, "chat"), {
+        text,
+        time: Date.now()
+      });
+      chatInput.value = "";
+    }
+  };
+
+  const q = query(collection(db, "chat"), orderBy("time"));
+  onSnapshot(q, (snapshot) => {
+    let logs = snapshot.docs.map(doc => doc.data().text).slice(-5);
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillRect(0, canvas.height - 80, canvas.width, 80);
+    ctx.fillStyle = "white";
+    logs.forEach((msg, i) => {
+      ctx.fillText(msg, 10, canvas.height - 60 + i * 15);
+    });
+  });
+
+  drawWorld();
+</script>
 </body>
 </html>
