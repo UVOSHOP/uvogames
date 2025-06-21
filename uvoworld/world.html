@@ -81,7 +81,7 @@
   }
 
   function ambilDataDariBot() {
-    fetch(`https://api.telegram.org/bot${token}/getUpdates`)
+    fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=-1`)
       .then(res => res.json())
       .then(data => {
         const pesan = data.result;
@@ -94,13 +94,18 @@
           }
         }
         if (!teks) return renderRumah();
-        const lines = teks.split(/\r?\n/).slice(2);
+        const lines = teks.split(/
+?
+/).slice(2);
+        console.log("📦 Isi teks:", teks);
         rumahList = Array(10).fill(null);
         for (let i = 0; i < 10; i++) {
           const match = lines[i]?.match(/Rumah (\d+): (.+)/);
           if (match) {
-            rumahList[i] = match[2] === "x" ? null : match[2];
-          }
+          rumahList[i] = match[2] === "x" ? null : match[2];
+        } else {
+          console.warn("⚠️ Format tidak cocok:", lines[i]);
+        }
         }
         console.log("✅ Data berhasil diambil dari bot");
         renderRumah();
