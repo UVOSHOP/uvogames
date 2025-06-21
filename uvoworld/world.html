@@ -33,8 +33,8 @@
 </div>
 
 <script>
-  const token = "7961343490:AAGKb3JPPVBj1egmQU0hq2VfZTFmlx1zpi8";
-  const chat_id = "6501126879";
+  const token = "7961343490:AAGKb3JPPVBj1egmQU0hq2VfZTFmlx1zpi8"; // Token bot kamu
+  const chat_id = "6501126879"; // Chat ID tujuan
   const rumahList = Array(10).fill(null);
 
   function renderRumah() {
@@ -72,30 +72,25 @@
       .then(res => res.json())
       .then(data => {
         const pesan = data.result;
-        let teks = "";
-        for (let i = pesan.length - 1; i >= 0; i--) {
-          const msg = pesan[i]?.message?.text;
-          if (msg && msg.includes("🏠")) {
-            teks = msg;
-            break;
-          }
-        }
-        if (!teks) return;
-        const lines = teks.split("\n");
-        lines.forEach(line => {
-          const match = line.match(/Rumah (\d+) (?:diklaim|ganti) oleh (.+)/);
+        for (let i = 0; i < 10; i++) rumahList[i] = null; // Reset dulu
+
+        pesan.forEach(item => {
+          const msg = item?.message?.text;
+          const match = msg?.match(/Rumah (\\d+) (?:diklaim|ganti) oleh (.+)/);
           if (match) {
             const idx = parseInt(match[1]) - 1;
-            const nama = match[2];
+            const nama = match[2].trim();
             if (idx >= 0 && idx < 10) rumahList[idx] = nama;
           }
         });
+
         renderRumah();
-      });
+      })
+      .catch(() => console.log("❌ Gagal ambil data dari bot."));
   }
 
-  ambilDataDariBot();
-  setInterval(ambilDataDariBot, 5000);
+  ambilDataDariBot(); // Ambil awal
+  setInterval(ambilDataDariBot, 5000); // Ambil terus tiap 5 detik
 </script>
 
 </body>
