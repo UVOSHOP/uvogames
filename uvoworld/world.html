@@ -94,7 +94,7 @@
           }
         }
         if (!teks) return renderRumah();
-        const lines = teks.split("\n").slice(2);
+        const lines = teks.split(/\r?\n/).slice(2);
         rumahList = Array(10).fill(null);
         for (let i = 0; i < 10; i++) {
           const match = lines[i]?.match(/Rumah (\d+): (.+)/);
