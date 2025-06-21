@@ -1,96 +1,564 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UVOSHOP Login</title>
-  <style>
-    body {
-      background-color: #202938;
-      color: white;
-      font-family: sans-serif;
-      padding: 20px;
-    }
-    input, button {
-      width: 100%;
-      margin: 10px 0;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-    }
-    button {
-      background-color: orange;
-      color: white;
-      font-weight: bold;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UVOWORD</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Reset and Basic Styles */
+        :root {
+            --tile-size: 80px;
+            --grid-size: 10;
+            --grid-width: calc(var(--tile-size) * var(--grid-size));
+            --grass-color: #588157;
+            --road-color: #6c757d;
+            --ui-bg: #212529;
+            --text-light: #f8f9fa;
+            --accent-color: #a3b18a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden; /* Prevent scrolling of the whole page */
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--ui-bg);
+            color: var(--text-light);
+        }
+
+        /* Game Container Layout */
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+        }
+
+        #world-container {
+            flex-grow: 1;
+            overflow-x: auto;
+            overflow-y: hidden;
+            background-color: #344e41;
+            padding: 20px 0;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-color) var(--ui-bg);
+        }
+
+        #grid-container {
+            display: grid;
+            grid-template-columns: repeat(var(--grid-size), var(--tile-size));
+            grid-template-rows: repeat(var(--grid-size), var(--tile-size));
+            width: var(--grid-width);
+            margin: 0 auto; /* Center the grid within the scrollable area */
+            gap: 2px;
+            padding: 10px;
+            background-color: #3a5a40;
+            border-radius: 8px;
+        }
+
+        /* Tile Styling */
+        .tile {
+            width: var(--tile-size);
+            height: var(--tile-size);
+            background-color: var(--grass-color);
+            background-image: url('https://www.transparenttextures.com/patterns/low-contrast-linen.png');
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            position: relative;
+            transition: transform 0.2s, filter 0.2s;
+        }
+
+        .tile:not(.occupied):not(.road):hover {
+            transform: scale(1.05);
+            filter: brightness(1.2);
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .tile.road {
+            background-color: var(--road-color);
+            background-image: url('https://www.transparenttextures.com/patterns/asfalt.png');
+            cursor: not-allowed;
+        }
+
+        .tile.occupied {
+            cursor: default;
+        }
+
+        .tile img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none; /* Make sure clicks go to the tile div */
+            position: absolute;
+            bottom: 0;
+            left: 0;
+        }
+        
+        .tile .owner-tag {
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 1px 4px;
+            font-size: 8px;
+            border-radius: 3px;
+            white-space: nowrap;
+        }
+
+        /* UI Panel at the bottom */
+        #ui-panel {
+            padding: 10px;
+            background-color: var(--ui-bg);
+            border-top: 2px solid var(--accent-color);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-start;
+            max-height: 35vh; /* Limit UI panel height */
+            overflow-y: auto;
+        }
+
+        /* Player Info and Chat Container */
+        #player-info {
+            flex-basis: 150px;
+            flex-grow: 1;
+        }
+        
+        #player-info h2 {
+            font-size: 1rem;
+            color: var(--accent-color);
+        }
+
+        #chat-container {
+            flex-basis: 300px;
+            flex-grow: 2;
+            display: flex;
+            flex-direction: column;
+            max-height: 200px; /* Limit chat height */
+        }
+        
+        #chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 5px;
+            border: 1px solid #495057;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 0.8rem;
+            display: flex;
+            flex-direction: column-reverse; /* Newest messages at the bottom */
+        }
+        
+        .chat-message {
+            margin-bottom: 5px;
+        }
+
+        .chat-sender {
+            font-weight: 600;
+            color: var(--accent-color);
+        }
+
+        #chat-form {
+            display: flex;
+        }
+
+        #chat-input {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid #495057;
+            border-radius: 4px 0 0 4px;
+            background-color: #343a40;
+            color: var(--text-light);
+            outline: none;
+        }
+
+        #chat-send-btn {
+            padding: 8px 12px;
+            border: none;
+            background-color: var(--accent-color);
+            color: var(--ui-bg);
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* Build Modal */
+        #build-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
+
+        #build-modal-content {
+            background-color: var(--text-light);
+            color: #000;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        #house-selection {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+
+        .house-option {
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 10px;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+        
+        .house-option:hover {
+            border-color: var(--accent-color);
+            transform: scale(1.1);
+        }
+
+        .house-option img {
+            width: 64px;
+            height: 64px;
+        }
+        
+        #cancel-build-btn {
+            padding: 10px 20px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* Loader */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--ui-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            z-index: 2000;
+        }
+    </style>
 </head>
 <body>
-  <h2>Login / Register UVOSHOP</h2>
 
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="password" placeholder="Password">
-  
-  <button onclick="register()">Daftar</button>
-  <button onclick="login()">Login</button>
-  <button onclick="logout()">Logout</button>
+    <div id="loader">Memuat UVOWORD...</div>
 
-  <p id="status"></p>
+    <div id="game-container" style="display: none;">
+        <div id="world-container">
+            <div id="grid-container">
+                <!-- Tiles will be generated by JavaScript -->
+            </div>
+        </div>
 
-  <!-- Firebase SDKs -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        <div id="ui-panel">
+            <div id="player-info">
+                <h2>Selamat Datang,</h2>
+                <p id="player-name-display">Player...</p>
+            </div>
+            <div id="chat-container">
+                <div id="chat-messages"></div>
+                <form id="chat-form">
+                    <input type="text" id="chat-input" placeholder="Ketik pesan..." autocomplete="off">
+                    <button type="submit" id="chat-send-btn">Kirim</button>
+                </form>
+            </div>
+        </div>
+    </div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDniDZ_uRAn5UYVAEZTUhP-X37Y8g2EPxw",
-      authDomain: "uvoworld.firebaseapp.com",
-      projectId: "uvoworld",
-      storageBucket: "uvoworld.firebasestorage.app",
-      messagingSenderId: "522881047434",
-      appId: "1:522881047434:web:8dceaa5d4fe53f8373c673",
-      measurementId: "G-0MD2YBZNTR"
-    };
+    <!-- Modal for building a house -->
+    <div id="build-modal">
+        <div id="build-modal-content">
+            <h3>Pilih Rumah untuk Dibangun</h3>
+            <div id="house-selection">
+                <div class="house-option" data-house-type="house1">
+                    <img src="https://img.icons8.com/color/96/000000/cottage.png" alt="Rumah Tipe 1">
+                    <p>Cottage</p>
+                </div>
+                <div class="house-option" data-house-type="house2">
+                    <img src="https://img.icons8.com/color/96/000000/home.png" alt="Rumah Tipe 2">
+                    <p>Modern</p>
+                </div>
+                <div class="house-option" data-house-type="house3">
+                    <img src="https://img.icons8.com/color/96/000000/bungalow.png" alt="Rumah Tipe 3">
+                    <p>Bungalow</p>
+                </div>
+            </div>
+            <button id="cancel-build-btn">Batal</button>
+        </div>
+    </div>
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import functions from the Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set, push, query, limitToLast, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
 
-    window.register = () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      createUserWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          document.getElementById("status").innerText = "Berhasil daftar!";
-        })
-        .catch((error) => {
-          document.getElementById("status").innerText = error.message;
-        });
-    };
+        // Your web app's Firebase configuration (as provided in the request)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCAumGENjQDZuC6XKj2LqSNuw_Ejz7yKk0",
+            authDomain: "uvoworld-1.firebaseapp.com",
+            databaseURL: "https://uvoworld-1-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "uvoworld-1",
+            storageBucket: "uvoworld-1.appspot.com",
+            messagingSenderId: "885277532590",
+            appId: "1:885277532590:web:a809fb385ef500f744683f"
+        };
+        
+        // --- CONSTANTS AND VARIABLES ---
+        const GRID_SIZE = 10;
+        const houseImageUrls = {
+            house1: 'https://img.icons8.com/color/96/000000/cottage.png',
+            house2: 'https://img.icons8.com/color/96/000000/home.png',
+            house3: 'https://img.icons8.com/color/96/000000/bungalow.png'
+        };
 
-    window.login = () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          document.getElementById("status").innerText = "Login berhasil!";
-        })
-        .catch((error) => {
-          document.getElementById("status").innerText = error.message;
-        });
-    };
+        let playerName = `Player${Math.floor(100 + Math.random() * 900)}`;
+        let selectedTileIndex = null;
+        let housesData = {}; // Local cache for house data
 
-    window.logout = () => {
-      signOut(auth)
-        .then(() => {
-          document.getElementById("status").innerText = "Logout berhasil!";
-        });
-    };
+        // DOM Elements
+        const loader = document.getElementById('loader');
+        const gameContainer = document.getElementById('game-container');
+        const gridContainer = document.getElementById('grid-container');
+        const playerNameDisplay = document.getElementById('player-name-display');
+        
+        // Modal elements
+        const buildModal = document.getElementById('build-modal');
+        const cancelBuildBtn = document.getElementById('cancel-build-btn');
+        const houseSelectionContainer = document.getElementById('house-selection');
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        document.getElementById("status").innerText = "Login sebagai: " + user.email;
-      }
-    });
-  </script>
+        // Chat elements
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatMessagesContainer = document.getElementById('chat-messages');
+
+        // --- FIREBASE INITIALIZATION ---
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // --- GAME LOGIC ---
+
+        /**
+         * Initializes the entire game: sets player name, generates grid, and sets up listeners.
+         */
+        function initGame() {
+            playerNameDisplay.textContent = playerName;
+            generateGrid();
+            setupFirebaseListeners();
+            setupEventListeners();
+
+            // Hide loader and show game
+            loader.style.display = 'none';
+            gameContainer.style.display = 'flex';
+        }
+        
+        /**
+         * Generates the 10x10 grid of tiles.
+         */
+        function generateGrid() {
+            gridContainer.innerHTML = ''; // Clear previous grid if any
+            for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+                const tile = document.createElement('div');
+                tile.classList.add('tile');
+                tile.dataset.index = i;
+
+                const x = i % GRID_SIZE;
+                const y = Math.floor(i / GRID_SIZE);
+
+                // Create roads on every 5th row and column
+                if (x % 5 === 0 || y % 5 === 0) {
+                    tile.classList.add('road');
+                } else {
+                    tile.addEventListener('click', () => onTileClick(i));
+                }
+                gridContainer.appendChild(tile);
+            }
+        }
+
+        /**
+         * Renders all houses on the grid based on data from Firebase.
+         * @param {object} allHousesData - An object where keys are tile indices and values are house data.
+         */
+        function renderAllHouses(allHousesData) {
+            // Clear all existing houses first
+            document.querySelectorAll('.tile img, .tile .owner-tag').forEach(el => el.remove());
+            document.querySelectorAll('.tile.occupied').forEach(el => el.classList.remove('occupied'));
+
+            housesData = allHousesData || {};
+            
+            for (const index in housesData) {
+                const tile = gridContainer.querySelector(`.tile[data-index='${index}']`);
+                const house = housesData[index];
+
+                if (tile && house) {
+                    tile.classList.add('occupied');
+                    
+                    // Add house image
+                    const img = document.createElement('img');
+                    img.src = houseImageUrls[house.type] || '';
+                    img.alt = house.type;
+                    tile.appendChild(img);
+                    
+                    // Add owner tag
+                    const ownerTag = document.createElement('div');
+                    ownerTag.classList.add('owner-tag');
+                    ownerTag.textContent = house.owner;
+                    tile.appendChild(ownerTag);
+                }
+            }
+        }
+        
+        /**
+         * Renders chat messages in the UI.
+         * @param {object} messagesData - Object containing chat messages from Firebase.
+         */
+        function renderChatMessages(messagesData) {
+            chatMessagesContainer.innerHTML = '';
+            if (!messagesData) return;
+
+            const messageKeys = Object.keys(messagesData).reverse(); // Show newest first
+            messageKeys.forEach(key => {
+                const message = messagesData[key];
+                const messageEl = document.createElement('div');
+                messageEl.classList.add('chat-message');
+                messageEl.innerHTML = `<span class="chat-sender">${message.sender}:</span> ${message.text}`;
+                chatMessagesContainer.appendChild(messageEl);
+            });
+        }
+
+        // --- EVENT HANDLERS ---
+        
+        /**
+         * Handles clicking on a tile.
+         * @param {number} index - The index of the clicked tile.
+         */
+        function onTileClick(index) {
+            if (housesData[index]) {
+                console.log(`Tile ${index} is already occupied by ${housesData[index].owner}.`);
+                return;
+            }
+            selectedTileIndex = index;
+            buildModal.style.display = 'flex';
+        }
+        
+        /**
+         * Handles the selection of a house type from the modal.
+         * @param {string} houseType - The type of house to build (e.g., 'house1').
+         */
+        function buildHouse(houseType) {
+            if (selectedTileIndex === null) return;
+
+            const houseData = {
+                owner: playerName,
+                type: houseType
+            };
+            
+            const houseRef = ref(database, 'houses/' + selectedTileIndex);
+            set(houseRef, houseData)
+                .then(() => {
+                    console.log(`House built successfully at ${selectedTileIndex}`);
+                })
+                .catch(error => {
+                    console.error("Error building house: ", error);
+                });
+            
+            closeBuildModal();
+        }
+
+        /**
+         * Closes the build selection modal.
+         */
+        function closeBuildModal() {
+            selectedTileIndex = null;
+            buildModal.style.display = 'none';
+        }
+
+        /**
+         * Handles chat form submission.
+         * @param {Event} e - The form submission event.
+         */
+        function handleChatSubmit(e) {
+            e.preventDefault();
+            const messageText = chatInput.value.trim();
+
+            if (messageText) {
+                const chatRef = ref(database, 'chat');
+                push(chatRef, {
+                    sender: playerName,
+                    text: messageText,
+                    timestamp: serverTimestamp()
+                });
+                chatInput.value = '';
+            }
+        }
+        
+        // --- SETUP FUNCTIONS ---
+
+        /**
+         * Sets up all general event listeners for UI elements.
+         */
+        function setupEventListeners() {
+            cancelBuildBtn.addEventListener('click', closeBuildModal);
+            
+            houseSelectionContainer.addEventListener('click', (e) => {
+                const houseOption = e.target.closest('.house-option');
+                if (houseOption) {
+                    const houseType = houseOption.dataset.houseType;
+                    buildHouse(houseType);
+                }
+            });
+
+            chatForm.addEventListener('submit', handleChatSubmit);
+        }
+        
+        /**
+         * Sets up Firebase realtime listeners for houses and chat.
+         */
+        function setupFirebaseListeners() {
+            // Listener for all houses
+            const housesRef = ref(database, 'houses');
+            onValue(housesRef, (snapshot) => {
+                const data = snapshot.val();
+                renderAllHouses(data);
+            });
+
+            // Listener for chat messages (last 50)
+            const chatRef = query(ref(database, 'chat'), limitToLast(50));
+            onValue(chatRef, (snapshot) => {
+                const data = snapshot.val();
+                renderChatMessages(data);
+            });
+        }
+        
+        // --- START THE GAME ---
+        window.addEventListener('load', initGame);
+
+    </script>
 </body>
 </html>
