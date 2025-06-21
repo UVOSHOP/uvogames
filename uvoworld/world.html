@@ -102,13 +102,16 @@
             rumahList[i] = match[2] === "x" ? null : match[2];
           }
         }
+        console.log("✅ Data berhasil diambil dari bot");
         renderRumah();
       })
       .catch(() => console.log("❌ Gagal ambil data dari bot."));
   }
 
-  setInterval(ambilDataDariBot, 5000);
-  ambilDataDariBot();
+  document.addEventListener("DOMContentLoaded", () => {
+    ambilDataDariBot();
+    setInterval(ambilDataDariBot, 5000);
+  });
 </script>
 
 </body>
