@@ -14,21 +14,8 @@
       height: 100vh;
       overflow: hidden;
     }
-    #loginForm {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #222;
-      padding: 20px;
-      border-radius: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      color: white;
-    }
     #container {
-      display: none;
+      display: flex;
       flex-direction: column;
       height: 100%;
     }
@@ -131,14 +118,6 @@
   </script>
 </head>
 <body>
-  <form id="loginForm">
-    <label>Username:</label>
-    <input id="username" required>
-    <label>Password:</label>
-    <input id="password" type="password" required>
-    <button type="submit">Login</button>
-  </form>
-
   <div id="container">
     <div id="gridWrapper">
       <div id="grid"></div>
@@ -154,7 +133,6 @@
     const grid = document.getElementById('grid');
     const mapSize = 10;
     const cells = [];
-    let currentUser = null;
 
     function drawWorld(houseMap = {}) {
       grid.innerHTML = '';
@@ -184,8 +162,7 @@
             const className = type === '2' ? 'house2' : (type === '3' ? 'house3' : 'house1');
             db.ref('houses/' + index).set({
               owner: name,
-              type: className,
-              user: currentUser
+              type: className
             });
           });
 
@@ -203,9 +180,9 @@
     function sendMessage() {
       const input = document.getElementById('chatInput');
       const msg = input.value.trim();
-      if (msg && currentUser) {
+      if (msg) {
         db.ref('chat').push({
-          name: currentUser,
+          name: 'Player',
           text: msg,
           time: Date.now()
         });
@@ -221,30 +198,6 @@
       div.textContent = `${data.name}: ${data.text}`;
       document.getElementById('messages').appendChild(div);
     });
-
-    document.getElementById('loginForm').addEventListener('submit', e => {
-      e.preventDefault();
-      const user = username.value.trim();
-      const pass = password.value.trim();
-      if (user && pass) {
-        db.ref('users/' + user).once('value', snap => {
-          if (!snap.exists()) {
-            db.ref('users/' + user).set({ password: pass });
-            proceed(user);
-          } else if (snap.val().password === pass) {
-            proceed(user);
-          } else {
-            alert('Password salah!');
-          }
-        });
-      }
-    });
-
-    function proceed(user) {
-      currentUser = user;
-      document.getElementById('loginForm').style.display = 'none';
-      document.getElementById('container').style.display = 'flex';
-    }
   </script>
 </body>
 </html>
