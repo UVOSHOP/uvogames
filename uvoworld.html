@@ -18,6 +18,7 @@
             --ui-bg: #212529;
             --text-light: #f8f9fa;
             --accent-color: #a3b18a;
+            --error-color: #ff4d6d;
         }
 
         * {
@@ -191,6 +192,21 @@
             cursor: pointer;
             border-radius: 0 4px 4px 0;
         }
+        
+        /* Error Log */
+        #error-log {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background-color: var(--error-color);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 3000;
+            font-size: 0.9rem;
+            max-width: 300px;
+            display: none; /* Hidden by default */
+        }
 
         /* Build Modal */
         #build-modal {
@@ -262,12 +278,14 @@
             align-items: center;
             font-size: 1.5rem;
             z-index: 2000;
+            color: var(--text-light);
         }
     </style>
 </head>
 <body>
 
     <div id="loader">Memuat UVOWORD...</div>
+    <div id="error-log"></div>
 
     <div id="game-container" style="display: none;">
         <div id="world-container">
@@ -319,13 +337,16 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import { getDatabase, ref, onValue, set, push, query, limitToLast, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
 
-        // Your web app's Firebase configuration (as provided in the request)
+        // =================================================================================
+        // PENTING! PASTIKAN KONFIGURASI INI SESUAI DENGAN PROYEK FIREBASE ANDA
+        // =================================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyCAumGENjQDZuC6XKj2LqSNuw_Ejz7yKk0",
             authDomain: "uvoworld-1.firebaseapp.com",
+            // Pastikan URL ini BENAR. Buka Firebase > Realtime Database > Data, lalu salin URL dari sana.
             databaseURL: "https://uvoworld-1-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "uvoworld-1",
-            storageBucket: "uvoworld-1.appspot.com",
+            storageBucket: "uvoworld-1.appspot.com", // Domain yang benar adalah .appspot.com
             messagingSenderId: "885277532590",
             appId: "1:885277532590:web:a809fb385ef500f744683f"
         };
@@ -347,6 +368,7 @@
         const gameContainer = document.getElementById('game-container');
         const gridContainer = document.getElementById('grid-container');
         const playerNameDisplay = document.getElementById('player-name-display');
+        const errorLog = document.getElementById('error-log');
         
         // Modal elements
         const buildModal = document.getElementById('build-modal');
@@ -358,207 +380,175 @@
         const chatInput = document.getElementById('chat-input');
         const chatMessagesContainer = document.getElementById('chat-messages');
 
+        /**
+         * Function to show error messages on the screen
+         * @param {string} message The error message to display
+         */
+        function showError(message) {
+            console.error(message); // Keep logging to console
+            errorLog.textContent = message;
+            errorLog.style.display = 'block';
+            // Hide the error after 5 seconds
+            setTimeout(() => {
+                errorLog.style.display = 'none';
+            }, 5000);
+        }
+
         // --- FIREBASE INITIALIZATION ---
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-
-        // --- GAME LOGIC ---
-
-        /**
-         * Initializes the entire game: sets player name, generates grid, and sets up listeners.
-         */
-        function initGame() {
-            playerNameDisplay.textContent = playerName;
-            generateGrid();
-            setupFirebaseListeners();
-            setupEventListeners();
-
-            // Hide loader and show game
-            loader.style.display = 'none';
-            gameContainer.style.display = 'flex';
-        }
-        
-        /**
-         * Generates the 10x10 grid of tiles.
-         */
-        function generateGrid() {
-            gridContainer.innerHTML = ''; // Clear previous grid if any
-            for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
-                const tile = document.createElement('div');
-                tile.classList.add('tile');
-                tile.dataset.index = i;
-
-                const x = i % GRID_SIZE;
-                const y = Math.floor(i / GRID_SIZE);
-
-                // Create roads on every 5th row and column
-                if (x % 5 === 0 || y % 5 === 0) {
-                    tile.classList.add('road');
-                } else {
-                    tile.addEventListener('click', () => onTileClick(i));
-                }
-                gridContainer.appendChild(tile);
-            }
-        }
-
-        /**
-         * Renders all houses on the grid based on data from Firebase.
-         * @param {object} allHousesData - An object where keys are tile indices and values are house data.
-         */
-        function renderAllHouses(allHousesData) {
-            // Clear all existing houses first
-            document.querySelectorAll('.tile img, .tile .owner-tag').forEach(el => el.remove());
-            document.querySelectorAll('.tile.occupied').forEach(el => el.classList.remove('occupied'));
-
-            housesData = allHousesData || {};
+        try {
+            const app = initializeApp(firebaseConfig);
+            const database = getDatabase(app);
             
-            for (const index in housesData) {
-                const tile = gridContainer.querySelector(`.tile[data-index='${index}']`);
-                const house = housesData[index];
+            // --- GAME LOGIC ---
+            function initGame() {
+                playerNameDisplay.textContent = playerName;
+                generateGrid();
+                setupFirebaseListeners(database);
+                setupEventListeners(database);
 
-                if (tile && house) {
-                    tile.classList.add('occupied');
-                    
-                    // Add house image
-                    const img = document.createElement('img');
-                    img.src = houseImageUrls[house.type] || '';
-                    img.alt = house.type;
-                    tile.appendChild(img);
-                    
-                    // Add owner tag
-                    const ownerTag = document.createElement('div');
-                    ownerTag.classList.add('owner-tag');
-                    ownerTag.textContent = house.owner;
-                    tile.appendChild(ownerTag);
+                loader.style.display = 'none';
+                gameContainer.style.display = 'flex';
+            }
+            
+            function generateGrid() {
+                gridContainer.innerHTML = '';
+                for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+                    const tile = document.createElement('div');
+                    tile.classList.add('tile');
+                    tile.dataset.index = i;
+                    const x = i % GRID_SIZE;
+                    const y = Math.floor(i / GRID_SIZE);
+                    if (x % 5 === 0 || y % 5 === 0) {
+                        tile.classList.add('road');
+                    } else {
+                        tile.addEventListener('click', () => onTileClick(i));
+                    }
+                    gridContainer.appendChild(tile);
                 }
             }
-        }
-        
-        /**
-         * Renders chat messages in the UI.
-         * @param {object} messagesData - Object containing chat messages from Firebase.
-         */
-        function renderChatMessages(messagesData) {
-            chatMessagesContainer.innerHTML = '';
-            if (!messagesData) return;
-
-            const messageKeys = Object.keys(messagesData).reverse(); // Show newest first
-            messageKeys.forEach(key => {
-                const message = messagesData[key];
-                const messageEl = document.createElement('div');
-                messageEl.classList.add('chat-message');
-                messageEl.innerHTML = `<span class="chat-sender">${message.sender}:</span> ${message.text}`;
-                chatMessagesContainer.appendChild(messageEl);
-            });
-        }
-
-        // --- EVENT HANDLERS ---
-        
-        /**
-         * Handles clicking on a tile.
-         * @param {number} index - The index of the clicked tile.
-         */
-        function onTileClick(index) {
-            if (housesData[index]) {
-                console.log(`Tile ${index} is already occupied by ${housesData[index].owner}.`);
-                return;
-            }
-            selectedTileIndex = index;
-            buildModal.style.display = 'flex';
-        }
-        
-        /**
-         * Handles the selection of a house type from the modal.
-         * @param {string} houseType - The type of house to build (e.g., 'house1').
-         */
-        function buildHouse(houseType) {
-            if (selectedTileIndex === null) return;
-
-            const houseData = {
-                owner: playerName,
-                type: houseType
-            };
             
-            const houseRef = ref(database, 'houses/' + selectedTileIndex);
-            set(houseRef, houseData)
-                .then(() => {
-                    console.log(`House built successfully at ${selectedTileIndex}`);
-                })
-                .catch(error => {
-                    console.error("Error building house: ", error);
+            function renderAllHouses(allHousesData) {
+                document.querySelectorAll('.tile img, .tile .owner-tag').forEach(el => el.remove());
+                document.querySelectorAll('.tile.occupied').forEach(el => el.classList.remove('occupied'));
+                housesData = allHousesData || {};
+                for (const index in housesData) {
+                    const tile = gridContainer.querySelector(`.tile[data-index='${index}']`);
+                    const house = housesData[index];
+                    if (tile && house) {
+                        tile.classList.add('occupied');
+                        const img = document.createElement('img');
+                        img.src = houseImageUrls[house.type] || '';
+                        img.alt = house.type;
+                        tile.appendChild(img);
+                        const ownerTag = document.createElement('div');
+                        ownerTag.classList.add('owner-tag');
+                        ownerTag.textContent = house.owner;
+                        tile.appendChild(ownerTag);
+                    }
+                }
+            }
+            
+            function renderChatMessages(messagesData) {
+                chatMessagesContainer.innerHTML = '';
+                if (!messagesData) return;
+                const messageKeys = Object.keys(messagesData).reverse();
+                messageKeys.forEach(key => {
+                    const message = messagesData[key];
+                    const messageEl = document.createElement('div');
+                    messageEl.classList.add('chat-message');
+                    messageEl.innerHTML = `<span class="chat-sender">${message.sender}:</span> ${message.text}`;
+                    chatMessagesContainer.appendChild(messageEl);
                 });
-            
-            closeBuildModal();
-        }
-
-        /**
-         * Closes the build selection modal.
-         */
-        function closeBuildModal() {
-            selectedTileIndex = null;
-            buildModal.style.display = 'none';
-        }
-
-        /**
-         * Handles chat form submission.
-         * @param {Event} e - The form submission event.
-         */
-        function handleChatSubmit(e) {
-            e.preventDefault();
-            const messageText = chatInput.value.trim();
-
-            if (messageText) {
-                const chatRef = ref(database, 'chat');
-                push(chatRef, {
-                    sender: playerName,
-                    text: messageText,
-                    timestamp: serverTimestamp()
-                });
-                chatInput.value = '';
             }
-        }
-        
-        // --- SETUP FUNCTIONS ---
 
-        /**
-         * Sets up all general event listeners for UI elements.
-         */
-        function setupEventListeners() {
-            cancelBuildBtn.addEventListener('click', closeBuildModal);
-            
-            houseSelectionContainer.addEventListener('click', (e) => {
-                const houseOption = e.target.closest('.house-option');
-                if (houseOption) {
-                    const houseType = houseOption.dataset.houseType;
-                    buildHouse(houseType);
+            function onTileClick(index) {
+                if (housesData[index]) {
+                    showError(`Lahan ini sudah dimiliki oleh ${housesData[index].owner}.`);
+                    return;
                 }
-            });
+                selectedTileIndex = index;
+                buildModal.style.display = 'flex';
+            }
+            
+            function buildHouse(database, houseType) {
+                if (selectedTileIndex === null) return;
+                const houseData = { owner: playerName, type: houseType };
+                const houseRef = ref(database, 'houses/' + selectedTileIndex);
+                set(houseRef, houseData).catch(error => {
+                    showError(`Gagal membangun: ${error.message}. Periksa Aturan Keamanan (Security Rules) Firebase Anda.`);
+                });
+                closeBuildModal();
+            }
 
-            chatForm.addEventListener('submit', handleChatSubmit);
+            function closeBuildModal() {
+                selectedTileIndex = null;
+                buildModal.style.display = 'none';
+            }
+
+            function handleChatSubmit(e, database) {
+                e.preventDefault();
+                const messageText = chatInput.value.trim();
+                if (messageText) {
+                    const chatRef = ref(database, 'chat');
+                    push(chatRef, {
+                        sender: playerName,
+                        text: messageText,
+                        timestamp: serverTimestamp()
+                    }).catch(error => {
+                        showError(`Gagal mengirim pesan: ${error.message}.`);
+                    });
+                    chatInput.value = '';
+                }
+            }
+            
+            function setupEventListeners(database) {
+                cancelBuildBtn.addEventListener('click', closeBuildModal);
+                houseSelectionContainer.addEventListener('click', (e) => {
+                    const houseOption = e.target.closest('.house-option');
+                    if (houseOption) {
+                        const houseType = houseOption.dataset.houseType;
+                        buildHouse(database, houseType);
+                    }
+                });
+                chatForm.addEventListener('submit', (e) => handleChatSubmit(e, database));
+            }
+            
+            function setupFirebaseListeners(database) {
+                // =================================================================================
+                // PENTING! JIKA DATA TIDAK MUNCUL, KEMUNGKINAN BESAR KARENA SECURITY RULES
+                // Buka Firebase Console > Realtime Database > Rules
+                // dan ubah menjadi seperti ini untuk mode development/publik:
+                // {
+                //   "rules": {
+                //     ".read": "true",
+                //     ".write": "true"
+                //   }
+                // }
+                // =================================================================================
+                const housesRef = ref(database, 'houses');
+                onValue(housesRef, (snapshot) => {
+                    const data = snapshot.val();
+                    renderAllHouses(data);
+                }, (error) => {
+                    showError(`Gagal memuat data rumah: ${error.message}. Periksa Security Rules Anda.`);
+                });
+
+                const chatRef = query(ref(database, 'chat'), limitToLast(50));
+                onValue(chatRef, (snapshot) => {
+                    const data = snapshot.val();
+                    renderChatMessages(data);
+                }, (error) => {
+                    showError(`Gagal memuat chat: ${error.message}.`);
+                });
+            }
+            
+            window.addEventListener('load', initGame);
+
+        } catch (error) {
+            // This will catch errors during Firebase initialization (e.g., bad config)
+            loader.style.color = 'var(--error-color)';
+            loader.textContent = `Error Inisialisasi Firebase: ${error.message}`;
         }
-        
-        /**
-         * Sets up Firebase realtime listeners for houses and chat.
-         */
-        function setupFirebaseListeners() {
-            // Listener for all houses
-            const housesRef = ref(database, 'houses');
-            onValue(housesRef, (snapshot) => {
-                const data = snapshot.val();
-                renderAllHouses(data);
-            });
-
-            // Listener for chat messages (last 50)
-            const chatRef = query(ref(database, 'chat'), limitToLast(50));
-            onValue(chatRef, (snapshot) => {
-                const data = snapshot.val();
-                renderChatMessages(data);
-            });
-        }
-        
-        // --- START THE GAME ---
-        window.addEventListener('load', initGame);
-
     </script>
 </body>
 </html>
