@@ -1,140 +1,78 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>UVOWORLD - Rumah Interaktif</title>
+  <title>UVOWORLD - Sinkron Otomatis</title>
   <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      background: #f9f9f9;
-    }
-    h1 {
-      margin-top: 30px;
-    }
-    .jalan {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 12px;
-      margin-top: 40px;
-    }
+    body { font-family: sans-serif; text-align: center; background: #f0f0f0; }
+    .jalan { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 30px; }
     .rumah {
-      width: 100px;
-      height: 100px;
-      background: #cce;
-      border: 2px solid #444;
-      border-radius: 8px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+      width: 120px; height: 120px; background: #cce; border: 2px solid #333;
+      border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+      font-weight: bold; cursor: pointer; box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
     }
-    .klaim { background-color: #cce; }
-    .sudah { background-color: #aaffaa; }
-    #formBox {
-      display: none;
-      margin-top: 20px;
-    }
-    input {
-      padding: 6px;
-      margin: 5px;
-      border-radius: 4px;
-      border: 1px solid #aaa;
-      width: 200px;
-    }
-    button {
-      padding: 8px 16px;
-      background: #3399ff;
-      border: none;
-      color: white;
-      font-weight: bold;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #2277cc;
-    }
+    .claimed { background: #aaffaa; }
+    #formBox { margin-top: 20px; }
+    input { padding: 6px; margin: 4px; border: 1px solid #aaa; border-radius: 5px; width: 200px; }
+    button { padding: 8px 16px; background: #3399ff; border: none; color: white; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #2277cc; }
   </style>
 </head>
 <body>
 
 <h1>🏡 UVOWORLD</h1>
-<p>Klik salah satu rumah di jalan untuk klaim atau edit</p>
+<p>Rumah 1–10, diklaim & update otomatis tiap 5 detik</p>
 
 <div class="jalan" id="jalan"></div>
 
 <div id="formBox">
-  <h3 id="judulForm">Klaim Rumah</h3>
+  <h3>Klaim Rumah</h3>
+  <input id="nomorRumah" placeholder="Rumah ke-" type="number" min="1" max="10">
   <input id="username" placeholder="Username">
-  <input id="password" type="password" placeholder="Password">
-  <input id="newName" placeholder="Nama Rumah Baru (opsional)">
-  <button onclick="kirim()">Kirim</button>
+  <input id="password" placeholder="Password" type="password">
+  <button onclick="klaim()">Klaim</button>
 </div>
 
 <script>
-  const botToken = "7961343490:AAGKb3JPPVBj1egmQU0hq2VfZTFmlx1zpi8";
-  const chatId = "6501126879";
+  const token = "7961343490:AAGKb3JPPVBj1egmQU0hq2VfZTFmlx1zpi8";
+  const chat_id = "6501126879";
 
-  const rumahStatus = Array(10).fill(null); // null = belum diklaim
-  let rumahAktif = -1;
+  const rumahList = Array(10).fill(null); // index 0–9 = Rumah 1–10
 
   function renderRumah() {
     const jalan = document.getElementById("jalan");
     jalan.innerHTML = "";
-    rumahStatus.forEach((rumah, i) => {
+    for (let i = 0; i < 10; i++) {
       const div = document.createElement("div");
-      div.className = "rumah " + (rumah ? "sudah" : "klaim");
-      div.innerText = rumah ? rumah.nama : `Rumah ${i+1}`;
-      div.onclick = () => bukaForm(i);
+      div.className = "rumah" + (rumahList[i] ? " claimed" : "");
+      div.innerHTML = `Rumah ${i + 1}<br><small>${rumahList[i] || "Belum diklaim"}</small>`;
       jalan.appendChild(div);
+    }
+  }
+
+  function klaim() {
+    const nomor = parseInt(document.getElementById("nomorRumah").value);
+    const user = document.getElementById("username").value.trim();
+    const pass = document.getElementById("password").value.trim();
+    if (!nomor || !user || !pass || nomor < 1 || nomor > 10) return alert("Isi semua kolom dengan benar!");
+    rumahList[nomor - 1] = user; // Simpan lokal
+    renderRumah();
+  }
+
+  function kirimSemuaKeBot() {
+    let hasil = "🗂 Update Rumah UVOWORLD\n\n";
+    rumahList.forEach((nama, i) => {
+      hasil += `🏠 Rumah ${i + 1}: ${nama || "Belum diklaim"}\n`;
+    });
+
+    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id, text: hasil })
     });
   }
 
-  function bukaForm(index) {
-    rumahAktif = index;
-    document.getElementById("formBox").style.display = "block";
-    document.getElementById("judulForm").innerText = rumahStatus[index] ?
-      `Edit Rumah ${index+1}` : `Klaim Rumah ${index+1}`;
-  }
-
-  function kirim() {
-    const user = document.getElementById("username").value.trim();
-    const pass = document.getElementById("password").value.trim();
-    const nama = document.getElementById("newName").value.trim();
-
-    if (!user || !pass) return alert("Isi username & password!");
-
-    let text = rumahStatus[rumahAktif] ?
-      `✏️ Edit Rumah ${rumahAktif+1}\n👤 Username: ${user}\n🔒 Password: ${pass}\n🏠 Nama Baru: ${nama || '(tidak diubah)'}` :
-      `✅ Klaim Rumah ${rumahAktif+1}\n👤 Username: ${user}\n🔒 Password: ${pass}`;
-
-    fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text: text })
-    })
-    .then(res => res.json())
-    .then(() => {
-      alert("✅ Berhasil dikirim ke bot!");
-      if (!rumahStatus[rumahAktif]) {
-        rumahStatus[rumahAktif] = { user, pass, nama: nama || `Rumah ${rumahAktif+1}` };
-      } else {
-        if (rumahStatus[rumahAktif].user === user && rumahStatus[rumahAktif].pass === pass) {
-          rumahStatus[rumahAktif].nama = nama || rumahStatus[rumahAktif].nama;
-        } else {
-          alert("❌ Login gagal. Username/password salah.");
-          return;
-        }
-      }
-      document.getElementById("formBox").style.display = "none";
-      renderRumah();
-    })
-    .catch(() => alert("❌ Gagal kirim ke bot."));
-  }
-
   renderRumah();
+  setInterval(kirimSemuaKeBot, 5000); // Kirim update tiap 5 detik
 </script>
 
 </body>
