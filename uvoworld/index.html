@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>UVOWORD Multiplayer</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #1e1e1e;
+      font-family: sans-serif;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #loginForm {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #222;
+      padding: 20px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      color: white;
+    }
+    #container {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+    }
+    #gridWrapper {
+      flex: 1;
+      overflow-x: auto;
+      overflow-y: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(10, 48px);
+      grid-template-rows: repeat(10, 48px);
+      gap: 2px;
+      background-color: #222;
+      padding: 10px;
+    }
+    .cell {
+      width: 48px;
+      height: 48px;
+      background-color: #3cb043;
+      background-image: url('https://png.pngtree.com/thumb_back/fw800/background/20240127/pngtree-green-grass-texture-background-image_15615342.jpg');
+      background-size: cover;
+      border: 1px solid #111;
+      position: relative;
+    }
+    .road {
+      background-color: #888;
+      background-image: url('https://cgaxisimages.fra1.cdn.digitaloceanspaces.com/2019/07/cgaxis_pbr_15_grey_asphalt_7_diffuse-708x708.jpg');
+      background-size: cover;
+    }
+    .house1 {
+      background-image: url('https://png.pngtree.com/png-vector/20240519/ourlarge/pngtree-house-doll-icon-vector-png-image_12492308.png');
+      background-size: cover;
+    }
+    .house2 {
+      background-image: url('https://img95.699pic.com/element/40049/4922.png_860.png');
+      background-size: cover;
+    }
+    .house3 {
+      background-image: url('https://img95.699pic.com/element/40127/2359.png_860.png');
+      background-size: cover;
+    }
+    .label {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      font-size: 10px;
+      color: white;
+      background: rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+    #chat {
+      height: 60px;
+      display: flex;
+      border-top: 1px solid #333;
+      background: #111;
+    }
+    #chat input {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      background: #222;
+      color: white;
+    }
+    #chat button {
+      background: #61dafb;
+      border: none;
+      color: black;
+      padding: 8px 12px;
+    }
+    #messages {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      font-size: 12px;
+      max-height: 30vh;
+      overflow-y: auto;
+      width: 250px;
+      padding: 4px;
+      border-radius: 6px;
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCAumGENjQDZuC6XKj2LqSNuw_Ejz7yKk0",
+      authDomain: "uvoworld-1.firebaseapp.com",
+      projectId: "uvoworld-1",
+      storageBucket: "uvoworld-1.firebasestorage.app",
+      messagingSenderId: "885277532590",
+      appId: "1:885277532590:web:a809fb385ef500f744683f",
+      measurementId: "G-5BWB5HXH7R"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+  </script>
+</head>
+<body>
+  <form id="loginForm">
+    <label>Username:</label>
+    <input id="username" required>
+    <label>Password:</label>
+    <input id="password" type="password" required>
+    <button type="submit">Login</button>
+  </form>
+
+  <div id="container">
+    <div id="gridWrapper">
+      <div id="grid"></div>
+    </div>
+    <div id="chat">
+      <input type="text" id="chatInput" placeholder="Ketik pesan...">
+      <button id="sendBtn">Kirim</button>
+    </div>
+    <div id="messages"></div>
+  </div>
+
+  <script>
+    const grid = document.getElementById('grid');
+    const mapSize = 10;
+    const cells = [];
+    let currentUser = null;
+
+    function drawWorld(houseMap = {}) {
+      grid.innerHTML = '';
+      for (let y = 0; y < mapSize; y++) {
+        for (let x = 0; x < mapSize; x++) {
+          const index = y * mapSize + x;
+          const cell = document.createElement('div');
+          cell.classList.add('cell');
+          if (x % 5 === 0 || y % 5 === 0) cell.classList.add('road');
+          cell.dataset.index = index;
+
+          const label = document.createElement('div');
+          label.className = 'label';
+          cell.appendChild(label);
+
+          const house = houseMap[index];
+          if (house) {
+            cell.classList.add(house.type);
+            label.textContent = house.owner;
+          }
+
+          cell.addEventListener('click', () => {
+            if (houseMap[index]) return;
+            const name = prompt('Masukkan nama rumahmu:');
+            if (!name) return;
+            const type = prompt('Pilih rumah 1 / 2 / 3:', '1');
+            const className = type === '2' ? 'house2' : (type === '3' ? 'house3' : 'house1');
+            db.ref('houses/' + index).set({
+              owner: name,
+              type: className,
+              user: currentUser
+            });
+          });
+
+          grid.appendChild(cell);
+          cells[index] = cell;
+        }
+      }
+    }
+
+    db.ref('houses').on('value', snap => {
+      const houseMap = snap.val() || {};
+      drawWorld(houseMap);
+    });
+
+    function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const msg = input.value.trim();
+      if (msg && currentUser) {
+        db.ref('chat').push({
+          name: currentUser,
+          text: msg,
+          time: Date.now()
+        });
+        input.value = '';
+      }
+    }
+
+    document.getElementById('sendBtn').addEventListener('click', sendMessage);
+
+    db.ref('chat').limitToLast(50).on('child_added', snap => {
+      const data = snap.val();
+      const div = document.createElement('div');
+      div.textContent = `${data.name}: ${data.text}`;
+      document.getElementById('messages').appendChild(div);
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const user = username.value.trim();
+      const pass = password.value.trim();
+      if (user && pass) {
+        db.ref('users/' + user).once('value', snap => {
+          if (!snap.exists()) {
+            db.ref('users/' + user).set({ password: pass });
+            proceed(user);
+          } else if (snap.val().password === pass) {
+            proceed(user);
+          } else {
+            alert('Password salah!');
+          }
+        });
+      }
+    });
+
+    function proceed(user) {
+      currentUser = user;
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('container').style.display = 'flex';
+    }
+  </script>
+</body>
+</html>
